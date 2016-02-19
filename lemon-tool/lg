@@ -1,0 +1,439 @@
+#!/bin/bash
+# generate filename tags for lookupfile plugin
+
+#
+# function show_help_info() {
+#
+# {{{
+function show_help_info() {
+    echo "----------Help information-------------"
+    echo "usage: lg auto [:dir1] -excl [:dir2]"
+    echo -e "\t<auto> option will Generate the auto project_vim with your specified directory [:dir]"
+    echo -e "\t[:dir1] can be  NULL or xxx\/, it means current work directory or the sub directory"
+    echo -e "\t[:dir2] can be \"xxx\/\" means xxx directory is under the PWD"
+
+    echo "usage: lg auto-up "
+    echo -e "\t<auto-up> option just Generate cscope database from auto_config file"
+
+    echo "usage: lg update [:objFile]"
+    echo -e "\t<update> option will Generate the auto project_vim with your specified directory [:dir]"
+    echo -e "\t[:objFile] can be \"xxx\" means we just update the specified file"
+    echo -e "\t[:objFile] can be \" \"   means we update the all files from PROJ_auto"
+
+    echo "usage: lg manu [:dir] -excl [:dir]"
+    echo -e "\t<add> option will generate the specified Dir database, user can add the cscope database manually"
+    echo -e "\t<add> -excl option will exclude the dir in Database"
+
+    echo "usage: lg show "
+    echo -e "\t<show> option will show the Project Information "
+
+    echo "---------------------------------------"
+    echo " " 
+}
+# }}}
+
+#
+# function genCsFile_f() {...}
+# Describtion: Generate the cscope_file and cur_obj_files from config file
+#
+# {{{
+function genCsFile_f() 
+{
+    autoFlag=0
+    declare -a findPath
+    rm $file_tmp1 $file_tmp2 $cscope_file  2>>/dev/null
+    if [[ $1 == "-gnew" ]]; then
+        rm $new_obj_files 2>>/dev/null
+    else    
+        rm $cur_obj_files 2>>/dev/null
+    fi
+
+    cat $proj_auto_info | while read LINE_0
+    do
+        autoTag=`echo $LINE_0 | awk '{print $1}'`
+        if [[ $autoTag == "Include" ]]; then
+            autoFlag=1
+            continue
+        elif [[ $autoTag == "Exclude" ]]; then
+            autoFlag=2
+            continue
+        fi
+
+        if [[ $autoFlag == 1 ]]; then
+            echo "$LINE_0" >> $file_tmp1
+            #echo "$LINE_0" 
+        elif [[ $autoFlag == 2 ]]; then
+            echo "$LINE_0" >> $file_tmp2
+            #echo "$LINE_0" 
+        fi
+    done
+
+    inclFile=(`cat $file_tmp1`)
+    exclFile=(`cat $file_tmp2`)
+    needExcl=0
+    for (( i = 0; i < ${#inclFile[@]}; i++ )); do
+        for (( j = 0; j < ${#exclFile[@]}; j++ )); do
+            matchNum=0
+            matchNum=`expr match "${exclFile[$j]}" "${inclFile[$i]}"`
+            if [[ $matchNum != 0 ]]; then
+                #
+                # need enhanced to make sure that the exclFile don't contain the '/' 
+                exclPath=${exclPath}"-path ${exclFile[$j]%/} -a -prune -o"" "
+                #echo "expa:$exclPath"
+            fi
+        done
+
+        findPath[$i]="${inclFile[$i]} $exclPath"
+    done
+
+    for (( k = 0; k < ${#findPath[@]}; k++ )); do
+        echo "findpath:   [ ${findPath[$k]} ]"
+
+        if [[ $1 == "-gnew" ]]; then
+            find -L ${findPath[$k]} -not -wholename '*.svn*' -not -regex '.*\.\(png\|gif\)' -type f -name "*.[ch]" -printf %p"@@@"%T@"\n" >> $new_obj_files 2>>$cs_log
+        else
+            find -L ${findPath[$k]} -not -wholename '*.svn*' -not -regex '.*\.\(png\|gif\)' -type f -name "*.[ch]" -printf %p"@@@"%T@"\n" >> $cur_obj_files 2>>$cs_log
+        fi
+    done
+
+    # -gnew option means just generate the new_obj_files
+    if [[ $1 == "-gnew" ]]; then
+        return;
+    fi
+
+    awk 'BEGIN {FS="@@@"} {print $1}' $cur_obj_files >> $cscope_file
+    #windows will use blank character in file name, we need remove it in Unix file name
+    sed -i 's/\ /\\\ /g' $cscope_file
+
+    # split the big file to small files, and cscope them
+    cd $proj_path/project_vim/
+    split -d -l $splitCnt $cscope_file cscope_sp_ 
+    cd $proj_path
+    for cscInFile in $(find $proj_path/project_vim -name "cscope_sp_*" -type f)
+    do
+        cscOutFile=${cscInFile}.out
+        echo -e "\tcscope -bqk -i $cscInFile -f $cscOutFile"
+        cscope -bqk -i $cscInFile -f $cscOutFile 2>>$cs_log
+
+        tagOutFile=${cscInFile}.tags
+        echo -e "\tctags ... -L $cscInFile -f $tagOutFile"
+        ctags -R --c++-kinds=+px --fields=+liaS --extra=+q -L $cscInFile -f $tagOutFile 2>>$cs_log
+    done
+
+    #generate the tags files for lookup
+    echo -e "!_TAG_FILE_SORTED\t2\t/2=foldcase/" > $lookup_file
+    cat $cscope_file | while read LINE  
+    do
+        echo -e "${LINE##/*/}\t$LINE\t1" >> $lookup_file
+    done
+}
+# }}}
+
+### main {
+echo -e "\n==> Welcome to Lemon Project Generate programe <=="
+start_time=`date +%s`
+#set -x
+
+#
+#variable defines: Config File
+# {{{
+proj_path=`pwd`
+proj_update_info="$proj_path/project_vim/a_update.cfg"
+proj_manu_info="$proj_path/project_vim/a_manu.cfg"
+proj_auto_info="$proj_path/project_vim/a_auto.cfg"
+cs_log="$proj_path/project_vim/a_csLog"
+#For Program
+declare -a inclFile
+declare -a exclFile
+cscope_file="$proj_path/project_vim/cscope.files"
+cur_obj_files="$proj_path/project_vim/curObj.files"
+new_obj_files="$proj_path/project_vim/newObj.files"
+lookup_file="$proj_path/project_vim/tags.filename"
+file_tmp1="$proj_path/project_vim/fileTmp1"
+file_tmp2="$proj_path/project_vim/fileTmp2"
+splitCnt=500
+cscope_manu_file="$proj_path/project_vim/cscopemanual.files"
+
+test -d "$proj_path/project_vim" || mkdir -p $proj_path/project_vim
+test -f $proj_auto_info || touch $proj_auto_info 
+# }}}
+
+case $1 in
+"auto")
+#{{{ Generate the config file according the command arrguments
+    echo "-------------Generate Auto Project-------------"
+    #set -x
+    rm $proj_path/project_vim/* -rf 
+    exclTmpFile="$proj_path/project_vim/tmp1"
+    declare -a exclFile
+
+    echo "Auto Proj : $(date)" | tee -a $cs_log
+    # find every files we needed, Generate config files
+    for proFile in $@
+    do
+        if [[ $proFile == "auto" ]]; then
+            echo "Include : " >> $proj_auto_info
+            continue;
+        elif [[ $proFile == "-excl" ]]; then
+            echo "Exclude : " >> $proj_auto_info
+            excludeFlag=1
+            continue
+        fi
+
+        if [[ $excludeFlag == 0 ]]; then
+            echo -e "\t$proj_path/$proFile" >> $proj_auto_info
+        else
+            echo -e "\t$proj_path/$proFile" >> $proj_auto_info
+        fi
+
+    done
+
+    #use genCsFile_f function to Generate cscope_file
+    genCsFile_f
+
+    echo "Show the project info: "
+    cat $proj_auto_info
+    echo -e "--------------------------------------\n" | tee -a $cs_log
+#}}}
+    ;;
+"auto-up")
+#{{{
+    echo "-------------Generate Auto Project-------------"
+    #use genCsFile_f function to Generate cscope_file and cscope database
+    genCsFile_f
+    echo -e "--------------------------------------\n" | tee -a $cs_log
+#}}}
+    ;;
+"update") 
+    #{{{
+    echo "-------------------Update Auto Project-------------------"
+    # initial some variable
+    declare -a objLine; 
+    declare -a objCscopNumber; 
+    rm $proj_update_info 2>/dev/null
+
+    # CMD:"lg update /xx/xx/xx.c"
+    echo "Update Proj : $(date)" | tee -a $cs_log
+    if [[ $2 != '' ]]; then
+        newDiffFile_a=($2)
+    else # CMD:"lg update"
+        # Generate the new_obj_files from config file
+        genCsFile_f -gnew
+        newDiffFile_a=(`diff $cur_obj_files $new_obj_files | egrep "^>" | awk '{print $2}'`)
+    fi
+
+    # compare the new_obj_files and cur_obj_files to find three types files which are ADD, REMOVE, MODIFY.
+    #echo ${newDiffFile_a[@]}
+    echo -e "Update Files : $(date)" >> $proj_update_info
+    idx=0;
+    addFlag=0;
+    totalNewDiffLine=${#newDiffFile_a[@]}
+    totalCurFileLine=`awk 'END{print NR}' $cur_obj_files`
+    for (( l = 0; l < $totalNewDiffLine; l++ )); do
+        newFileName=${newDiffFile_a[$l]%@@@*}
+        newFileTime=${newDiffFile_a[$l]#*@@@}
+
+        curFile=(`grep -n "$newFileName" $cur_obj_files`)
+        curFileName=${curFile%@@@*}
+        curFileName=${curFileName#*:}
+        curFileTime=${curFile#*@@@}
+        curLineCnt=${curFile%%:*}
+
+        #echo "Debug: newFile Name:$newFileName, Time:$newFileTime"
+        #echo "Debug: curFile Name:$curFileName, Time:$curFileTime"
+        if [[ $newFileName == $curFileName ]]; then
+            if [[ $newFileTime != $curFileTime ]]; then
+                # This is a MODIFY type newFile
+                echo -e "\tMod@@@---$newFileName" | tee -a $proj_update_info
+                sed -i "${curLineCnt}c $newFileName@@@$newFileTime" $cur_obj_files
+                objLine[$idx]=$curLineCnt
+            fi
+        else
+            # This is a ADD type newFile
+            echo -e "\tAdd@@@---$newFileName"  | tee -a $proj_update_info
+            addFlag=1
+            echo "$newFileName@@@$newFileTime" >> $cur_obj_files
+            let totalCurFileLine=$totalCurFileLine+1
+            objLine[$idx]=$totalCurFileLine
+        fi
+
+        let idx=$idx+1
+    done
+
+    #just sync the cscope_file
+    awk 'BEGIN {FS="@@@"} {print $1}' $cur_obj_files >> $cscope_file
+
+    #objCscopNumber[0]="00";
+    # Generate the objCscopNumber variable which is used to update the cscope database incremental
+    for (( j = 0; j < ${#objLine[@]}; j++ )); do
+        objCsFlag=1;
+        let csNum=${objLine[$j]}/$splitCnt
+        for (( k = 0; k < ${#objCscopNumber[@]}; k++ )); do
+            if [[ $csNum -eq ${objCscopNumber[$k]} ]]; then
+                objCsFlag=0;
+            fi
+        done
+
+        if [[ $objCsFlag == 1 ]]; then
+            if [[ $csNum < 10 ]]; then
+                objCscopNumber[$k]="0"$csNum;
+            else
+                objCscopNumber[$k]=$csNum;
+            fi
+        fi
+    done
+    echo "-Debug : modify line -- "${objLine[@]}" -- " | tee -a $cs_log
+    echo "-Debug : cscope Number -- "${objCscopNumber[@]}" -- " | tee -a $cs_log
+
+    #update the cscope database.
+    if [[ ${#objLine[@]} == 0 && $addFlag == 0 ]]; then
+        echo -e "\nDon't update anything... Good luck !"
+    else
+        cd $proj_path/project_vim/
+        split -d -l $splitCnt $cscope_file cscope_sp_ 
+        cd $proj_path
+        for (( i = 0; i < ${#objCscopNumber[@]}; i++ )); do
+            cscInFile="${proj_path}/project_vim/cscope_sp_${objCscopNumber[$i]}"
+            cscOutFile=${cscInFile}.out
+            echo -e "\tcscope -bqk -i $cscInFile -f $cscOutFile"
+            cscope -bqk -i $cscInFile -f $cscOutFile 2>>$cs_log
+
+            tagOutFile=${cscInFile}.tags
+            echo -e "\tctags ... -L $cscInFile -f $tagOutFile"
+            ctags -R --c++-kinds=+px --fields=+liaS --extra=+q -L $cscInFile -f $tagOutFile 2>>$cs_log
+        done
+
+        #generate the tags files for lookup
+        if [[ $addFlag == 1 ]]; then
+            echo -e "!_TAG_FILE_SORTED\t2\t/2=foldcase/" > $lookup_file
+            cat $cscope_file | while read LINE  
+            do
+                echo -e "${LINE##/*/}\t$LINE\t1" >> $lookup_file
+            done
+        fi
+    fi
+
+    echo -e "--------------------------------------\n" | tee -a $cs_log
+#}}}
+    ;;
+"manu")
+    #{{{
+    # Just generate the specified Dir database, user can add the cscope database manually
+    # For Example : linux kerner source code
+    #   if you need, just Add it with ":cs add project_vim/cscopemanual.out"
+    #   or you can kill it with ":cs kill xxx"
+    echo "-------------Generate Add Project-------------"
+    rm $cscope_manu_file -rf 
+    rm $proj_manu_info -rf 
+
+    if [[ $2 == '' ]]; then
+        echo "Need parameters .."
+        exit 1
+    fi
+
+    echo "Manu Proj : $(date)" | tee -a $cs_log
+    # find every files we needed
+    excludeFlag=0
+    excludeDir=0
+    for proFile in $@
+    do
+        if [[ $proFile == "-excl" ]]; then
+            excludeFlag=1
+            continue
+        elif [[ $proFile == "manu" ]]; then
+            continue
+        fi
+
+        if [[ $excludeFlag == 0 ]]; then
+            echo "$proj_path/$proFile" >> $proj_manu_info
+            findPath=${findPath}${proj_path}/${proFile}" "
+        else
+            echo -e "\t[exclude]: $proFile" >> $proj_manu_info
+            findPath=${findPath}"-path ${proj_path}/$proFile -a -prune -o"" "
+        fi
+    done
+
+    echo $findPath
+    find $findPath -not -wholename '*.svn*' -not -regex '.*\.\(png\|gif\)' -type f -name "*.[ch]" -print >> $cscope_manu_file 2>>$cs_log
+    # cscope them
+    cscOutFile="$proj_path/project_vim/cscopemanual.out"
+    echo -e "\tcscope -bqk -i $cscope_manu_file -f $cscOutFile"
+    cscope -bqk -i $cscope_manu_file -f $cscOutFile 2>>$cs_log
+    tagOutFile="$proj_path/project_vim/cscopemanual.tags"
+    echo -e "\tctags ... -L $cscope_manu_file -f $tagOutFile"
+    ctags -R --c++-kinds=+px --fields=+liaS --extra=+q -L $cscope_manu_file -f $tagOutFile 2>>$cs_log
+
+    echo -e "--------------------------------------\n" | tee -a $cs_log
+#}}}
+    ;;
+"show")
+    #{{{
+    # show the Project Information 
+    echo "-------------Show the Project Information-------------"
+    echo "Show Proj : "
+    echo -e "======  Auto: ======"
+    cat $proj_auto_info 2>>/dev/null
+    echo -e "\n======  Manu:  ======"
+    cat $proj_manu_info 2>>/dev/null
+    echo -e "\n======"
+    echo -e "--------------------------------------\n" | tee -a $cs_log
+    #}}}
+    ;;
+"webos") 
+    #{{{ ----
+    lg auto src/ts/mp/ui/agent/                 \
+            src/lib/epi/                        \
+            src/bert/common                           \
+            src/bert/ge/ \
+            src/bert/libcommon/ \
+            src/bert/ts/ \
+            src/bert/lib/agr/ \
+            src/bert/lib/altc/ \
+            src/bert/lib/altepi/ \
+            src/bert/lib/base/ \
+            src/bert/lib/bcmsdk/ \
+            src/bert/lib/certkey/ \
+            src/bert/lib/common/ \
+            src/bert/lib/dmalloc/ \
+            src/bert/lib/duma/ \
+            src/bert/lib/focalpoint_2.5.8/ \
+            src/bert/lib/info/ \
+            src/bert/lib/ledprog/ \
+            src/bert/lib/Linux/ \
+            src/bert/lib/mocana/ \
+            src/bert/lib/pcap/ \
+            src/bert/lib/python_scripting/ \
+            src/bert/lib/qlogic/ \
+            src/bert/lib/smisbest/ \
+            src/bert/lib/stem/ \
+            src/bert/lib/tornado2.2.1_pne2.0/ \
+            src/bert/lib/vxworks/ \
+
+             #}}}
+    ;;
+"webos-lo") 
+    #{{{ ----
+    lg auto src/bert/                           \
+            src/ts/mp/ui/agent/                 \
+            src/lib/epi/                        \
+      -excl src/bert/lib/bcmsdk_5.9.2/ src/bert/lib/bcmsdk_6.3.2/ \
+    #}}}
+    ;;
+"nosx")
+    #{{{ --
+    lg auto nos/ zebos/ 
+    #}}}
+    ;;
+*)
+    show_help_info;
+    ;;
+esac
+
+end_time=`date +%s`
+let uT=$end_time-$start_time
+let uT_m=$uT/60
+let uT_s=$uT%60
+echo "Time usage: $uT_m m $uT_s s"
+echo " "
+exit 0
+### }  // end of main

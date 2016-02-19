@@ -1,0 +1,246 @@
+#!/bin/bash
+
+function show_help_info()
+{
+    echo "<-----lemon tools usage:----->"
+    echo "=lt find (:dir) (:str)"
+    echo -e "\tuse: check every *.c or *.h in path with (string)"
+    echo " "
+    echo "=lt svn ci "
+    echo -e "\tuse: This will check the ~/branch/svn-log.txt file and checkin the files wirten in it to svn"
+    echo " "
+    echo "=lt svn st "
+    echo -e "\tuse: svn status check "
+    echo "=lt tar (:target)"
+    echo -e "\tuse: tar one file or dir, just use xx.tar.gz format"
+    echo "=lt untar (:target)"
+    echo -e "\tuse: untar one tared file or dir, it will analyze the format auto "
+    echo "=lt tr (:target)"
+    echo -e "\tuse: trasport HEX string to ASCII, :target need use format \"xx xx xx\""
+    echo "-----------------------------"
+
+}
+
+#main
+path=$(pwd)
+start_time=`date +%s`
+
+case $1 in
+    "svn")
+        case $2 in
+            ci)
+                read -p "Please confirm svn checkin operation(y/n):" confirm
+                if [[ $confirm == 'y' ]]; then
+                    svn ci $(awk 'BEGIN {COUT=10000000} {if($1=="Change") COUT=NR} {if(NR>COUT) print $2 }' ~/branch/svn-log.txt | tr '\r\n' '   ') -F ~/branch/svn-log.txt
+                fi
+                ;;
+            st)
+                svn st -q | grep -v "^Per" | grep -v "^$"
+                ;;
+        esac
+        ;;
+    "find")
+        find $2 -name "*.[ch]" | xargs grep "$3" -n
+        ;;
+    "vim")
+        case $2 in
+            "up")
+                git pull origin
+                ;;
+            "new")
+                git clone http://github.com/scrooloose/nerdtree.git
+                git clone http://github.com/scrooloose/nerdtree.git
+                git clone http://github.com/scrooloose/nerdtree.git
+                ;;
+        esac
+        ;;
+    "tar")
+        tar -zcvpf ${2}.tar.gz $2
+        #zip -r ${2}.zip $2
+        ;;
+    "untar")
+        tarType=${2##*.}
+        #echo $tarType
+        case $tarType in
+            "gz")
+                tar -zxvf $2
+                ;;
+            "bz2")
+                tar -jxvf $2
+                ;;
+            "zip")
+                unzip $2 
+                ;;
+            *)
+                echo "No supported type!"
+                ;;
+        esac
+        ;;
+    "tr")
+        #{{{ ~~ 
+        if [[ $3 != "" ]]; then
+            echo "Error: just use <lt tr "xx xx xx">"
+            echo "split xx and xx with blank space"
+        fi
+        hexList=$2
+        echo $hexList | awk '{for(i=1;i<=NF;i++){printf "%c",strtonum("0x"$i)}}'
+        echo 
+        #}}}
+        ;;
+    "diff")
+        # {{{
+        submitNum=$2
+        longPath=(`submit info $submitNum | grep @@`)
+        shortPath=(`submit info $submitNum | grep @@ | awk 'BEGIN {FS="@@"} {print $1}'`)
+
+        submit info $submitNum | grep @@ | awk 'BEGIN {FS="@@";print "Index \t Name"} {print NR-1 $0}' > /tmp/mss
+        cat /tmp/mss
+
+        echo "------------"
+        echo -n "Please choose the diff file ! [Idx/Exit/show] : "
+        read ret
+        while [[ $ret != "exit" && $ret != "e" && $ret != "" ]] ; do
+            if [[ $ret == "show" ]]; then
+                cat /tmp/mss
+            else    
+                let objNum=${longPath[$ret]##*/}-1
+                if [[ $objNum == -1 ]]; then
+                    oldFile=${longPath[$ret]}
+                    curFile=${longPath[$ret]%@@*}
+                else
+                    oldFile=${longPath[$ret]%/*}/$objNum
+                    curFile=${longPath[$ret]}
+                fi
+                difCmd="vimdiff $oldFile $curFile" 
+                #echo $difCmd
+                $difCmd
+            fi
+            echo 
+            echo -n "Please choose the diff file ! [Idx/Exit/show] : "
+            read ret
+        done
+
+        echo ""
+        echo "Bye !"
+        echo "------------"
+        # }}}
+        ;;
+    "lstr")
+        # {{{ 
+        lsvtreeCmd="sct lsvtree -short "
+        lshistoryCmd="sct lshistory "
+        objFile="/tmp/file_hist_lemon"
+
+        echo "------------"
+        echo -n "Please choose the file , we will show its history and version ! [Name/exit] : "
+        read ret
+        if [[ -f $ret ]]; then
+            echo -e "\n\t #### Following is Version ###" > $objFile
+            $lsvtreeCmd $ret >> $objFile
+            echo -e "\n\t #### Following is History ###" >> $objFile
+            $lshistoryCmd $ret >> $objFile
+            echo "The file's version and history has been add in </tmp/file_hist_lemon>"
+            vim $objFile
+        fi
+
+        echo ""
+        echo "Bye !"
+        echo "------------"
+        # }}}
+        ;;
+    "cc")
+    #{{{
+        echo "###---ClearCase tool assist ! ---###"
+        echo "Function Choose"
+        echo -e "Func     \t Info"
+        echo -e "-diff   \t show the diff with submit Number"
+        echo -e "-lstree \t show the history and version of special Files"
+        echo " "
+        echo -n "[Choose function/Exit] : "
+        read ret
+        while [[ $ret != "exit" || $ret != "e" || $ret != "Exit" ]]; do
+            case $ret in
+                diff)
+                    echo -n "Input the submit number : "
+                    read number
+                    lt diff $number
+                    ;;
+                "lstree")
+                    lt lstr 
+                    ;;
+            esac
+
+            echo ""
+            echo ""
+            echo ""
+            echo ""
+            echo "Function Choose"
+            echo -e "Func     \t Info"
+            echo -e "-diff   \t show the diff with submit Number"
+            echo -e "-lstree \t show the history and version of special Files"
+            echo -n "[Choose function/Exit] : "
+            read ret
+
+        done
+        if [[ $ret == "exit" || $ret == "e" || $ret == "Exit" ]]; then
+            echo ""
+            echo "Bye !"
+            echo "------------"
+        fi
+    #}}}
+        ;;
+    "upld")
+# {{{ ftp upload firmware
+echo -n "[Choose Destination(labtop/server61)] : "
+read ret
+if [[ $ret == "s" ]]; then
+ftp -n<<!
+open 10.240.237.61
+user anonymous maoss1@lenovo.com
+binary
+cd pub/lemon/
+#lcd ~/workspace/nos/build/images-gen/
+hash
+prompt
+put $2
+close
+bye
+!
+else
+    curl -u mss -T $2 ftp://10.107.180.173/FW/
+fi
+# }}}
+        ;;
+    "ci")
+        # {{{ 
+        lsvtreeCmd="sct lsvtree -short "
+        lshistoryCmd="sct lshistory "
+        objFile="/tmp/file_hist_lemon"
+
+        echo "------------"
+        echo "We will check in these files : "
+        echo "^^^^^^^^^"
+        lsco
+        echo -e "^^^^^^^^^\n"
+        echo -n "Please input the comment for this check in! [Comment] : "
+        read comment
+        if [[ -n $comment ]]; then
+            echo "sct ci -c \"$comment\" *"
+            sct ci -c "$comment" `lsco`
+        fi
+        # }}}
+        ;;
+    "help")
+        show_help_info
+        ;;
+    *)
+        show_help_info
+        ;;
+esac
+
+end_time=`date +%s`
+let uT=$end_time-$start_time
+let uT_m=$uT/60
+let uT_s=$uT%60
+echo "Time usage: $uT_m m $uT_s s"
+echo " "
