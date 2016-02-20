@@ -29,6 +29,7 @@ Bundle 'AutoComplPop'
 Bundle 'OmniCppComplete'
 Bundle 'snipMate'
 Bundle 'L9'
+Bundle 'desertEx'
 " Bundle ''
 " non github repos
 " Bundle 'git://git.wincent.com/command-t.git'
