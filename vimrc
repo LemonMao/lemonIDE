@@ -14,7 +14,6 @@ Bundle 'gmarik/vundle'
 " original repos on github 
 " Bundle 'tpope/vim-fugitive'
 " vim-scripts repos
-Bundle 'desert256.vim'
 Bundle 'DoxygenToolkit.vim'
 Bundle 'c.vim'
 Bundle 'a.vim'
@@ -23,6 +22,7 @@ Bundle 'mru.vim'
 Bundle 'bufexplorer.zip'
 Bundle 'The-NERD-tree'
 Bundle 'The-NERD-Commenter'
+Bundle 'genutils'
 Bundle 'lookupfile'
 Bundle 'Mark'
 Bundle 'AutoComplPop'
@@ -94,7 +94,7 @@ set t_Co=256
 "let g:CSApprox_attr_map = { 'bold' : 'bold', 'italic' : '', 'sp' : '' }
 "colorscheme desert2
 "colorscheme desertEx
-colorscheme desert256
+colorscheme desertmss
 "colorscheme grayvim
 
 " gui settings
