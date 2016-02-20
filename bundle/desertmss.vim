@@ -252,6 +252,7 @@ if has("gui_running") || &t_Co == 88 || &t_Co == 256
     "DiffText
     "ErrorMsg
     call <SID>X("VertSplit", "c2bfa5", "7f7f7f", "reverse")
+    "hi VertSplit       ctermfg=236   ctermbg=65 
     call <SID>X("Folded", "ffd700", "4d4d4d", "")
     call <SID>X("FoldColumn", "d2b48c", "4d4d4d", "")
     call <SID>X("IncSearch", "708090", "f0e68c", "")
@@ -286,6 +287,10 @@ if has("gui_running") || &t_Co == 88 || &t_Co == 256
     call <SID>X("Ignore", "666666", "", "")
     "Error
     call <SID>X("Todo", "ff4500", "eeee00", "")
+
+    " Lemon add 
+    "hi Label cterm=underline
+    call <SID>X("Label", "f0e68c", "", "underline")
 
     " delete functions {{{
     delf <SID>X
