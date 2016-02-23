@@ -26,4 +26,7 @@ echo "Modify the mark.vim , comment the 95 lines"
 sleep 2
 vim ~/.vim/bundle/Mark/plugin/mark.vim
 
+echo "Copy the c&sh snippets.."
+sleep 2
+cp ../bundle/c.snippets ../bundle/sh.snippets ~/.vim/bundle/snipMate/snippets/
 

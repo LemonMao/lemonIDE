@@ -1,0 +1,206 @@
+# main  ==> main() {...}
+# {{{
+snippet main
+	int main(int argc, const char *argv[])
+	{
+		${1}
+		return 0;
+	} /* end of main */ 
+#}}}
+
+# inc   ==> include <...>
+# Inc   ==> include "..."
+#{{{
+snippet inc
+	#include <${1:stdio}.h>${2}
+snippet Inc
+	#include "${1:`Filename("$1.h")`}"${2}
+#}}}
+
+# def   ==> #define xxx 
+# ifdef ==> #ifdef xx #endif
+# if    ==> #if ... #endif
+# Def   ==> #ifndef xx #define xx ... #endif 
+# {{{
+snippet Def
+	#ifndef $1
+	#define ${1:SYMBOL} ${2:value}
+	#endif${3}
+snippet def
+	#define 
+snippet ifdef
+	#ifdef ${1:FOO}
+		${2:#define }
+	#endif
+snippet #if
+	#if ${1:FOO}
+		${2}
+	#endif
+# }}}
+
+# once  ==> Header Include-Guard
+#{{{
+# Header Include-Guard
+# (the randomizer code is taken directly from TextMate; it could probably be
+# cleaner, I don't know how to do it in vim script)
+snippet once
+	#ifndef ${1:_`toupper(Filename('', 'UNTITLED'))`_H_}
+	#define $1
+
+	${2}
+
+	#endif /* end of include guard: $1 */
+#}}}
+
+# if    ==> if () {...}
+# el    ==> else  {...}
+# elif  ==> elif(){...}
+#{{{
+#If Condition
+snippet if
+	if (${1:/* condition */}) {
+		${2:/* code */}
+	}
+snippet el
+	else {
+		${1}
+	}
+snippet elif
+	else if (${1}) {
+		${2}
+	}
+# }}}
+
+# do    ==> do{...}while()
+# wh    ==> while(){...}
+# for   ==> for()  {...}
+# {{{
+# Do While Loop
+snippet do
+	do
+	{
+		${2:/* code */}
+	} while (${1:/* condition */});
+# While Loop
+snippet wh
+	while (${1:/* condition */})
+	{
+		${2:/* code */}
+	}
+# For Loop
+snippet for
+	for (${2:i} = 0; $2 < ${1:count}; $2${3:++})
+	{
+		${4:/* code */}
+	}
+# Custom For Loop
+snippet forr
+	for (${1:i} = ${2:0}; ${3:$1 < 10}; $1${4:++})
+	{
+		${5:/* code */}
+	}
+snippet forx
+	for (${1:i = 0}; ${2:i < 10}; ${3:i++})
+	{
+		${5:/* code */}
+	}
+# switch
+snippet switch (${1:0}) {
+		case ${2:1}:
+		default:
+			${3:doing};
+			break;
+		}
+
+# }}}
+
+# td    ==> typedef XXXX YYYY
+# st    ==> struct XXX_s {...} YYY_t
+# tds   ==> typedef struct {...} YYY_t
+# tde   ==> typedef enum   {...} YYY_t
+# {{{
+# Typedef
+snippet td
+	typedef ${1:int} ${2:MyCustomType};${3}
+snippet st
+	struct ${1:`Filename('$1_t', 'name')`}
+	{
+		${3:/* data */}
+	}${2: /* optional variable list */};${4}
+snippet tds
+	typedef struct ${1:MyStruct}_s
+	{
+		${3:/* data */}
+	} ${2:$1}_t;
+snippet tde
+	typedef enum ${1:MyEnum}
+	{
+		${3:/* data */}
+	} ${2:$1_e};
+# }}}
+
+# pr    ==> printf(...);
+# prd   ==> printf(for Debug);
+# prk   ==> printk(...);
+# prkd  ==> printk(for Debug);
+# fpr   ==> fprintf(...);
+# {{{
+# unfortunately version this isn't as nice as TextMates's, given the lack of a
+# dynamic `...`
+# fprintf (again, this isn't as nice as TextMate's version, but it works)
+snippet pr
+	printf("==> ${1} \n"${2});${3}
+snippet prd
+	printf("==>%s, %d\n", __FUNCTION__, __LINE__);${1}
+snippet prk
+	printk("==> ${1} \n"${2});${3}
+snippet prkd
+	printf("==>%s, %d\n", __FUNCTION__, __LINE__);${1}
+snippet fpr
+	fprintf(${1:stderr}, " %${2:s}\n"${3});${4}
+# }}}
+
+# t     ==> X ? Y : Z
+# un    ==> unsigned
+# {{{
+snippet t
+	${1:/* condition */} ? ${2:a} : ${3:b}
+snippet un
+	unsigned
+# }}}
+
+# file  ==> File comment
+# funh  ==> Function comment
+# fun   ==> void funtion(xx){...}
+# {{{
+# Function
+snippet fun
+	${1:void} 
+	${2:function_name}(${3})
+	{
+		${4:/* code */}
+	}
+snippet file
+	/*
+	 * `expand("%:t")` - ${1}
+	 *
+	 * Copyright (C) `strftime("%Y")` ${2:`g:snip_company`}
+	 *
+	 * Author: ${3:`g:snip_author` (`g:snip_mail`)}
+	 * Create: `strftime("%Y-%m-%d %H:%M:%S")`
+	 *
+	 * History:
+	 * --------
+	 * `strftime("%Y-%m-%d")`	v1.0	$3
+	 *     1. Initial revision.
+	 */
+	${4}
+snippet funh
+	/**************************************************************************
+	**  Description: ${2: N/A}
+	**    
+	**  Parameters: [In] ${3:N/A}
+	**              [Out]${4:N/A} 
+	**  Return:  ${5:N/A}
+	**************************************************************************/
+# }}}
