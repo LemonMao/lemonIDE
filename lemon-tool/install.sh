@@ -46,6 +46,7 @@ echo " "
 
 echo "Copy the c&sh snippets.."
 sleep 2
+rm $dstPluginPath/snipMate/snippets/c.snippets $dstPluginPath/snipMate/snippets/sh.snippets 
 ln -s $srcPluginPath/c.snippets  $dstPluginPath/snipMate/snippets/c.snippets 
 ln -s $srcPluginPath/sh.snippets $dstPluginPath/snipMate/snippets/sh.snippets
 echo " "
