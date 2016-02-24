@@ -116,6 +116,10 @@ autocmd BufReadPost *
     \ if line("'\"") > 0 && line("'\"") <= line("$") |
     \     exe "normal g'\"" |
     \ endif
+
+" Prevent vim from trying to connect to the X server when connecting from home,
+" which causes a startup delay of about 14 seconds.
+" set clipboard=autoselect,exclude:.*
 "}}}
 
 " Plugin Settings: {{{
