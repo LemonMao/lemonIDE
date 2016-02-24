@@ -9,7 +9,7 @@
 #set -x
 ############ Local varibal
 srcPluginPath="../myplugin"
-dstPluginPath="~/.vim/bundle"
+dstPluginPath=~/.vim/bundle
 
 
 ############ backup the old vim stuff
@@ -19,7 +19,7 @@ cp ~/.vimrc ~/vim-bak/vimrc.bak
 
 ############ install lemon vim stuff
 cp ../vimrc ~/.vimrc
-mkdir $dstPluginPath
+mkdir -v $dstPluginPath/ -v
 cd $dstPluginPath
 git clone https://github.com/gmarik/vundle.git
 cd -
