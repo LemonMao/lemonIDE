@@ -20,6 +20,10 @@ cp ~/.vimrc ~/vim-bak/vimrc.bak
 ############ install lemon vim stuff
 cp ../vimrc ~/.vimrc
 mkdir $dstPluginPath
+cd $dstPluginPath
+git clone https://github.com/gmarik/vundle.git
+cd -
+#cp $srcPluginPath/vundle $dstPluginPath/vundle
 #cp ../bundle ~/.vim/ -rf
 #cp ../lemon-tool ~/.vim/ -rf
 #cp ../doc ~/.vim/ -rf
