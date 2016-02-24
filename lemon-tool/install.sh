@@ -13,13 +13,13 @@ dstPluginPath=~/.vim/bundle
 
 
 ############ backup the old vim stuff
-mkdir ~/vim-bak
-cp ~/.vimrc ~/vim-bak/vimrc.bak
+mkdir -p ~/vim-bak
+mv ~/.vimrc ~/vim-bak/vimrc.bak
 #rm ~/.vim/* -rf
 
 ############ install lemon vim stuff
-cp ../vimrc ~/.vimrc
-mkdir -v $dstPluginPath/ -v
+ln -s ../vimrc ~/.vimrc
+mkdir -v $dstPluginPath/
 cd $dstPluginPath
 git clone https://github.com/gmarik/vundle.git
 cd -
