@@ -23,6 +23,7 @@ mkdir -v $dstPluginPath/
 cd $dstPluginPath
 git clone https://github.com/gmarik/vundle.git
 cd -
+echo " "
 #cp $srcPluginPath/vundle $dstPluginPath/vundle
 #cp ../bundle ~/.vim/ -rf
 #cp ../lemon-tool ~/.vim/ -rf
@@ -32,18 +33,21 @@ cd -
 echo "Get in the VIM to install plugin with BundleInstall command ..."
 sleep 3
 vim
-
-###########  install myself theme
-cp $srcPluginPath/desertmss.vim $dstPluginPath/desertEx/colors/
+echo " "
 
 ###########  Customize private plugins 
+# my theme
+cp $srcPluginPath/desertmss.vim $dstPluginPath/desertEx/colors/
+
 echo "Modify the mark.vim , comment the 95 lines"
 sleep 2
 vim $dstPluginPath/Mark/plugin/mark.vim
+echo " "
 
 echo "Copy the c&sh snippets.."
 sleep 2
-cp $srcPluginPath/c.snippets $srcPluginPath/sh.snippets $dstPluginPath/snipMate/snippets/
+ln -s $srcPluginPath/c.snippets  $dstPluginPath/snipMate/snippets/c.snippets 
+ln -s $srcPluginPath/sh.snippets $dstPluginPath/snipMate/snippets/sh.snippets
 echo " "
 
 ########### Other actions
