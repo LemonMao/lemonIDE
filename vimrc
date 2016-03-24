@@ -15,7 +15,6 @@ Bundle 'gmarik/vundle'
 " Bundle 'tpope/vim-fugitive'
 " vim-scripts repos
 Bundle 'DoxygenToolkit.vim'
-Bundle 'c.vim'
 Bundle 'a.vim'
 Bundle 'taglist.vim'
 Bundle 'mru.vim'
@@ -30,6 +29,7 @@ Bundle 'OmniCppComplete'
 Bundle 'snipMate'
 Bundle 'L9'
 Bundle 'desertEx'
+Bundle 'Comment-Tools'
 " Bundle ''
 " non github repos
 " Bundle 'git://git.wincent.com/command-t.git'
@@ -116,6 +116,10 @@ autocmd BufReadPost *
     \ if line("'\"") > 0 && line("'\"") <= line("$") |
     \     exe "normal g'\"" |
     \ endif
+
+" Prevent vim from trying to connect to the X server when connecting from home,
+" which causes a startup delay of about 14 seconds.
+set clipboard=autoselect,exclude:.* 
 "}}}
 
 " Plugin Settings: {{{
@@ -355,8 +359,8 @@ nmap <Leader>F :NERDTreeFind<CR>
 "nmap <F2>  $<CR>
 "nmap <F3>  %
 "nmap <F5> <Plug>LookupFile " This has been mapped in lookupfile plugin 
-nmap <F6> <leader>/ :call <sid>SearchAnyMark()<cr>
-nmap <F7> <leader>? :call <sid>SearchAnyMark("b")<cr>
+nmap <F6>  <leader>* :call <sid>SearchCurrentMark()<cr>
+nmap <F7>  <leader># :call <sid>SearchCurrentMark("b")<cr>
 nmap <F9>  :call RunShell("Check out file : ", "/usr/atria/bin/cleartool co ")<cr>
 nmap <F10> :call RunShell("Uncheck out file : ", "/usr/atria/bin/cleartool unco -rm ")<cr>
 nmap <F11> :call RunShell("Update current project_vim info! ", "lg update ")<cr>

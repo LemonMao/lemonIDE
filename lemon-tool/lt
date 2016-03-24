@@ -195,7 +195,7 @@ echo -n "[Choose Destination(labtop/server61)] : "
 read ret
 if [[ $ret == "s" ]]; then
 ftp -n<<!
-open 10.240.237.61
+open 10.240.236.131
 user anonymous maoss1@lenovo.com
 binary
 cd pub/lemon/
