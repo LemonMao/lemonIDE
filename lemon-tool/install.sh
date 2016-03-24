@@ -39,9 +39,14 @@ echo " "
 # my theme
 cp $srcPluginPath/desertmss.vim $dstPluginPath/desertEx/colors/
 
-echo "Modify the mark.vim , comment the 95 lines"
+echo "Comment the 122 lines of vimrc"
 sleep 2
-vim $dstPluginPath/Mark/plugin/mark.vim
+vim +122 $dstPluginPath/Mark/plugin/mark.vim
+echo " "
+
+echo "Comment the 95 lines of mark.vim file"
+sleep 2
+vim +95 $dstPluginPath/Mark/plugin/mark.vim
 echo " "
 
 echo "Copy the c&sh snippets.."
