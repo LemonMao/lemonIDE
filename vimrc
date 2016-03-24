@@ -119,7 +119,11 @@ autocmd BufReadPost *
 
 " Prevent vim from trying to connect to the X server when connecting from home,
 " which causes a startup delay of about 14 seconds.
+<<<<<<< HEAD
 set clipboard=autoselect,exclude:.* 
+=======
+" set clipboard=autoselect,exclude:.*
+>>>>>>> e9640a18fec7accb0cfb3bfa2f3f3c1be3bda85d
 "}}}
 
 " Plugin Settings: {{{
