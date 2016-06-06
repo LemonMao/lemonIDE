@@ -29,7 +29,13 @@ Bundle 'OmniCppComplete'
 Bundle 'snipMate'
 Bundle 'L9'
 Bundle 'desertEx'
-Bundle 'Comment-Tools'
+Bundle 'https://github.com/Lokaltog/vim-powerline.git'
+Bundle 'Align'
+Bundle 'FuzzyFinder'
+" - For python
+"Bundle 'Pydiction'
+Bundle 'http://github.com/kevinw/pyflakes-vim'
+"Bundle 'UltiSnips'
 " Bundle ''
 " non github repos
 " Bundle 'git://git.wincent.com/command-t.git'
@@ -119,7 +125,7 @@ autocmd BufReadPost *
 
 " Prevent vim from trying to connect to the X server when connecting from home,
 " which causes a startup delay of about 14 seconds.
-" set clipboard=autoselect,exclude:.*
+set clipboard=autoselect,exclude:.*
 "}}}
 
 " Plugin Settings: {{{
@@ -168,6 +174,15 @@ for s:tagsObj in s:tagsList
     exec "set tags+=".s:tagsObj
 endfor
 
+" vim-Powerline
+"set guifont=PowerlineSymbols\ for\ Powerline
+let g:Powerline_symbols = 'fancy'
+
+" FuzzyFinder
+let g:fuf_modesDisable = []
+let g:fuf_mrufile_maxItem = 100
+let g:fuf_mrucmd_maxItem = 100
+let g:fuf_mrufile_exclude = ''
 
 " cscope
 if has("cscope")
@@ -227,12 +242,14 @@ let g:LookupFile_AllowNewFiles=0
 "
 " Utility Funtions
 function! RunShell(Msg, Shell)
-    let s:curFile = bufname("%")
+    "let s:curFile = getcwd() . '/' . bufname("%")
+    let s:curFile =  expand("%:p")
 	echo a:Msg . s:curFile
     if filereadable(s:curFile)
         let s:cmd = a:Shell . s:curFile
         echo s:cmd
         call system(s:cmd)
+        exec "edit" 
     endif
 	echo 'done'
 endfunction
@@ -359,8 +376,8 @@ nmap <Leader>F :NERDTreeFind<CR>
 "nmap <F2>  $<CR>
 "nmap <F3>  %
 "nmap <F5> <Plug>LookupFile " This has been mapped in lookupfile plugin 
-nmap <F6>  <leader>* :call <sid>SearchCurrentMark()<cr>
-nmap <F7>  <leader># :call <sid>SearchCurrentMark("b")<cr>
+nmap <F6>  <leader>#<cr>
+nmap <F7>  <leader>*<cr>
 nmap <F9>  :call RunShell("Check out file : ", "/usr/atria/bin/cleartool co ")<cr>
 nmap <F10> :call RunShell("Uncheck out file : ", "/usr/atria/bin/cleartool unco -rm ")<cr>
 nmap <F11> :call RunShell("Update current project_vim info! ", "lg update ")<cr>
@@ -417,10 +434,22 @@ nmap <leader>sf :cs find f <C-R>=expand("<cfile>")<cr><cr>
 nmap <leader>si :cs find i <C-R>=expand("<cfile>")<cr><cr>
 nmap <leader>sd :cs find d <C-R>=expand("<cword>")<cr><cr>
 
+" FuzzyFinder
+nnoremap <silent> sb     :FufBuffer<CR>
+nnoremap <silent> sm     :FufMruFile<CR>
+nnoremap <silent> smc    :FufMruCmd<CR>
+nnoremap <silent> su     :FufBookmarkFile<CR>
+nnoremap <silent> s<C-u> :FufBookmarkFileAdd<CR>
+vnoremap <silent> s<C-u> :FufBookmarkFileAddAsSelectedText<CR>
+nnoremap <silent> sf     :FufFile<CR>
+
+" Pydiction
+"let g:pydiction_location = '~/.vim/bundle/Pydiction/complete-dict'
+
 "LookupFile hotkey mapping
 nmap <silent> <leader>l :LUTags<cr>
-"nmap <silent> <leader>lb :LUBufs<cr>
-nmap <silent> <leader>lw :LUWalk<cr>
+nmap <silent> <leader>lb :LUBufs<cr>
+"nmap <silent> <leader>lw :LUWalk<cr>
 
 " center display after searching
 nnoremap n   nzz

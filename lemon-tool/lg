@@ -79,11 +79,12 @@ function genCsFile_f()
                 #
                 # need enhanced to make sure that the exclFile don't contain the '/' 
                 exclPath=${exclPath}"-path ${exclFile[$j]%/} -a -prune -o"" "
-                #echo "expa:$exclPath"
+                echo "expa:$exclPath"
             fi
         done
 
         findPath[$i]="${inclFile[$i]} $exclPath"
+        exclPath=" "
     done
 
     for (( k = 0; k < ${#findPath[@]}; k++ )); do
@@ -96,8 +97,12 @@ function genCsFile_f()
         fi
     done
 
+    #sort the file
+    #cat $cur_obj_files | sort > $cur_obj_files
+
     # -gnew option means just generate the new_obj_files
     if [[ $1 == "-gnew" ]]; then
+        #cat $new_obj_files | sort > $new_obj_files
         return;
     fi
 
@@ -212,13 +217,26 @@ case $1 in
     declare -a objCscopNumber; 
     rm $proj_update_info 2>/dev/null
 
-    # CMD:"lg update /xx/xx/xx.c"
+    # Type1: "lg update /xx/xx/xx.c"
+    # Type2: "lg update all"
+    # Type3: "lg update "
     echo "Update Proj : $(date)" | tee -a $cs_log
-    if [[ $2 != '' ]]; then
-        newDiffFile_a=($2)
-    else # CMD:"lg update"
+    if [[ $2 == 'all' ]]; then
         # Generate the new_obj_files from config file
         genCsFile_f -gnew
+        newDiffFile_a=(`diff $cur_obj_files $new_obj_files | egrep "^>" | awk '{print $2}'`)
+    elif [[ $2 != '' ]]; then
+        newDiffFile_a=($2)
+    else 
+        # Generate the new_obj_files from config file
+        rm $new_obj_files 2>>/dev/null
+        cat $cur_obj_files | while read LINE_0
+        do
+            cmd="find ${LINE_0%@@@*} -printf %p"@@@"%T@"\n"  >> $new_obj_files 2>>$cs_log"
+            find ${LINE_0%@@@*} -printf %p"@@@"%T@"\n"  >> $new_obj_files 2>>$cs_log
+            #echo $cmd
+        done
+        cp $new_obj_files /tmp/1
         newDiffFile_a=(`diff $cur_obj_files $new_obj_files | egrep "^>" | awk '{print $2}'`)
     fi
 
@@ -354,7 +372,7 @@ case $1 in
     done
 
     echo $findPath
-    find $findPath -not -wholename '*.svn*' -not -regex '.*\.\(png\|gif\)' -type f -name "*.[ch]" -print >> $cscope_manu_file 2>>$cs_log
+    find $findPath -not -wholename '*.svn*' -not -regex '.*\.\(png\|gif\)' -type f -name "*.[ch]" -or -name "*.py" -print >> $cscope_manu_file 2>>$cs_log
     # cscope them
     cscOutFile="$proj_path/project_vim/cscopemanual.out"
     echo -e "\tcscope -bqk -i $cscope_manu_file -f $cscOutFile"
@@ -421,7 +439,8 @@ case $1 in
     ;;
 "nosx")
     #{{{ --
-    lg auto nos/ zebos/ 
+    lg auto nos/ zebos/ \
+        -excl nos/platform/asic/sdk/
     #}}}
     ;;
 *)

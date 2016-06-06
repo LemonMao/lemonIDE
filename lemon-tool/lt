@@ -194,20 +194,31 @@ case $1 in
 echo -n "[Choose Destination(labtop/server61)] : "
 read ret
 if [[ $ret == "s" ]]; then
-ftp -n<<!
-open 10.240.236.131
-user anonymous maoss1@lenovo.com
-binary
-cd pub/lemon/
-#lcd ~/workspace/nos/build/images-gen/
-hash
-prompt
-put $2
-close
-bye
-!
+    #scp $2 maoss1@10.240.236.131:FW/
+    #curl -T $2 tftp://10.240.236.131/lemon/
+    cmd="curl -T $2 ftp://10.240.236.131/pub/lemon/$2"
+    echo $cmd
+    $cmd
+#ftp -n<<!
+#open 10.240.236.131
+#user anonymous maoss1@lenovo.com
+#binary
+#cd pub/lemon/
+##lcd ~/workspace/nos/build/images-gen/
+#hash
+#prompt
+#put $2
+#close
+#bye
+#!
 else
-    curl -u mss -T $2 ftp://10.107.180.173/FW/
+    if [[ $3 == home ]]; then
+        cmd="curl -u mss -T $2 ftp://10.96.192.92/FW/"
+    else    
+        cmd="curl -u mss -T $2 ftp://10.107.180.173/FW/"
+    fi
+    echo $cmd
+    $cmd
 fi
 # }}}
         ;;
