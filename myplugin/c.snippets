@@ -8,8 +8,8 @@ snippet main
 	} /* end of main */ 
 #}}}
 
-# inc   ==> include <...>
-# Inc   ==> include "..."
+# Inc   ==> include <...>
+# inc   ==> include "..."
 #{{{
 snippet inc
 	#include <${1:stdio}.h>${2}
@@ -38,19 +38,6 @@ snippet #if
 	#endif
 # }}}
 
-# once  ==> Header Include-Guard
-#{{{
-# Header Include-Guard
-# (the randomizer code is taken directly from TextMate; it could probably be
-# cleaner, I don't know how to do it in vim script)
-snippet once
-	#ifndef ${1:_`toupper(Filename('', 'UNTITLED'))`_H_}
-	#define $1
-
-	${2}
-
-	#endif /* end of include guard: $1 */
-#}}}
 
 # if    ==> if () {...}
 # el    ==> else  {...}
@@ -77,31 +64,26 @@ snippet elif
 # {{{
 # Do While Loop
 snippet do
-	do
-	{
+	do {
 		${2:/* code */}
 	} while (${1:/* condition */});
 # While Loop
 snippet wh
-	while (${1:/* condition */})
-	{
+	while (${1:/* condition */}) {
 		${2:/* code */}
 	}
 # For Loop
 snippet for
-	for (${2:i} = 0; $2 < ${1:count}; $2${3:++})
-	{
+	for (${2:i} = 0; $2 < ${1:count}; $2${3:++}) {
 		${4:/* code */}
 	}
 # Custom For Loop
 snippet forr
-	for (${1:i} = ${2:0}; ${3:$1 < 10}; $1${4:++})
-	{
+	for (${1:i} = ${2:0}; ${3:$1 < 10}; $1${4:++}) {
 		${5:/* code */}
 	}
 snippet forx
-	for (${1:i = 0}; ${2:i < 10}; ${3:i++})
-	{
+	for (${1:i = 0}; ${2:i < 10}; ${3:i++}) {
 		${5:/* code */}
 	}
 # switch
@@ -128,10 +110,10 @@ snippet st
 		${3:/* data */}
 	}${2: /* optional variable list */};${4}
 snippet tds
-	typedef struct ${1:MyStruct}_s
+	typedef struct ${1:MyStruct}
 	{
 		${3:/* data */}
-	} ${2:$1}_t;
+	} ${2:$1}_s;
 snippet tde
 	typedef enum ${1:MyEnum}
 	{
@@ -169,9 +151,11 @@ snippet un
 	unsigned
 # }}}
 
-# file  ==> File comment
+# fileh  ==> File head
+# fileg  ==> File guard
 # funh  ==> Function comment
 # fun   ==> void funtion(xx){...}
+# seg   ==> //================
 # {{{
 # Function
 snippet fun
@@ -180,7 +164,7 @@ snippet fun
 	{
 		${4:/* code */}
 	}
-snippet file
+snippet fileh
 	/*
 	 * `expand("%:t")` - ${1}
 	 *
@@ -195,6 +179,13 @@ snippet file
 	 *     1. Initial revision.
 	 */
 	${4}
+snippet fileg
+	#ifndef ${1:_`toupper(Filename('', 'UNTITLED'))`_H_}
+	#define $1
+
+	${2}
+
+	#endif /* end of include guard: $1 */
 snippet funh
 	/**************************************************************************
 	**  Description: ${2: N/A}
@@ -203,4 +194,8 @@ snippet funh
 	**              [Out]${4:N/A} 
 	**  Return:  ${5:N/A}
 	**************************************************************************/
+snippet seg
+	//==============================================================================
+	// ${1}
+	//==============================================================================
 # }}}

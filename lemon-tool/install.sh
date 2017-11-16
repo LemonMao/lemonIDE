@@ -41,7 +41,7 @@ cp $srcPluginPath/desertmss.vim $dstPluginPath/desertEx/colors/
 
 echo "Comment the 122 lines of vimrc"
 sleep 2
-vim +122 $dstPluginPath/Mark/plugin/mark.vim
+vim +122 ~/.vimrc
 echo " "
 
 echo "Comment the 95 lines of mark.vim file"

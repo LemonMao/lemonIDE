@@ -198,6 +198,7 @@ case $1 in
 
     echo "Show the project info: "
     cat $proj_auto_info
+    vim -c "FufTaggedFile" -c "qa"
     echo -e "--------------------------------------\n" | tee -a $cs_log
 #}}}
     ;;
@@ -223,10 +224,35 @@ case $1 in
     echo "Update Proj : $(date)" | tee -a $cs_log
     if [[ $2 == 'all' ]]; then
         # Generate the new_obj_files from config file
-        genCsFile_f -gnew
-        newDiffFile_a=(`diff $cur_obj_files $new_obj_files | egrep "^>" | awk '{print $2}'`)
+        #genCsFile_f -gnew
+        #newDiffFile_a=(`diff $cur_obj_files $new_obj_files | egrep "^>" | awk '{print $2}'`)
+        #newDiffFile_a=(`awk '{print $2}' $cur_obj_files`)
+        cd $proj_path/project_vim/
+        rm $proj_path/project_vim/cscope_sp_*
+        split -d -l $splitCnt $cscope_file cscope_sp_ 
+        cd $proj_path
+        for cscInFile in $(find $proj_path/project_vim -name "cscope_sp_*" -type f)
+        do
+            cscOutFile=${cscInFile}.out
+            echo -e "\tcscope -bqk -i $cscInFile -f $cscOutFile"
+            cscope -bqk -i $cscInFile -f $cscOutFile 2>>$cs_log
+
+            tagOutFile=${cscInFile}.tags
+            echo -e "\tctags ... -L $cscInFile -f $tagOutFile"
+            ctags -R --c++-kinds=+px --fields=+liaS --extra=+q -L $cscInFile -f $tagOutFile 2>>$cs_log
+        done
+        end_time=`date +%s`
+        let uT=$end_time-$start_time
+        let uT_m=$uT/60
+        let uT_s=$uT%60
+        echo "Time usage: $uT_m m $uT_s s"
+        vim -c "FufTaggedFile" -c "qa" &
+        echo " "
+
+        exit 0
+
     elif [[ $2 != '' ]]; then
-        newDiffFile_a=($2)
+        newDiffFile_a=`find $2 -printf %p"@@@"%T@"\n"`
     else 
         # Generate the new_obj_files from config file
         rm $new_obj_files 2>>/dev/null
@@ -245,6 +271,7 @@ case $1 in
     echo -e "Update Files : $(date)" >> $proj_update_info
     idx=0;
     addFlag=0;
+    #set -x
     totalNewDiffLine=${#newDiffFile_a[@]}
     totalCurFileLine=`awk 'END{print NR}' $cur_obj_files`
     for (( l = 0; l < $totalNewDiffLine; l++ )); do
@@ -257,8 +284,9 @@ case $1 in
         curFileTime=${curFile#*@@@}
         curLineCnt=${curFile%%:*}
 
-        #echo "Debug: newFile Name:$newFileName, Time:$newFileTime"
-        #echo "Debug: curFile Name:$curFileName, Time:$curFileTime"
+        #echo $curFile
+        echo "Debug: newFile Name:$newFileName, Time:$newFileTime"
+        echo "Debug: curFile Name:$curFileName, Time:$curFileTime"
         if [[ $newFileName == $curFileName ]]; then
             if [[ $newFileTime != $curFileTime ]]; then
                 # This is a MODIFY type newFile
@@ -278,8 +306,9 @@ case $1 in
         let idx=$idx+1
     done
 
+    #set +x
     #just sync the cscope_file
-    awk 'BEGIN {FS="@@@"} {print $1}' $cur_obj_files >> $cscope_file
+    awk 'BEGIN {FS="@@@"} {print $1}' $cur_obj_files > $cscope_file
 
     #objCscopNumber[0]="00";
     # Generate the objCscopNumber variable which is used to update the cscope database incremental
@@ -294,7 +323,7 @@ case $1 in
 
         if [[ $objCsFlag == 1 ]]; then
             if [[ $csNum < 10 ]]; then
-                objCscopNumber[$k]="0"$csNum;
+                objCscopNumber[$k]=$csNum;
             else
                 objCscopNumber[$k]=$csNum;
             fi
@@ -311,14 +340,18 @@ case $1 in
         split -d -l $splitCnt $cscope_file cscope_sp_ 
         cd $proj_path
         for (( i = 0; i < ${#objCscopNumber[@]}; i++ )); do
-            cscInFile="${proj_path}/project_vim/cscope_sp_${objCscopNumber[$i]}"
+            if [[ ${objCscopNumber[$i]} -lt 10 ]]; then
+                cscInFile="${proj_path}/project_vim/cscope_sp_0${objCscopNumber[$i]}"
+            else
+                cscInFile="${proj_path}/project_vim/cscope_sp_${objCscopNumber[$i]}"
+            fi
             cscOutFile=${cscInFile}.out
             echo -e "\tcscope -bqk -i $cscInFile -f $cscOutFile"
             cscope -bqk -i $cscInFile -f $cscOutFile 2>>$cs_log
 
             tagOutFile=${cscInFile}.tags
             echo -e "\tctags ... -L $cscInFile -f $tagOutFile"
-            ctags -R --c++-kinds=+px --fields=+liaS --extra=+q -L $cscInFile -f $tagOutFile 2>>$cs_log
+            #ctags -R --c++-kinds=+px --fields=+liaS --extra=+q -L $cscInFile -f $tagOutFile 2>>$cs_log
         done
 
         #generate the tags files for lookup
@@ -372,7 +405,7 @@ case $1 in
     done
 
     echo $findPath
-    find $findPath -not -wholename '*.svn*' -not -regex '.*\.\(png\|gif\)' -type f -name "*.[ch]" -or -name "*.py" -print >> $cscope_manu_file 2>>$cs_log
+    find $findPath -not -wholename '*.svn*' -not -regex '.*\.\(png\|gif\)' -type f -regex ".*\.p?[ych]" -print >> $cscope_manu_file 2>>$cs_log
     # cscope them
     cscOutFile="$proj_path/project_vim/cscopemanual.out"
     echo -e "\tcscope -bqk -i $cscope_manu_file -f $cscOutFile"
@@ -409,7 +442,6 @@ case $1 in
             src/bert/lib/altc/ \
             src/bert/lib/altepi/ \
             src/bert/lib/base/ \
-            src/bert/lib/bcmsdk/ \
             src/bert/lib/certkey/ \
             src/bert/lib/common/ \
             src/bert/lib/dmalloc/ \
@@ -426,6 +458,7 @@ case $1 in
             src/bert/lib/stem/ \
             src/bert/lib/tornado2.2.1_pne2.0/ \
             src/bert/lib/vxworks/ \
+            #src/bert/lib/bcmsdk/ \
 
              #}}}
     ;;
@@ -452,6 +485,7 @@ end_time=`date +%s`
 let uT=$end_time-$start_time
 let uT_m=$uT/60
 let uT_s=$uT%60
+echo "Finished Time:" `date`
 echo "Time usage: $uT_m m $uT_s s"
 echo " "
 exit 0

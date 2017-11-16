@@ -35,6 +35,7 @@ Bundle 'FuzzyFinder'
 " - For python
 "Bundle 'Pydiction'
 Bundle 'http://github.com/kevinw/pyflakes-vim'
+Bundle 'https://github.com/junegunn/vim-easy-align'
 "Bundle 'UltiSnips'
 " Bundle ''
 " non github repos
@@ -57,7 +58,7 @@ set ruler                           " line and column number of the cursor posit
 set wildmenu                        " enhanced command completion
 set wildmode=list:longest,full      " command completion mode
 set laststatus=2                    " always show the status line
-set mouse=a                         " use mouse in all mode
+set mouse=                         " use mouse in all mode
 set foldenable                      " fold lines
 set foldmethod=marker               " fold as marker 
 set noerrorbells                    " do not use error bell
@@ -126,6 +127,7 @@ autocmd BufReadPost *
 " Prevent vim from trying to connect to the X server when connecting from home,
 " which causes a startup delay of about 14 seconds.
 set clipboard=autoselect,exclude:.*
+
 "}}}
 
 " Plugin Settings: {{{
@@ -159,9 +161,9 @@ let g:NERDTreeShowBookmarks=1
 let g:NERDTreeQuitOnOpen=1
 
 " snipMate
-let g:snip_author   = "Jeffy Du"
-let g:snip_mail     = "jeffy.du@163.com"
-let g:snip_company  = "SIC Microelectronics CO. Ltd"
+let g:snip_author   = "Lemon Mao"
+let g:snip_mail     = "maoss1@lenovo.com"
+let g:snip_company  = "Lenovo Corporation."
 
 " man.vim - view man page in VIM
 source $VIMRUNTIME/ftplugin/man.vim
@@ -229,6 +231,34 @@ let g:LookupFile_PreservePatternHistory=1
 let g:LookupFile_AlwaysAcceptFirst=1
 let g:LookupFile_AllowNewFiles=0
 
+" EasyAlign
+xmap ga <Plug>(EasyAlign)
+nmap ga <Plug>(EasyAlign)
+let g:easy_align_delimiters = {
+\ '>': { 'pattern': '>>\|=>\|>' },
+\ '/': {
+\     'pattern':         '//\+\|/\*\|\*/',
+\     'delimiter_align': 'l',
+\     'ignore_groups':   ['!Comment'] },
+\ ']': {
+\     'pattern':       '[[\]]',
+\     'left_margin':   0,
+\     'right_margin':  0,
+\     'stick_to_left': 0
+\   },
+\ ')': {
+\     'pattern':       '[()]',
+\     'left_margin':   0,
+\     'right_margin':  0,
+\     'stick_to_left': 0
+\   },
+\ 'd': {
+\     'pattern':      ' \(\S\+\s*[;=]\)\@=',
+\     'left_margin':  0,
+\     'right_margin': 0
+\   }
+\ }
+
 " vimgdb.vim
 "if has("gdb")
 	"set asm=0
@@ -247,11 +277,14 @@ function! RunShell(Msg, Shell)
 	echo a:Msg . s:curFile
     if filereadable(s:curFile)
         let s:cmd = a:Shell . s:curFile
-        echo s:cmd
+        "echo s:cmd
         call system(s:cmd)
         exec "edit" 
     endif
-	echo 'done'
+    if a:Shell == "lg update "
+        exec "cs reset"
+    endif
+	echo s:cmd "done"
 endfunction
 
 function! ToggleMouse()                                                          
@@ -374,7 +407,8 @@ nmap <Leader>F :NERDTreeFind<CR>
 
 " F1 ~~ F12 hotkey mapping
 "nmap <F2>  $<CR>
-"nmap <F3>  %
+nmap <F3>  :diffput<cr>
+nmap <F4>  :vimgrep //g zebos/**/*.[ch]
 "nmap <F5> <Plug>LookupFile " This has been mapped in lookupfile plugin 
 nmap <F6>  <leader>#<cr>
 nmap <F7>  <leader>*<cr>
@@ -442,6 +476,10 @@ nnoremap <silent> su     :FufBookmarkFile<CR>
 nnoremap <silent> s<C-u> :FufBookmarkFileAdd<CR>
 vnoremap <silent> s<C-u> :FufBookmarkFileAddAsSelectedText<CR>
 nnoremap <silent> sf     :FufFile<CR>
+nnoremap <silent> st     :FufTaggedFile<CR>
+
+" Align
+",ascom
 
 " Pydiction
 "let g:pydiction_location = '~/.vim/bundle/Pydiction/complete-dict'

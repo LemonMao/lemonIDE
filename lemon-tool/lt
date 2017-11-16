@@ -24,6 +24,7 @@ function show_help_info()
 #main
 path=$(pwd)
 start_time=`date +%s`
+#stty erase ^?
 
 case $1 in
     "svn")
@@ -89,35 +90,56 @@ case $1 in
         ;;
     "diff")
         # {{{
-        submitNum=$2
-        longPath=(`submit info $submitNum | grep @@`)
-        shortPath=(`submit info $submitNum | grep @@ | awk 'BEGIN {FS="@@"} {print $1}'`)
+        submitNum=''
+        if [[ $2 == "co" ]]; then
+            diffco=1
+        else 
+            submitNum=$2
+        fi
+        tmp_file="./tmp_file"
+        touch $tmp_file
+        submit info $submitNum > $tmp_file
+        longPath=(`cat $tmp_file| grep @@`)
+        shortPath=(`cat $tmp_file | grep @@ | awk 'BEGIN {FS="@@"} {print $1}'`)
+        submitInfo=(`cat $tmp_file | grep "^Status" | awk '{print $2}'`)
+        checkoutfile=(`cleartool lsco -avobs -cview -sh`)
 
-        submit info $submitNum | grep @@ | awk 'BEGIN {FS="@@";print "Index \t Name"} {print NR-1 $0}' > /tmp/mss
+        cat $tmp_file | grep @@ | awk 'BEGIN {FS="@@";print "Index \t Name"} {print NR-1 $0}' > /tmp/mss
         cat /tmp/mss
+        rm $tmp_file 
 
         echo "------------"
-        echo -n "Please choose the diff file ! [Idx/Exit/show] : "
-        read ret
+        read -e -p "Please choose the diff file ! [Idx/Exit/show] : " ret
         while [[ $ret != "exit" && $ret != "e" && $ret != "" ]] ; do
             if [[ $ret == "show" ]]; then
                 cat /tmp/mss
             else    
                 let objNum=${longPath[$ret]##*/}-1
-                if [[ $objNum == -1 ]]; then
-                    oldFile=${longPath[$ret]}
-                    curFile=${longPath[$ret]%@@*}
-                else
+                if [[ $submitInfo == "integrated" || $submitInfo == "submitted" ]]; then
                     oldFile=${longPath[$ret]%/*}/$objNum
                     curFile=${longPath[$ret]}
+                else    
+                    # submit status is "open"
+                    existco=(`echo ${checkoutfile[@]} | grep ${longPath[$ret]%@@*}`)
+                    #echo $existco
+                    if [[ $diffco == 1 && -n $existco ]]; then
+                        oldFile=${longPath[$ret]%/*}/0
+                        curFile=${longPath[$ret]%@@*}
+                    elif [[ $objNum == -1 || -n $existco ]]; then
+                        oldFile=${longPath[$ret]}
+                        curFile=${longPath[$ret]%@@*}
+                    else
+                        #oldFile=${longPath[$ret]%/*}/$objNum
+                        oldFile=${longPath[$ret]%/*}/0
+                        curFile=${longPath[$ret]}
+                    fi
                 fi
                 difCmd="vimdiff $oldFile $curFile" 
                 #echo $difCmd
                 $difCmd
             fi
             echo 
-            echo -n "Please choose the diff file ! [Idx/Exit/show] : "
-            read ret
+            read -p "Please choose the diff file ! [Idx/Exit/show] : " -e ret
         done
 
         echo ""
@@ -194,9 +216,13 @@ case $1 in
 echo -n "[Choose Destination(labtop/server61)] : "
 read ret
 if [[ $ret == "s" ]]; then
-    #scp $2 maoss1@10.240.236.131:FW/
-    #curl -T $2 tftp://10.240.236.131/lemon/
-    cmd="curl -T $2 ftp://10.240.236.131/pub/lemon/$2"
+    if [[ $2 == "IBM" ]]; then
+        cmd="scp IBMNetworkImg-mars maoss1@10.240.237.61:FW/"
+    else    
+        cmd="scp $2 maoss1@10.240.237.61:FW/"
+    fi
+    #cmd="curl -T $2 ftp://10.240.236.131/pub/lemon/$2"
+    #cmd="curl -T $2 ftp://10.240.237.61/pub/lemon/$2"
     echo $cmd
     $cmd
 #ftp -n<<!
@@ -215,7 +241,7 @@ else
     if [[ $3 == home ]]; then
         cmd="curl -u mss -T $2 ftp://10.96.192.92/FW/"
     else    
-        cmd="curl -u mss -T $2 ftp://10.107.180.173/FW/"
+        cmd="curl -u ftp -T $2 ftp://10.107.180.173/"
     fi
     echo $cmd
     $cmd
@@ -253,5 +279,6 @@ end_time=`date +%s`
 let uT=$end_time-$start_time
 let uT_m=$uT/60
 let uT_s=$uT%60
+echo "--- Finished Time:" `date`
 echo "Time usage: $uT_m m $uT_s s"
 echo " "
