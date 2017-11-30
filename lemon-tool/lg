@@ -91,9 +91,9 @@ function genCsFile_f()
         echo "findpath:   [ ${findPath[$k]} ]"
 
         if [[ $1 == "-gnew" ]]; then
-            find -L ${findPath[$k]} -not -wholename '*.svn*' -not -regex '.*\.\(png\|gif\)' -type f -name "*.[ch]" -printf %p"@@@"%T@"\n" >> $new_obj_files 2>>$cs_log
+            find -L ${findPath[$k]} -not -wholename '*.svn*' -not -regex '.*\.\(png\|gif\)' -type f -regex ".*\.p?[ych]" -printf %p"@@@"%T@"\n" >> $new_obj_files 2>>$cs_lo
         else
-            find -L ${findPath[$k]} -not -wholename '*.svn*' -not -regex '.*\.\(png\|gif\)' -type f -name "*.[ch]" -printf %p"@@@"%T@"\n" >> $cur_obj_files 2>>$cs_log
+            find -L ${findPath[$k]} -not -wholename '*.svn*' -not -regex '.*\.\(png\|gif\)' -type f -regex ".*\.p?[ych]" -printf %p"@@@"%T@"\n" >> $cur_obj_files 2>>$cs_log
         fi
     done
 
