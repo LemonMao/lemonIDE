@@ -56,6 +56,9 @@ ln -s $srcPluginPath/c.snippets  $dstPluginPath/snipMate/snippets/c.snippets
 ln -s $srcPluginPath/sh.snippets $dstPluginPath/snipMate/snippets/sh.snippets
 echo " "
 
+echo "Copy the NERDTreeBookmarks..."
+cp $srcPluginPath/NERDTreeBookmarks ~/.NERDTreeBookmarks
+
 ########### Other actions
 echo "Manual actions:"
 echo "1. Add private bin path '~/.vim/lemon-tool/' to PATH"
