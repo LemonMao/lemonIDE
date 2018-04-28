@@ -128,6 +128,8 @@ autocmd BufReadPost *
 " which causes a startup delay of about 14 seconds.
 set clipboard=autoselect,exclude:.*
 
+" remove the old Plugin 
+" set runtimepath-=/usr/share/vim/vim74
 "}}}
 
 " Plugin Settings: {{{
@@ -187,13 +189,14 @@ let g:fuf_mrucmd_maxItem = 100
 let g:fuf_mrufile_exclude = ''
 
 " cscope
-if has("cscope")
-    set csto=0
-    set cst
-    set nocsverb  " show the excute info
+function! CloseManualCsc()
+    echo s:csCnt
+    exec "cs del" s:csCnt
+endfunction
 
+function! AddProjectCscope()
     let s:csCnt = 0
-    let s:csDir = system("find $(pwd)/project_vim -type f -name \"cscope_sp_*.out\" ")
+    let s:csDir = system("find $(pwd)/project_vim -type f -name \"*cscope_sp_*.out\" ")
     let s:csList = split(s:csDir, '\n')
     for csObjFile in s:csList
         if filereadable(csObjFile)
@@ -201,7 +204,14 @@ if has("cscope")
             let s:csCnt+=1
         endif
     endfor
+endfunction
 
+if has("cscope")
+    set csto=0
+    set nocst
+    set nocsverb  " show the excute info
+
+    call AddProjectCscope()
     "if isdirectory("project_vim")
         "cd project_vim
         "if filereadable("cscope.out")
@@ -218,10 +228,6 @@ if has("cscope")
     "endif
 endif
 
-function! CloseManualCsc()
-    echo s:csCnt
-    exec "cs del" s:csCnt
-endfunction
 
 " LookupFile setting
 let g:LookupFile_TagExpr='"./project_vim/tags.filename"'
@@ -281,7 +287,8 @@ function! RunShell(Msg, Shell)
         call system(s:cmd)
         exec "edit" 
     endif
-    if a:Shell == "lg update "
+    if match(a:Shell, "lg update ") > 0
+        call AddProjectCscope()
         exec "cs reset"
     endif
 	echo s:cmd "done"
@@ -414,7 +421,7 @@ nmap <F6>  <leader>#<cr>
 nmap <F7>  <leader>*<cr>
 nmap <F9>  :call RunShell("Check out file : ", "/usr/atria/bin/cleartool co ")<cr>
 nmap <F10> :call RunShell("Uncheck out file : ", "/usr/atria/bin/cleartool unco -rm ")<cr>
-nmap <F11> :call RunShell("Update current project_vim info! ", "lg update ")<cr>
+nmap <F11> :call RunShell("Update current project_vim info! ", "cd /vobs/nosx;lg update ")<cr>
 nmap <F12> :call ToggleMouse() <CR> 
 "nmap <silent> <C-1> *<CR>
 

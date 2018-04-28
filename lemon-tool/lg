@@ -91,9 +91,10 @@ function genCsFile_f()
         echo "findpath:   [ ${findPath[$k]} ]"
 
         if [[ $1 == "-gnew" ]]; then
-            find -L ${findPath[$k]} -not -wholename '*.svn*' -not -regex '.*\.\(png\|gif\)' -type f -regex ".*\.p?[ych]" -printf %p"@@@"%T@"\n" >> $new_obj_files 2>>$cs_lo
+            #-regex ".*\.p?[ych]"
+            find -L ${findPath[$k]} -not -wholename '*.svn*' -not -regex '.*\.\(png\|gif\)' -type f -name "*.[ch]" -printf %p"@@@"%T@"\n" >> $new_obj_files 2>>$cs_lo
         else
-            find -L ${findPath[$k]} -not -wholename '*.svn*' -not -regex '.*\.\(png\|gif\)' -type f -regex ".*\.p?[ych]" -printf %p"@@@"%T@"\n" >> $cur_obj_files 2>>$cs_log
+            find -L ${findPath[$k]} -not -wholename '*.svn*' -not -regex '.*\.\(png\|gif\)' -type f -name "*.[ch]" -printf %p"@@@"%T@"\n" >> $cur_obj_files 2>>$cs_log
         fi
     done
 
@@ -346,11 +347,13 @@ case $1 in
                 cscInFile="${proj_path}/project_vim/cscope_sp_${objCscopNumber[$i]}"
             fi
             cscOutFile=${cscInFile}.out
-            echo -e "\tcscope -bqk -i $cscInFile -f $cscOutFile"
-            cscope -bqk -i $cscInFile -f $cscOutFile 2>>$cs_log
+            rm ${cscOutFile}*
+            sleep 1
+            echo -e "\tcscope -bqk -i $cscInFile -f $cscOutFile" | tee -a $cs_log
+            cscope -bqk -i $cscInFile -f $cscOutFile 2>>$cs_log 
 
             tagOutFile=${cscInFile}.tags
-            echo -e "\tctags ... -L $cscInFile -f $tagOutFile"
+            echo -e "\tctags ... -L $cscInFile -f $tagOutFile" | tee -a $cs_log
             #ctags -R --c++-kinds=+px --fields=+liaS --extra=+q -L $cscInFile -f $tagOutFile 2>>$cs_log
         done
 

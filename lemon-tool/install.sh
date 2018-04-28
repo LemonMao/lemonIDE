@@ -10,19 +10,20 @@
 ############ Local varibal
 srcPluginPath=~/.vim/myplugin
 dstPluginPath=~/.vim/bundle
+vimbak=~/vim-bak
+vimrc=~/.vimrc 
 
 
 ############ backup the old vim stuff
-mkdir -p ~/vim-bak
-mv ~/.vimrc ~/vim-bak/vimrc.bak
+[ -d $vimbak ] && mkdir -p $vimbak
+[ -e $vimrc ] && mv $vimrc ~/vim-bak/vimrc.bak
 #rm ~/.vim/* -rf
 
 ############ install lemon vim stuff
-ln -s ~/.vim/vimrc ~/.vimrc
+ln -s ~/.vim/vimrc $vimrc
 mkdir -v $dstPluginPath/
-cd $dstPluginPath
-git clone https://github.com/gmarik/vundle.git
-cd -
+git clone https://github.com/gmarik/vundle.git $dstPluginPath/
+[ $? -ne 0 ] && echo "!!!!  Install vindle tool failed !"
 echo " "
 #cp $srcPluginPath/vundle $dstPluginPath/vundle
 #cp ../bundle ~/.vim/ -rf
@@ -32,34 +33,40 @@ echo " "
 ###########  Install plugins online
 echo "Get in the VIM to install plugin with BundleInstall command ..."
 sleep 3
-vim
+vim -c BundleInstall
 echo " "
 
 ###########  Customize private plugins 
 # my theme
 cp $srcPluginPath/desertmss.vim $dstPluginPath/desertEx/colors/
+# tmux config
+[ -e ~/.tmux.conf ] && mv ~/.tmux.conf $vimbak/tmux.conf-bak
+ln -s $srcPluginPath/tmux.conf ~/.tmux.conf
+# bash alias
+#[ -e ~/.bash_aliases ] && cat $srcPluginPath/bash_aliases >> ~/.bash_aliases || ln -s $srcPluginPath/bash_aliases ~/.bash_aliases
+cat $srcPluginPath/lemon_bashrc >> ~/.bashrc
+# Bookmark
+[ -e ~/.NERDTreeBookmarks ] && mv ~/.NERDTreeBookmarks $vimbak/NERDTreeBookmarks-bak
+ln -s $srcPluginPath/NERDTreeBookmarks ~/.NERDTreeBookmarks
+# c&sh snippets.
+[ -e $dstPluginPath/snipMate/snippets/c.snippets ] && mv $dstPluginPath/snipMate/snippets/c.snippets $vimbak/
+[ -e $dstPluginPath/snipMate/snippets/sh.snippets ] && mv $dstPluginPath/snipMate/snippets/sh.snippets $vimbak/
+ln -s $srcPluginPath/c.snippets  $dstPluginPath/snipMate/snippets/c.snippets 
+ln -s $srcPluginPath/sh.snippets $dstPluginPath/snipMate/snippets/sh.snippets
+#[ -e  ] && mv 
 
-echo "Comment the 122 lines of vimrc"
-sleep 2
-vim +122 ~/.vimrc
-echo " "
+
+#echo "Comment the 122 lines of vimrc"
+#sleep 2
+#vim +122 ~/.vimrc
+#echo " "
 
 echo "Comment the 95 lines of mark.vim file"
 sleep 2
 vim +95 $dstPluginPath/Mark/plugin/mark.vim
 echo " "
 
-echo "Copy the c&sh snippets.."
-sleep 2
-rm $dstPluginPath/snipMate/snippets/c.snippets $dstPluginPath/snipMate/snippets/sh.snippets 
-ln -s $srcPluginPath/c.snippets  $dstPluginPath/snipMate/snippets/c.snippets 
-ln -s $srcPluginPath/sh.snippets $dstPluginPath/snipMate/snippets/sh.snippets
-echo " "
-
-echo "Copy the NERDTreeBookmarks..."
-cp $srcPluginPath/NERDTreeBookmarks ~/.NERDTreeBookmarks
-
 ########### Other actions
 echo "Manual actions:"
-echo "1. Add private bin path '~/.vim/lemon-tool/' to PATH"
+echo "1. Git config apply"
 
