@@ -199,7 +199,7 @@ case $1 in
 
     echo "Show the project info: "
     cat $proj_auto_info
-    vim -c "FufTaggedFile" -c "qa"
+    #vim -c "FufTaggedFile" -c "qa"
     echo -e "--------------------------------------\n" | tee -a $cs_log
 #}}}
     ;;
@@ -223,7 +223,7 @@ case $1 in
     # Type2: "lg update all"
     # Type3: "lg update "
     echo "Update Proj : $(date)" | tee -a $cs_log
-    if [[ $2 == 'all' ]]; then
+    if [[ $2 == 'all' || $2 == '' ]]; then
         # Generate the new_obj_files from config file
         #genCsFile_f -gnew
         #newDiffFile_a=(`diff $cur_obj_files $new_obj_files | egrep "^>" | awk '{print $2}'`)
@@ -436,7 +436,7 @@ case $1 in
 "webos") 
     #{{{ ----
     lg auto src/ts/mp/ui/agent/                 \
-            src/lib/epi/                        \
+            src/lib/                            \
             src/bert/common                           \
             src/bert/ge/ \
             src/bert/libcommon/ \
@@ -469,14 +469,13 @@ case $1 in
     #{{{ ----
     lg auto src/bert/                           \
             src/ts/mp/ui/agent/                 \
-            src/lib/epi/                        \
+            src/lib/                            \
       -excl src/bert/lib/bcmsdk_5.9.2/ src/bert/lib/bcmsdk_6.3.2/ \
     #}}}
     ;;
 "nosx")
     #{{{ --
-    lg auto nos/ zebos/ \
-        -excl nos/platform/asic/sdk/
+    lg auto zebos/ nos/ -excl nos/platform/asic/sdk/
     #}}}
     ;;
 *)

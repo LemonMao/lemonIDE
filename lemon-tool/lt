@@ -238,11 +238,12 @@ if [[ $ret == "s" ]]; then
 #bye
 #!
 else
-    if [[ $3 == home ]]; then
-        cmd="curl -u mss -T $2 ftp://10.96.192.92/FW/"
-    else    
-        cmd="curl -u ftp -T $2 ftp://10.107.180.173/"
-    fi
+    #cmd="curl --progress-bar -s -u %s -T %s%s ftp://%s:%d%s%s"
+    #if [[ $3 == home ]]; then
+        #cmd="curl -u mss -T $2 ftp://10.96.192.92/FW/"
+    #else    
+        #cmd="curl -u ftp -T $2 ftp://10.107.180.173/"
+    #fi
     echo $cmd
     $cmd
 fi
