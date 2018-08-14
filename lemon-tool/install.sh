@@ -22,7 +22,7 @@ vimrc=~/.vimrc
 ############ install lemon vim stuff
 ln -s ~/.vim/vimrc $vimrc
 mkdir -v $dstPluginPath/
-git clone https://github.com/gmarik/vundle.git $dstPluginPath/
+git clone https://github.com/gmarik/vundle.git $dstPluginPath/vundle/
 [ $? -ne 0 ] && echo "!!!!  Install vindle tool failed !"
 echo " "
 #cp $srcPluginPath/vundle $dstPluginPath/vundle
