@@ -29,7 +29,7 @@ Bundle 'OmniCppComplete'
 Bundle 'snipMate'
 Bundle 'L9'
 Bundle 'desertEx'
-Bundle 'asyncrun'
+Bundle 'https://github.com/skywind3000/asyncrun.vim'
 Bundle 'https://github.com/Lokaltog/vim-powerline.git'
 Bundle 'Align'
 Bundle 'FuzzyFinder'
@@ -278,8 +278,10 @@ let g:easy_align_delimiters = {
 "endif
 "}}}
 
-"python-mode
 " syntastic
+set statusline+=%#warningmsg#
+set statusline+=%{SyntasticStatuslineFlag()}
+set statusline+=%*
 let g:syntastic_always_populate_loc_list=1
 let g:syntastic_auto_loc_list=1
 let g:syntastic_enable_signs=1
@@ -288,10 +290,16 @@ let g:syntastic_aggregate_errors=1
 let g:syntastic_loc_list_height=5
 let g:syntastic_error_symbol='X'
 let g:syntastic_style_error_symbol='X'
-let g:syntastic_warning_symbol='x'
-let g:syntastic_style_warning_symbol='x'
+let g:syntastic_warning_symbol='>'
+let g:syntastic_style_warning_symbol='>'
 let g:syntastic_python_checkers=['flake8', 'pydocstyle', 'python']
+let g:syntastic_quiet_messages = {"regex": 'No such file or directory'}
+let g:syntastic_mode_map = {"mode": "passive", "active_filetypes": ["python"], "passive_filetypes": [""] } 
+
+"python-mode
 " syntax highlight
+let g:pymode_options_max_line_length = 120
+let g:pymode_options_colorcolumn = 0
 let g:pymode_syntax=1
 let g:pymode_syntax_slow_sync=1
 let g:pymode_syntax_all=1
@@ -302,7 +310,7 @@ let g:pymode_syntax_highlight_stars_operator=g:pymode_syntax_all
 let g:pymode_syntax_highlight_self=g:pymode_syntax_all
 let g:pymode_syntax_indent_errors=g:pymode_syntax_all
 let g:pymode_syntax_string_formatting=g:pymode_syntax_all
-let g:pymode_syntax_space_errors=g:pymode_syntax_all
+"let g:pymode_syntax_space_errors=g:pymode_syntax_all
 let g:pymode_syntax_string_format=g:pymode_syntax_all
 let g:pymode_syntax_string_templates=g:pymode_syntax_all
 let g:pymode_syntax_doctests=g:pymode_syntax_all
@@ -312,10 +320,8 @@ let g:pymode_syntax_highlight_exceptions=g:pymode_syntax_all
 let g:pymode_syntax_docstrings=g:pymode_syntax_all
 ""开启警告
 let g:pymode_warnings = 0
-"设置QuickFix窗口的最大，最小高度
 let g:pymode_quickfix_minheight = 3
 let g:pymode_quickfix_maxheight = 10
-""使用python3
 let g:pymode_python = 'python3'
 "使用PEP8风格的缩进
 let g:pymode_indent = 1
