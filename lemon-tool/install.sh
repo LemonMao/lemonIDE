@@ -9,7 +9,7 @@
 #set -x
 ############ Local varibal
 srcPluginPath=~/.vim/myplugin
-dstPluginPath=~/.vim/bundle
+dstPluginPath=~/.vim/plugged
 vimbak=~/vim-bak
 vimrc=~/.vimrc 
 
@@ -22,7 +22,9 @@ vimrc=~/.vimrc
 ############ install lemon vim stuff
 ln -s ~/.vim/vimrc $vimrc
 mkdir -v $dstPluginPath/
-git clone https://github.com/gmarik/vundle.git $dstPluginPath/vundle/
+#git clone https://github.com/gmarik/vundle.git $dstPluginPath/vundle/
+#git clone https://github.com/VundleVim/Vundle.vim.git ~/.vim/bundle/Vundle.vim
+curl -fLo ~/.vim/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vimcurl -fLo ~/.vim/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
 [ $? -ne 0 ] && echo "!!!!  Install vindle tool failed !"
 echo " "
 #cp $srcPluginPath/vundle $dstPluginPath/vundle
@@ -33,7 +35,7 @@ echo " "
 ###########  Install plugins online
 echo "Get in the VIM to install plugin with BundleInstall command ..."
 sleep 3
-vim -c BundleInstall
+vim +PlugInstall +qall
 echo " "
 
 ###########  Customize private plugins 

@@ -1,54 +1,44 @@
 " Vim config file.
 
-" Vundel setting {{{
-set nocompatible " be iMproved
-filetype off " required!
+" Vim-plug setting {{{
+call vundle#begin('~/.vim/plugged')
+" Unused - old plugin
+"Plug 'lookupfile'
+"Plug 'taglist.vim'
+"Plug 'mru.vim'
+"Plug 'bufexplorer.zip'
+Plug 'vim-scripts/AutoComplPop'
+Plug 'vim-scripts/OmniCppComplete'
+"Plug 'kien/ctrlp.vim'
+"Plug 'FuzzyFinder'
 
-set rtp+=~/.vim/bundle/vundle/
-call vundle#rc()
-" let Vundle manage Vundle  
-" " required!   
-Bundle 'gmarik/vundle'
-
-
-" original repos on github 
-" Bundle 'tpope/vim-fugitive'
-" vim-scripts repos
-Bundle 'DoxygenToolkit.vim'
-Bundle 'a.vim'
-Bundle 'taglist.vim'
-Bundle 'mru.vim'
-Bundle 'bufexplorer.zip'
-Bundle 'The-NERD-tree'
-Bundle 'The-NERD-Commenter'
-Bundle 'genutils'
-Bundle 'lookupfile'
-Bundle 'Mark'
-Bundle 'AutoComplPop'
-Bundle 'OmniCppComplete'
-Bundle 'snipMate'
-Bundle 'L9'
-Bundle 'desertEx'
-Bundle 'https://github.com/skywind3000/asyncrun.vim'
-Bundle 'https://github.com/Lokaltog/vim-powerline.git'
-Bundle 'Align'
-Bundle 'FuzzyFinder'
-Bundle 'https://github.com/junegunn/vim-easy-align'
-" --- For python
-"Bundle 'Pydiction'
-"Bundle 'http://github.com/kevinw/pyflakes-vim'
-Bundle 'klen/python-mode' 
-Bundle 'scrooloose/syntastic'
-
-" --- Unused
-"Bundle 'UltiSnips'
-" Bundle ''
-" non github repos
-" Bundle 'git://git.wincent.com/command-t.git'
-" Bundle 'file:///Users/gmarik/path/to/plugin'
-
-filetype plugin indent on           " auto detect file type
-" Vundel setting end }}}
+" Used
+Plug 'majutsushi/tagbar'
+Plug 'vim-scripts/DoxygenToolkit.vim'
+Plug 'vim-scripts/a.vim' " swtich between source files and header files quickly 
+Plug 'scrooloose/nerdtree'
+Plug 'scrooloose/nerdcommenter'
+"Plug 'scrooloose/syntastic'
+Plug 'vim-scripts/Mark' " highlight some key variables 
+Plug 'vim-scripts/snipMate'
+Plug 'vim-scripts/genutils' " Vim-script library
+Plug 'vim-scripts/L9' " Vim-script library 
+Plug 'vim-scripts/desertEx'
+Plug 'skywind3000/asyncrun.vim'
+Plug 'Lokaltog/vim-powerline'
+Plug 'vim-scripts/Align'
+Plug 'junegunn/vim-easy-align'
+Plug 'klen/python-mode'           " For python
+Plug 'w0rp/ale' " syntax checker
+Plug 'Yggdroot/LeaderF' " Fuzzy finder buffer, mru, files, tags, strings
+Plug 'Yggdroot/indentLine' " display vertical lines
+" Good plugin, but not need now
+"Plug 'tpope/vim-fugitive' " Git wrapper 
+"Plug 'Pydiction'
+"Plug 'http://github.com/kevinw/pyflakes-vim'
+" Haven tested, not good for me
+call vundle#end()
+" vim-plug setting end }}}
 
 " Global Settings: {{{
 syntax on                           " highlight syntax
@@ -128,6 +118,8 @@ autocmd BufReadPost *
     \ if line("'\"") > 0 && line("'\"") <= line("$") |
     \     exe "normal g'\"" |
     \ endif
+" Auto update vimrc file
+"autocmd BufWritePost $MYVIMRC source $MYVIMRC
 
 " Prevent vim from trying to connect to the X server when connecting from home,
 " which causes a startup delay of about 14 seconds.
@@ -147,18 +139,21 @@ else " unix
 endif
 
 " mru
-let MRU_Window_Height = 10
+"let MRU_Window_Height = 10
+
+"Tagbar
+let g:tagbar_left = 1
 
 " taglist
-let g:Tlist_WinWidth = 25
-let g:Tlist_Use_Right_Window = 0
-let g:Tlist_Auto_Update = 1
-let g:Tlist_Process_File_Always = 1
-let g:Tlist_Exit_OnlyWindow = 1
-let g:Tlist_Show_One_File = 1
-let g:Tlist_Enable_Fold_Column = 0
-let g:Tlist_Auto_Highlight_Tag = 1
-let g:Tlist_GainFocus_On_ToggleOpen = 1
+"let g:Tlist_WinWidth = 25
+"let g:Tlist_Use_Right_Window = 0
+"let g:Tlist_Auto_Update = 1
+"let g:Tlist_Process_File_Always = 1
+"let g:Tlist_Exit_OnlyWindow = 1
+"let g:Tlist_Show_One_File = 1
+"let g:Tlist_Enable_Fold_Column = 0
+"let g:Tlist_Auto_Highlight_Tag = 1
+"let g:Tlist_GainFocus_On_ToggleOpen = 1
 
 " nerdtree
 let g:NERDTreeWinPos = "right"
@@ -179,8 +174,10 @@ source $VIMRUNTIME/ftplugin/man.vim
 set nocp
 let s:tagsFile = system("find $(pwd)/project_vim -type f -name \"cscope_sp_*.tags\" ")
 let s:tagsList = split(s:tagsFile, '\n')
-for s:tagsObj in s:tagsList
-    exec "set tags+=".s:tagsObj
+for ctagsObj in s:tagsList
+    if filereadable(ctagsObj)
+        exec "set tags+=".ctagsObj
+    endif
 endfor
 
 " vim-Powerline
@@ -188,10 +185,24 @@ endfor
 let g:Powerline_symbols = 'fancy'
 
 " FuzzyFinder
-let g:fuf_modesDisable = []
-let g:fuf_mrufile_maxItem = 100
-let g:fuf_mrucmd_maxItem = 100
-let g:fuf_mrufile_exclude = ''
+"let g:fuf_modesDisable = []
+"let g:fuf_mrufile_maxItem = 100
+"let g:fuf_mrucmd_maxItem = 100
+"let g:fuf_mrufile_exclude = ''
+
+" LeaderF
+let g:Lf_StlColorscheme = 'powerline'
+let g:Lf_MruMaxFiles = 250
+"let g:Lf_ExternalCommand = 'find %s -path /vobs/nosx/nos/platform/asic/sdk -a -prune -o -type f -name *.[ch]'
+let g:Lf_WildIgnore = {
+    \ 'dir': ['.svn','.git','.hg', 'lost+found', 'nos/platform/asic', 'project_vim'],
+    \ 'file': ['*.sw?','~$*','*.bak','*.exe','*.o','*.so','*.py[co]']
+    \}
+let g:Lf_CtagsFuncOpts = {
+    \ 'c': '--c-kinds=fp',
+    \ }
+
+
 
 " cscope
 function! CloseManualCsc()
@@ -235,12 +246,12 @@ endif
 
 
 " LookupFile setting
-let g:LookupFile_TagExpr='"./project_vim/tags.filename"'
-let g:LookupFile_MinPatLength=2
-let g:LookupFile_PreserveLastPattern=0
-let g:LookupFile_PreservePatternHistory=1
-let g:LookupFile_AlwaysAcceptFirst=1
-let g:LookupFile_AllowNewFiles=0
+"let g:LookupFile_TagExpr='"./project_vim/tags.filename"'
+"let g:LookupFile_MinPatLength=2
+"let g:LookupFile_PreserveLastPattern=0
+"let g:LookupFile_PreservePatternHistory=1
+"let g:LookupFile_AlwaysAcceptFirst=1
+"let g:LookupFile_AllowNewFiles=0
 
 " EasyAlign
 xmap ga <Plug>(EasyAlign)
@@ -276,12 +287,43 @@ let g:easy_align_delimiters = {
 	"let g:vimgdb_debug_file=""
 	"run macros/gdb_mappings.vim
 "endif
-"}}}
+
+" Async
+let g:asyncrun_open = 8 "Automatically open window 
+let g:asyncrun_bell = 1 " After finished, make a bell to notify 
+
+"CtrlP
+"let g:ctrlp_map      = '<c-p>'
+"let g:ctrlp_cmd      = 'CtrlP'
+"let g:ctrlp_mruf_max = 300
+"let g:ctrlp_by_filename = 1 " default search by full path, set to 1 by filename only, change with <c-d>
+"let g:ctrlp_custom_ignore = {
+    "\ 'dir':  '\v[\/]\.(git|hg|svn|rvm)$',
+    "\ 'file': '\v\.(exe|so|dll|zip|tar|tar.gz|pyc)$',
+    "\ }
+"let g:ctrlp_custom_ignore = {
+    "\ 'dir':  'lost+found/',
+    "\ }
+"let g:ctrlp_regexp = 0 "é»˜è®¤ä¸ä½¿ç”¨æ­£åˆ™è¡¨è¾¾å¼ï¼Œç½®1æ”¹ä¸ºé»˜è®¤ä½¿ç”¨æ­£åˆ™è¡¨è¾¾å¼ï¼Œå¯ä»¥ç”¨<C-r>è¿›è¡Œåˆ‡æ¢
+"let g:ctrlp_clear_cache_on_exit = 0
+"let g:ctrlp_user_command = 'find %s -path /vobs/nosx/nos/platform/asic/sdk -a -prune -o -type f -name *.[ch]'
+"let g:ctrlp_match_window = 'bottom,order:btt,min:1,max:20,results:20'
+"let g:ctrlp_working_path_mode = ''
+
+
+"DoxygenToolkit
+let g:DoxygenToolkit_briefTag_pre="@Brife  "
+let g:DoxygenToolkit_paramTag_pre="@Param "
+let g:DoxygenToolkit_returnTag="@Returns   "
+let g:DoxygenToolkit_blockHeader="--------------------------------------------------------------------------"
+let g:DoxygenToolkit_blockFooter="----------------------------------------------------------------------------"
+let g:DoxygenToolkit_authorName="Mathias Lorente"
+
 
 " syntastic
-set statusline+=%#warningmsg#
-set statusline+=%{SyntasticStatuslineFlag()}
-set statusline+=%*
+"set statusline+=%#warningmsg#
+"set statusline+=%{SyntasticStatuslineFlag()}
+"set statusline+=%*
 let g:syntastic_always_populate_loc_list=1
 let g:syntastic_auto_loc_list=1
 let g:syntastic_enable_signs=1
@@ -318,38 +360,38 @@ let g:pymode_syntax_builtin_objs=g:pymode_syntax_all
 let g:pymode_syntax_builtin_types=g:pymode_syntax_all
 let g:pymode_syntax_highlight_exceptions=g:pymode_syntax_all
 let g:pymode_syntax_docstrings=g:pymode_syntax_all
-""¿ªÆô¾¯¸æ
+""å¼€å¯è­¦å‘Š
 let g:pymode_warnings = 0
 let g:pymode_quickfix_minheight = 3
 let g:pymode_quickfix_maxheight = 10
 let g:pymode_python = 'python3'
-"Ê¹ÓÃPEP8·ç¸ñµÄËõ½ø
+"ä½¿ç”¨PEP8é£æ ¼çš„ç¼©è¿›
 let g:pymode_indent = 1
-""È¡Ïû´úÂëÕÛµş
+""å–æ¶ˆä»£ç æŠ˜å 
 let g:pymode_folding = 0
-"¿ªÆôpython-mode¶¨ÒåµÄÒÆ¶¯·½Ê½
+"å¼€å¯python-modeå®šä¹‰çš„ç§»åŠ¨æ–¹å¼
 let g:pymode_motion = 0
-""ÆôÓÃpython-modeÄÚÖÃµÄpythonÎÄµµ£¬Ê¹ÓÃK½øĞĞ²éÕÒ
+""å¯ç”¨python-modeå†…ç½®çš„pythonæ–‡æ¡£ï¼Œä½¿ç”¨Kè¿›è¡ŒæŸ¥æ‰¾
 let g:pymode_doc = 1
 let g:pymode_doc_bind = 'K'
-"×Ô¶¯¼ì²â²¢ÆôÓÃvirtualenv
+"è‡ªåŠ¨æ£€æµ‹å¹¶å¯ç”¨virtualenv
 let g:pymode_virtualenv = 1
-"²»Ê¹ÓÃpython-modeÔËĞĞpython´úÂë
+"ä¸ä½¿ç”¨python-modeè¿è¡Œpythonä»£ç 
 let g:pymode_run = 0
 let g:pymode_run_bind = '<Leader>r'
-"²»Ê¹ÓÃpython-modeÉèÖÃ¶Ïµã
+"ä¸ä½¿ç”¨python-modeè®¾ç½®æ–­ç‚¹
 let g:pymode_breakpoint = 0
 "let g:pymode_breakpoint_bind = '<leader>b'
-"ÆôÓÃpythonÓï·¨¼ì²é
+"å¯ç”¨pythonè¯­æ³•æ£€æŸ¥
 let g:pymode_lint = 1
-"ĞŞ¸Äºó±£´æÊ±½øĞĞ¼ì²é
+"ä¿®æ”¹åä¿å­˜æ—¶è¿›è¡Œæ£€æŸ¥
 let g:pymode_lint_on_write = 0
-"±à¼­Ê±½øĞĞ¼ì²é
+"ç¼–è¾‘æ—¶è¿›è¡Œæ£€æŸ¥
 let g:pymode_lint_on_fly = 0
 let g:pymode_lint_checkers = ['pyflakes', 'pep8']
-"·¢ÏÖ´íÎóÊ±²»×Ô¶¯´ò¿ªQuickFix´°¿Ú
+"å‘ç°é”™è¯¯æ—¶ä¸è‡ªåŠ¨æ‰“å¼€QuickFixçª—å£
 let g:pymode_lint_cwindow = 0
-"²à±ßÀ¸²»ÏÔÊ¾python-modeÏà¹ØµÄ±êÖ¾
+"ä¾§è¾¹æ ä¸æ˜¾ç¤ºpython-modeç›¸å…³çš„æ ‡å¿—
 let g:pymode_lint_signs = 1
 let g:pymode_lint_todo_symbol = 'WW'
 let g:pymode_lint_comment_symbol = 'CC'
@@ -357,27 +399,60 @@ let g:pymode_lint_visual_symbol = 'RR'
 let g:pymode_lint_error_symbol = 'EE'
 let g:pymode_lint_info_symbol = 'II'
 let g:pymode_lint_pyflakes_symbol = 'FF'
-"ÆôÓÃÖØ¹¹
+"å¯ç”¨é‡æ„
 let g:pymode_rope = 0
-""²»ÔÚ¸¸Ä¿Â¼ÏÂ²éÕÒ.ropeproject£¬ÄÜÌáÉıÏìÓ¦ËÙ¶È
+""ä¸åœ¨çˆ¶ç›®å½•ä¸‹æŸ¥æ‰¾.ropeprojectï¼Œèƒ½æå‡å“åº”é€Ÿåº¦
 "let g:pymode_rope_lookup_project = 0
-""¹â±êÏÂµ¥´Ê²éÔÄÎÄµµ
+""å…‰æ ‡ä¸‹å•è¯æŸ¥é˜…æ–‡æ¡£
 "let g:pymode_rope_show_doc_bind = '<C-c>d'
-"""ÏîÄ¿ĞŞ¸ÄºóÖØĞÂÉú³É»º´æ
+"""é¡¹ç›®ä¿®æ”¹åé‡æ–°ç”Ÿæˆç¼“å­˜
 "let g:pymode_rope_regenerate_on_write = 1
-""¿ªÆô²¹È«£¬²¢ÉèÖÃ<C-Tab>ÎªÄ¬ÈÏ¿ì½İ¼ü
+""å¼€å¯è¡¥å…¨ï¼Œå¹¶è®¾ç½®<C-Tab>ä¸ºé»˜è®¤å¿«æ·é”®
 "let g:pymode_rope_completion = 1
 "let g:pymode_rope_complete_on_dot = 1
 "let g:pymode_rope_completion_bind = '<C-Tab>'
-"""<C-c>gÌø×ªµ½¶¨Òå´¦£¬Í¬Ê±ĞÂ½¨ÊúÖ±´°¿Ú´ò¿ª
+"""<C-c>gè·³è½¬åˆ°å®šä¹‰å¤„ï¼ŒåŒæ—¶æ–°å»ºç«–ç›´çª—å£æ‰“å¼€
 "let g:pymode_rope_goto_definition_bind = '<C-c>g'
 "let g:pymode_rope_goto_definition_cmd = 'vnew'
-""ÖØÃüÃû¹â±êÏÂµÄº¯Êı£¬·½·¨£¬±äÁ¿¼°ÀàÃû
+""é‡å‘½åå…‰æ ‡ä¸‹çš„å‡½æ•°ï¼Œæ–¹æ³•ï¼Œå˜é‡åŠç±»å
 "let g:pymode_rope_rename_bind = '<C-c>rr'
-"""ÖØÃüÃû¹â±êÏÂµÄÄ£¿é»ò°ü
+"""é‡å‘½åå…‰æ ‡ä¸‹çš„æ¨¡å—æˆ–åŒ…
 "let g:pymode_rope_rename_module_bind = '<C-c>r1r'
 
+" ale
+"ale
+""å§‹ç»ˆå¼€å¯æ ‡å¿—åˆ—
+let g:ale_enabled = 0
+let g:ale_sign_column_always = 1
+let g:ale_set_highlights = 0
+"è‡ªå®šä¹‰errorå’Œwarningå›¾æ ‡
+let g:ale_sign_error = 'X'
+let g:ale_sign_warning = 'W'
+"åœ¨vimè‡ªå¸¦çš„çŠ¶æ€æ ä¸­æ•´åˆale
+let g:ale_statusline_format = ['âœ— %d', 'âš¡ %d', 'âœ” OK']
+"æ˜¾ç¤ºLinteråç§°,å‡ºé”™æˆ–è­¦å‘Šç­‰ç›¸å…³ä¿¡æ¯
+let g:ale_echo_msg_error_str = 'E'
+let g:ale_echo_msg_warning_str = 'W'
+let g:ale_echo_msg_format = '[%linter%] %s [%severity%]'
+""æ™®é€šæ¨¡å¼ä¸‹ï¼Œspå‰å¾€ä¸Šä¸€ä¸ªé”™è¯¯æˆ–è­¦å‘Šï¼Œsnå‰å¾€ä¸‹ä¸€ä¸ªé”™è¯¯æˆ–è­¦å‘Š
+nmap cp <Plug>(ale_previous_wrap)
+nmap cn <Plug>(ale_next_wrap)
+"<Leader>sè§¦å‘/å…³é—­è¯­æ³•æ£€æŸ¥
+"nmap <Leader>c :ALEToggle<CR>
+""<Leader>dæŸ¥çœ‹é”™è¯¯æˆ–è­¦å‘Šçš„è¯¦ç»†ä¿¡æ¯
+"nmap <Leader>cl :ALEDetail<CR>
+"æ–‡ä»¶å†…å®¹å‘ç”Ÿå˜åŒ–æ—¶ä¸è¿›è¡Œæ£€æŸ¥
+"let g:ale_lint_on_text_changed = 'never'
+""æ‰“å¼€æ–‡ä»¶æ—¶ä¸è¿›è¡Œæ£€æŸ¥
+"let g:ale_lint_on_enter = 0
+"ä½¿ç”¨clangå¯¹cå’Œc++è¿›è¡Œè¯­æ³•æ£€æŸ¥ï¼Œå¯¹pythonä½¿ç”¨pylintè¿›è¡Œè¯­æ³•æ£€æŸ¥
+let g:ale_linters = {
+\   'c++': ['clang'],
+\   'c': ['gcc'],
+\   'python': ['pylint'],
+\}
 
+"}}}
 
 " Lemon Mao - configure: {{{
 "
@@ -512,16 +587,18 @@ let maplocalleader = "\\"
 " map : -> <space>
 map <Space> :
 
-nmap <Leader>r :MRU<cr>
-nmap <Leader>R :MRU 
-nmap <Leader>t :TlistToggle<cr>
+"nmap <Leader>r :MRU<cr>
+"nmap <Leader>R :MRU 
+"nmap <Leader>t :TlistToggle<cr>
+nmap <Leader>t :TagbarToggle<cr>
 nmap <Leader>f :NERDTreeToggle<CR>
 nmap <Leader>F :NERDTreeFind<CR>
 
 " F1 ~~ F12 hotkey mapping
-"nmap <F2>  $<CR>
+"nmap <F2>  :AsyncRun lt find zebos/
 nmap <F3>  :diffput<cr>
-nmap <F4>  :vimgrep //g zebos/**/*.[ch]
+nmap <F4>  :AsyncRun lt find zebos/
+"nmap <F4>  :vimgrep //g zebos/**/*.[ch]
 "nmap <F5> <Plug>LookupFile " This has been mapped in lookupfile plugin 
 nmap <F6>  <leader>#<cr>
 nmap <F7>  <leader>*<cr>
@@ -582,14 +659,30 @@ nmap <leader>si :cs find i <C-R>=expand("<cfile>")<cr><cr>
 nmap <leader>sd :cs find d <C-R>=expand("<cword>")<cr><cr>
 
 " FuzzyFinder
-nnoremap <silent> sb     :FufBuffer<CR>
-nnoremap <silent> sm     :FufMruFile<CR>
-nnoremap <silent> smc    :FufMruCmd<CR>
-nnoremap <silent> su     :FufBookmarkFile<CR>
-nnoremap <silent> s<C-u> :FufBookmarkFileAdd<CR>
-vnoremap <silent> s<C-u> :FufBookmarkFileAddAsSelectedText<CR>
-nnoremap <silent> sf     :FufFile<CR>
-nnoremap <silent> st     :FufTaggedFile<CR>
+"nnoremap <silent> sb     :FufBuffer<CR>
+"nnoremap <silent> sm     :FufMruFile<CR>
+"nnoremap <silent> smc    :FufMruCmd<CR>
+"nnoremap <silent> su     :FufBookmarkFile<CR>
+"nnoremap <silent> s<C-u> :FufBookmarkFileAdd<CR>
+"vnoremap <silent> s<C-u> :FufBookmarkFileAddAsSelectedText<CR>
+"nnoremap <silent> sf     :FufFile<CR>
+"nnoremap <silent> st     :FufTaggedFile<CR>
+
+" CtrlP
+"nnoremap <silent> sb     :CtrlPBuffer<CR>
+"nnoremap <silent> sm     :CtrlPMRUFiles<CR>
+
+" LeaderF
+nnoremap <silent> sb     :LeaderfBuffer<CR>
+nnoremap <silent> sm     :LeaderfMru<CR>
+nnoremap <silent> sf     :LeaderfFile<CR>
+nnoremap <silent> st     :LeaderfBufTag<CR>
+nnoremap <silent> sta    :LeaderfBufTagAll<CR>
+nnoremap <silent> ss     :LeaderfLine<CR>
+nnoremap <silent> ssa    :LeaderfLineAll<CR>
+nnoremap <silent> sfu    :LeaderfFunction<CR>
+nnoremap <silent> sfua   :LeaderfFunctionAll<CR>
+
 
 " Align
 ",ascom
@@ -598,8 +691,8 @@ nnoremap <silent> st     :FufTaggedFile<CR>
 "let g:pydiction_location = '~/.vim/bundle/Pydiction/complete-dict'
 
 "LookupFile hotkey mapping
-nmap <silent> <leader>l :LUTags<cr>
-nmap <silent> <leader>lb :LUBufs<cr>
+"nmap <silent> <leader>l :LUTags<cr>
+"nmap <silent> <leader>lb :LUBufs<cr>
 "nmap <silent> <leader>lw :LUWalk<cr>
 
 " center display after searching
