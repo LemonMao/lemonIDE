@@ -1,7 +1,7 @@
 " Vim config file.
 
 " Vim-plug setting {{{
-call vundle#begin('~/.vim/plugged')
+call plug#begin('~/.vim/plugged')
 " Unused - old plugin
 "Plug 'lookupfile'
 "Plug 'taglist.vim'
@@ -25,19 +25,21 @@ Plug 'vim-scripts/genutils' " Vim-script library
 Plug 'vim-scripts/L9' " Vim-script library 
 Plug 'vim-scripts/desertEx'
 Plug 'skywind3000/asyncrun.vim'
-Plug 'Lokaltog/vim-powerline'
+"Plug 'https://github.com/Lokaltog/vim-powerline.git'
+Plug 'vim-airline/vim-airline'
+Plug 'vim-airline/vim-airline-themes'
 Plug 'vim-scripts/Align'
 Plug 'junegunn/vim-easy-align'
 Plug 'klen/python-mode'           " For python
 Plug 'w0rp/ale' " syntax checker
-Plug 'Yggdroot/LeaderF' " Fuzzy finder buffer, mru, files, tags, strings
+Plug 'Yggdroot/LeaderF', {'do':'./install.sh'} " Fuzzy finder buffer, mru, files, tags, strings
 Plug 'Yggdroot/indentLine' " display vertical lines
 " Good plugin, but not need now
 "Plug 'tpope/vim-fugitive' " Git wrapper 
 "Plug 'Pydiction'
 "Plug 'http://github.com/kevinw/pyflakes-vim'
 " Haven tested, not good for me
-call vundle#end()
+call plug#end()
 " vim-plug setting end }}}
 
 " Global Settings: {{{
@@ -183,6 +185,30 @@ endfor
 " vim-Powerline
 "set guifont=PowerlineSymbols\ for\ Powerline
 let g:Powerline_symbols = 'fancy'
+
+" airline
+let g:airline_theme='dark'   
+" 使用powerline打过补丁的字体
+let g:airline_powerline_fonts=1
+if !exists('g:airline_symbols')
+    let g:airline_symbols={}
+endif
+" 关闭空白符检测
+let g:airline#extensions#whitespace#enabled=0
+" powerline symbols
+let g:airline_left_sep = ''
+let g:airline_left_alt_sep = ''
+let g:airline_right_sep = ''
+let g:airline_right_alt_sep = ''
+let g:airline_symbols.branch = ''
+let g:airline_symbols.readonly = ''
+let g:airline_symbols.linenr = '☰'
+let g:airline_symbols.maxlinenr = ''
+" Tabline
+"let g:airline#extensions#tabline#enabled = 1
+"let g:airline#extensions#tabline#buffer_nr_show = 1
+
+
 
 " FuzzyFinder
 "let g:fuf_modesDisable = []
@@ -702,4 +728,10 @@ nnoremap *   *zz
 nnoremap #   #zz
 nnoremap g*  g*zz
 nnoremap g#  g#z
+
+
+
+"Airline 设置切换Buffer快捷键"
+"nnoremap <C-N> :bn<CR>
+nnoremap <C-P> :bp<CR>
 "}}}

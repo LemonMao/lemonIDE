@@ -46,7 +46,10 @@ cp $srcPluginPath/desertmss.vim $dstPluginPath/desertEx/colors/
 ln -s $srcPluginPath/tmux.conf ~/.tmux.conf
 # bash alias
 #[ -e ~/.bash_aliases ] && cat $srcPluginPath/bash_aliases >> ~/.bash_aliases || ln -s $srcPluginPath/bash_aliases ~/.bash_aliases
-cat $srcPluginPath/lemon_bashrc >> ~/.bashrc
+read -e -p "Shell alias config, additional apply[Y/n]:" ret
+if [[ $ret != "n" ]] ; then
+    cat $srcPluginPath/lemon_bashrc >> ~/.bashrc
+fi
 # Bookmark
 [ -e ~/.NERDTreeBookmarks ] && mv ~/.NERDTreeBookmarks $vimbak/NERDTreeBookmarks-bak
 ln -s $srcPluginPath/NERDTreeBookmarks ~/.NERDTreeBookmarks
