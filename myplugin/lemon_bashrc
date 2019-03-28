@@ -1,9 +1,9 @@
 export PATH=$PATH:~/.vim/lemon-tool/
 
 #Lemon Aliases
-alias ll="ls -lth"
-alias ld="ls -lth | grep "^d""
-alias la="ls -lath"
+alias ll="ls -lthr"
+alias ld="ls -lthr -F | grep /$"
+alias la="ls -lathr"
 alias tmnew="tmux -2 new -s "
 alias tmls="tmux ls"
 alias tmat="tmux -2 att -t "

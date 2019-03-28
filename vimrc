@@ -30,7 +30,7 @@ Plug 'vim-airline/vim-airline'
 Plug 'vim-airline/vim-airline-themes'
 Plug 'vim-scripts/Align'
 Plug 'junegunn/vim-easy-align'
-Plug 'klen/python-mode'           " For python
+Plug 'python-mode/python-mode', { 'branch': 'develop' }
 Plug 'w0rp/ale' " syntax checker
 Plug 'Yggdroot/LeaderF', {'do':'./install.sh'} " Fuzzy finder buffer, mru, files, tags, strings
 Plug 'Yggdroot/indentLine' " display vertical lines
@@ -350,22 +350,24 @@ let g:DoxygenToolkit_authorName="Mathias Lorente"
 "set statusline+=%#warningmsg#
 "set statusline+=%{SyntasticStatuslineFlag()}
 "set statusline+=%*
-let g:syntastic_always_populate_loc_list=1
-let g:syntastic_auto_loc_list=1
-let g:syntastic_enable_signs=1
-let g:syntastic_check_on_wq=0
-let g:syntastic_aggregate_errors=1
-let g:syntastic_loc_list_height=5
-let g:syntastic_error_symbol='X'
-let g:syntastic_style_error_symbol='X'
-let g:syntastic_warning_symbol='>'
-let g:syntastic_style_warning_symbol='>'
-let g:syntastic_python_checkers=['flake8', 'pydocstyle', 'python']
-let g:syntastic_quiet_messages = {"regex": 'No such file or directory'}
-let g:syntastic_mode_map = {"mode": "passive", "active_filetypes": ["python"], "passive_filetypes": [""] } 
+"let g:syntastic_always_populate_loc_list=1
+"let g:syntastic_auto_loc_list=1
+"let g:syntastic_enable_signs=1
+"let g:syntastic_check_on_wq=0
+"let g:syntastic_aggregate_errors=1
+"let g:syntastic_loc_list_height=5
+"let g:syntastic_error_symbol='X'
+"let g:syntastic_style_error_symbol='X'
+"let g:syntastic_warning_symbol='>'
+"let g:syntastic_style_warning_symbol='>'
+"let g:syntastic_python_checkers=['flake8', 'pydocstyle', 'python']
+"let g:syntastic_quiet_messages = {"regex": 'No such file or directory'}
+"let g:syntastic_mode_map = {"mode": "passive", "active_filetypes": ["python"], "passive_filetypes": [""] } 
 
 "python-mode
 " syntax highlight
+"let g:pymode_python = 'python2'
+let g:pymode=0
 let g:pymode_options_max_line_length = 120
 let g:pymode_options_colorcolumn = 0
 let g:pymode_syntax=1
@@ -473,11 +475,10 @@ nmap cn <Plug>(ale_next_wrap)
 "let g:ale_lint_on_enter = 0
 "使用clang对c和c++进行语法检查，对python使用pylint进行语法检查
 let g:ale_linters = {
-\   'c++': ['clang'],
-\   'c': ['gcc'],
 \   'python': ['pylint'],
 \}
 
+let s:numberf = 1
 "}}}
 
 " Lemon Mao - configure: {{{
@@ -502,15 +503,29 @@ function! RunShell(Msg, Shell)
 endfunction
 
 function! ToggleMouse()                                                          
-    if &mouse == 'a'                                                                 
-        set mouse=                                                                                                                                    
-        set nonumber                                                                     
-        echo "Mouse usage disabled"                                                      
-    else                                                                             
-        set mouse=a                                                                      
-        set number                                                                       
-        echo "Mouse usage enabled"                                                       
-    endif                                                                            
+    if  s:numberf == 1
+        let s:numberf = 0
+        exec "IndentLinesToggle" 
+        set nonumber
+    else 
+        let s:numberf = 1
+        exec "IndentLinesToggle" 
+        set number
+    endif
+    "<cr>
+    "exec "<cr>"
+    echo "Done!"                                                      
+    "if &mouse == 'a'                                                                 
+        "set mouse=                                                                                                                                    
+        "set nonumber                                                                     
+        "IndentLinesToggle
+        "echo "Mouse usage disabled"                                                      
+    "else                                                                             
+        "set mouse=a                                                                      
+        "set number                                                                       
+        "IndentLinesToggle
+        "echo "Mouse usage enabled"                                                       
+    "endif                                                                            
 endfunction
 "map gd gD
 "
@@ -626,8 +641,9 @@ nmap <F3>  :diffput<cr>
 nmap <F4>  :AsyncRun lt find zebos/
 "nmap <F4>  :vimgrep //g zebos/**/*.[ch]
 "nmap <F5> <Plug>LookupFile " This has been mapped in lookupfile plugin 
-nmap <F6>  <leader>#<cr>
-nmap <F7>  <leader>*<cr>
+nmap <F5>  <leader>#
+nmap <F6>  <leader>*
+nmap <F7>  :AsyncRun cd /vobs/nosx/nos/build/mars; make 
 nmap <F9>  :call RunShell("Check out file : ", "/usr/atria/bin/cleartool co ")<cr>
 nmap <F10> :call RunShell("Uncheck out file : ", "/usr/atria/bin/cleartool unco -rm ")<cr>
 nmap <F11> :call RunShell("Update current project_vim info! ", "cd /vobs/nosx;lg update ")<cr>

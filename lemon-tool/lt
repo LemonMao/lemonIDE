@@ -217,13 +217,14 @@ echo -n "[Choose Destination(labtop/server61)] : "
 read ret
 if [[ $ret == "s" ]]; then
     if [[ $2 == "IBM" ]]; then
-        cmd="scp IBMNetworkImg-mars maoss1@10.240.237.61:FW/"
+        cmd="scp IBMNetworkImg-mars maoss1@10.240.237.65:FW/"
     else    
-        cmd="scp $2 maoss1@10.240.237.61:FW/"
+        cmd="scp $2 maoss1@10.240.237.65:FW/"
     fi
     #cmd="curl -T $2 ftp://10.240.236.131/pub/lemon/$2"
     #cmd="curl -T $2 ftp://10.240.237.61/pub/lemon/$2"
-    echo $cmd
+    cmd2="scp $2 maoss1@10.240.237.65:FW/$2"
+    echo $cmd2
     $cmd
 #ftp -n<<!
 #open 10.240.236.131
