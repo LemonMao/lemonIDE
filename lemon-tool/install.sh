@@ -15,8 +15,8 @@ vimrc=~/.vimrc
 
 
 ############ backup the old vim stuff
-[ -d $vimbak ] && mkdir -p $vimbak
-[ -e $vimrc ] && mv $vimrc ~/vim-bak/vimrc.bak
+mkdir -p $vimbak
+[ -e $vimrc ] && mv $vimrc $vimbak/vimrc.bak
 #rm ~/.vim/* -rf
 
 ############ install lemon vim stuff
@@ -24,8 +24,8 @@ ln -s ~/.vim/vimrc $vimrc
 mkdir -v $dstPluginPath/
 #git clone https://github.com/gmarik/vundle.git $dstPluginPath/vundle/
 #git clone https://github.com/VundleVim/Vundle.vim.git ~/.vim/bundle/Vundle.vim
-curl -fLo ~/.vim/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vimcurl -fLo ~/.vim/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
-[ $? -ne 0 ] && echo "!!!!  Install vindle tool failed !"
+curl -fLo ~/.vim/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
+[ $? -ne 0 ] && echo "!!!!  Install vindle tool failed !" && exit
 echo " "
 #cp $srcPluginPath/vundle $dstPluginPath/vundle
 #cp ../bundle ~/.vim/ -rf
