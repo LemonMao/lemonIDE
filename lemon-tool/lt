@@ -213,18 +213,17 @@ case $1 in
         ;;
     "upld")
 # {{{ ftp upload firmware
-echo -n "[Choose Destination(labtop/server61)] : "
-read ret
-if [[ $ret == "s" ]]; then
-    if [[ $2 == "IBM" ]]; then
-        cmd="scp IBMNetworkImg-mars maoss1@10.240.237.65:FW/"
+#echo -n "[Choose Destination(vm/xx)] : "
+#read ret
+#if [[ $ret == "v" ]]; then
+    if [[ $2 == "sos" ]]; then
+        cmd="scp m2/target/oct_mips64/sw_x86v-sc-stdeb/sonicosv.st.eng m2/target/oct_mips64/sw_x86v-sc-stdeb/sonicosv.st.ns.eng ubuntu@10.103.219.149:sonicos/"
     else    
         cmd="scp $2 maoss1@10.240.237.65:FW/"
     fi
     #cmd="curl -T $2 ftp://10.240.236.131/pub/lemon/$2"
     #cmd="curl -T $2 ftp://10.240.237.61/pub/lemon/$2"
-    cmd2="scp $2 maoss1@10.240.237.65:FW/$2"
-    echo $cmd2
+    echo $cmd
     $cmd
 #ftp -n<<!
 #open 10.240.236.131
@@ -238,16 +237,16 @@ if [[ $ret == "s" ]]; then
 #close
 #bye
 #!
-else
-    #cmd="curl --progress-bar -s -u %s -T %s%s ftp://%s:%d%s%s"
-    #if [[ $3 == home ]]; then
-        #cmd="curl -u mss -T $2 ftp://10.96.192.92/FW/"
-    #else    
-        #cmd="curl -u ftp -T $2 ftp://10.107.180.173/"
-    #fi
-    echo $cmd
-    $cmd
-fi
+#else
+    ##cmd="curl --progress-bar -s -u %s -T %s%s ftp://%s:%d%s%s"
+    ##if [[ $3 == home ]]; then
+        ##cmd="curl -u mss -T $2 ftp://10.96.192.92/FW/"
+    ##else    
+        ##cmd="curl -u ftp -T $2 ftp://10.107.180.173/"
+    ##fi
+    #echo $cmd
+    #$cmd
+#fi
 # }}}
         ;;
     "ci")

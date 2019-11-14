@@ -30,7 +30,7 @@ Plug 'vim-airline/vim-airline'
 Plug 'vim-airline/vim-airline-themes'
 Plug 'vim-scripts/Align'
 Plug 'junegunn/vim-easy-align'
-Plug 'python-mode/python-mode', { 'branch': 'develop' }
+"Plug 'python-mode/python-mode', { 'branch': 'develop' }
 Plug 'w0rp/ale' " syntax checker
 Plug 'Yggdroot/LeaderF', {'do':'./install.sh'} " Fuzzy finder buffer, mru, files, tags, strings
 Plug 'Yggdroot/indentLine' " display vertical lines

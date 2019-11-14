@@ -92,9 +92,9 @@ function genCsFile_f()
 
         if [[ $1 == "-gnew" ]]; then
             #-regex ".*\.p?[ych]"
-            find -L ${findPath[$k]} -not -wholename '*.svn*' -not -regex '.*\.\(png\|gif\)' -type f -name "*.[ch]" -printf %p"@@@"%T@"\n" >> $new_obj_files 2>>$cs_lo
+            find -L ${findPath[$k]} -not -wholename '*.svn*' -not -regex '.*\.\(png\|gif\)' -type f -name "*.[ch]" -o -name "*.cpp" -printf %p"@@@"%T@"\n" >> $new_obj_files 2>>$cs_lo
         else
-            find -L ${findPath[$k]} -not -wholename '*.svn*' -not -regex '.*\.\(png\|gif\)' -type f -name "*.[ch]" -printf %p"@@@"%T@"\n" >> $cur_obj_files 2>>$cs_log
+            find -L ${findPath[$k]} -not -wholename '*.svn*' -not -regex '.*\.\(png\|gif\)' -type f -name "*.[ch]" -o -name "*.cpp" -printf %p"@@@"%T@"\n" >> $cur_obj_files 2>>$cs_log
         fi
     done
 
@@ -476,6 +476,11 @@ case $1 in
 "nosx")
     #{{{ --
     lg auto zebos/ nos/ -excl nos/platform/asic/sdk/
+    #}}}
+    ;;
+"sos")
+    #{{{ --
+    lg auto firmware/bcp firmware/fw firmware/h firmware/ipsec firmware/lib bsp/oct_mips64 bspLib/ h/ os/Linux m2/target/oct_mips64/sw_x86v-sc-stdeb/
     #}}}
     ;;
 *)
