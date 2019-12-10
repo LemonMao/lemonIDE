@@ -34,6 +34,7 @@ Plug 'junegunn/vim-easy-align'
 Plug 'w0rp/ale' " syntax checker
 Plug 'Yggdroot/LeaderF', {'do':'./install.sh'} " Fuzzy finder buffer, mru, files, tags, strings
 Plug 'Yggdroot/indentLine' " display vertical lines
+Plug 'CoatiSoftware/vim-sourcetrail'
 " Good plugin, but not need now
 "Plug 'tpope/vim-fugitive' " Git wrapper 
 "Plug 'Pydiction'

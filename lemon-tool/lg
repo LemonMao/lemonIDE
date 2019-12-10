@@ -92,9 +92,9 @@ function genCsFile_f()
 
         if [[ $1 == "-gnew" ]]; then
             #-regex ".*\.p?[ych]"
-            find -L ${findPath[$k]} -not -wholename '*.svn*' -not -regex '.*\.\(png\|gif\)' -type f -name "*.[ch]" -o -name "*.cpp" -printf %p"@@@"%T@"\n" >> $new_obj_files 2>>$cs_lo
+            find -L ${findPath[$k]} -not -wholename '*.svn*' -not -regex '.*\.\(png\|gif\)' -type f \( -name "*.[ch]" -o -name "*.cpp" -o -name "*.cc" \) -printf %p"@@@"%T@"\n" >> $new_obj_files 2>>$cs_lo
         else
-            find -L ${findPath[$k]} -not -wholename '*.svn*' -not -regex '.*\.\(png\|gif\)' -type f -name "*.[ch]" -o -name "*.cpp" -printf %p"@@@"%T@"\n" >> $cur_obj_files 2>>$cs_log
+            find -L ${findPath[$k]} -not -wholename '*.svn*' -not -regex '.*\.\(png\|gif\)' -type f \( -name "*.[ch]" -o -name "*.cpp" -o -name "*.cc" \) -printf %p"@@@"%T@"\n" >> $cur_obj_files 2>>$cs_log
         fi
     done
 
@@ -182,13 +182,14 @@ case $1 in
             continue;
         elif [[ $proFile == "-excl" ]]; then
             echo "Exclude : " >> $proj_auto_info
-            excludeFlag=1
+            #excludeFlag=1
             continue
         fi
 
-        if [[ $excludeFlag == 0 ]]; then
-            echo -e "\t$proj_path/$proFile" >> $proj_auto_info
-        else
+        if [[ $proFile == "." ]]; then
+            echo  "proFile :$proFile \n"
+            echo -e "\t$proj_path" >> $proj_auto_info
+        else    
             echo -e "\t$proj_path/$proFile" >> $proj_auto_info
         fi
 
