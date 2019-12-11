@@ -7,8 +7,8 @@ call plug#begin('~/.vim/plugged')
 "Plug 'taglist.vim'
 "Plug 'mru.vim'
 "Plug 'bufexplorer.zip'
-Plug 'vim-scripts/AutoComplPop'
-Plug 'vim-scripts/OmniCppComplete'
+"Plug 'vim-scripts/AutoComplPop'
+"Plug 'vim-scripts/OmniCppComplete'
 "Plug 'kien/ctrlp.vim'
 "Plug 'FuzzyFinder'
 
@@ -24,7 +24,6 @@ Plug 'vim-scripts/snipMate'
 Plug 'vim-scripts/genutils' " Vim-script library
 Plug 'vim-scripts/L9' " Vim-script library 
 Plug 'vim-scripts/desertEx'
-Plug 'skywind3000/asyncrun.vim'
 "Plug 'https://github.com/Lokaltog/vim-powerline.git'
 Plug 'vim-airline/vim-airline'
 Plug 'vim-airline/vim-airline-themes'
@@ -34,7 +33,13 @@ Plug 'junegunn/vim-easy-align'
 Plug 'w0rp/ale' " syntax checker
 Plug 'Yggdroot/LeaderF', {'do':'./install.sh'} " Fuzzy finder buffer, mru, files, tags, strings
 Plug 'Yggdroot/indentLine' " display vertical lines
-Plug 'CoatiSoftware/vim-sourcetrail'
+"Plug 'CoatiSoftware/vim-sourcetrail'
+Plug 'ludovicchabant/vim-gutentags'
+Plug 'skywind3000/asyncrun.vim'
+Plug 'skywind3000/gutentags_plus'
+Plug 'skywind3000/vim-preview'
+Plug 'Valloric/YouCompleteMe'
+
 " Good plugin, but not need now
 "Plug 'tpope/vim-fugitive' " Git wrapper 
 "Plug 'Pydiction'
@@ -480,6 +485,39 @@ let g:ale_linters = {
 \}
 
 let s:numberf = 1
+
+" YCM
+let g:ycm_add_preview_to_completeopt = 0
+let g:ycm_show_diagnostics_ui = 0
+let g:ycm_server_log_level = 'info'
+let g:ycm_min_num_identifier_candidate_chars = 2
+let g:ycm_collect_identifiers_from_comments_and_strings = 1
+let g:ycm_complete_in_strings=1
+let g:ycm_key_invoke_completion = '<c-z>'
+set completeopt=menu,menuone
+
+noremap <c-z> <NOP>
+
+let g:ycm_semantic_triggers =  {
+            \ 'c,cpp,python,java,go,erlang,perl': ['re!\w{3}'],
+            \ 'cs,lua,javascript': ['re!\w{2}'],
+            \ }
+
+let g:ycm_filetype_whitelist = { 
+            \ "c":1,
+            \ "cpp":1, 
+            \ "objc":1,
+            \ "sh":1,
+            \ "zsh":1,
+            \ "zimbu":1,
+            \ }
+
+"let g:ycm_global_ycm_extra_conf='~/.ycm_extra_conf.py'  "设置全局配置文件的路径
+"let g:ycm_seed_identifiers_with_syntax=1    " 语法关键字补全
+let g:ycm_confirm_extra_conf=0  " 打开vim时不再询问是否加载ycm_extra_conf.py配置
+"let g:ycm_key_invoke_completion = '<C-a>' " ctrl + a 触发补全，防止与其他插件冲突
+"set completeopt=longest,menu    "让Vim的补全菜单行为与一般IDE一致(参考VimTip1228)
+"nnoremap <leader>jd :YcmCompleter GoToDefinitionElseDeclaration<CR> "定义跳转快捷键
 "}}}
 
 " Lemon Mao - configure: {{{
@@ -557,16 +595,55 @@ endfunction
 
 " settings of cscope.
 " " I use GNU global instead cscope because global is faster.
-"set cscopetag
-"set cscopeprg=gtags-cscope
-"set cscopequickfix=c-,d-,e-,f-,g0,i-,s-,t-
+" 第一个 GTAGSLABEL 告诉 gtags 默认 C/C++/Java 等六种原生支持的代码直接使用
+" gtags 本地分析器，而其他语言使用 pygments 模块。
+"let $GTAGSLABEL = 'native-pygments'
+"let $GTAGSCONF = '/path/to/share/gtags/gtags.conf'
+
+" gutentags 搜索工程目录的标志，当前文件路径向上递归直到碰到这些文件/目录名
+let g:gutentags_project_root = ['.root', '.svn', '.git', '.hg', '.project']
+" 所生成的数据文件的名称
+let g:gutentags_ctags_tagfile = '.tags'
+" 同时开启 ctags 和 gtags 支持：
+let g:gutentags_modules = []
+"if executable('ctags')
+    "let g:gutentags_modules += ['ctags']
+"endif
+if executable('gtags-cscope') && executable('gtags')
+    let g:gutentags_modules += ['gtags_cscope']
+else
+    let g:gutentags_modules += ['ctags']
+endif
+" 将自动生成的 ctags/gtags 文件全部放入 ~/.cache/tags 目录中，避免污染工程目录
+let s:vim_tags = expand('~/.cache/tags')
+let g:gutentags_cache_dir = s:vim_tags
+" 配置 ctags 的参数
+let g:gutentags_ctags_extra_args = ['--fields=+niazS', '--extra=+q']
+let g:gutentags_ctags_extra_args += ['--c++-kinds=+px']
+let g:gutentags_ctags_extra_args += ['--c-kinds=+px']
+" 如果使用 universal ctags 需要增加下面一行
+"let g:gutentags_ctags_extra_args += ['--output-format=e-ctags']
+" 禁用 gutentags 自动加载 gtags 数据库的行为
+let g:gutentags_auto_add_gtags_cscope = 0
+" 检测 ~/.cache/tags 不存在就新建
+if !isdirectory(s:vim_tags)
+    silent! call mkdir(s:vim_tags, 'p')
+endif
+let g:gutentags_define_advanced_commands = 1
+" change focus to quickfix window after search (optional).
+let g:gutentags_plus_switch = 1
+let g:gutentags_plus_nomap = 1
+
+set cscopetag
+set cscopeprg=gtags-cscope
+"set cscopequickfix=c+,d+,e+,f+,i+,s+,t+
 "nmap <silent> <leader>j <ESC>:cstag <c-r><c-w><CR>
 "nmap <silent> <leader>g <ESC>:lcs f c <c-r><c-w><cr>:lw<cr>
 "nmap <silent> <leader>s <ESC>:lcs f s <c-r><c-w><cr>:lw<cr>
 "command! -nargs=+ -complete=dir FindFiles :call FindFiles(<f-args>)
 "au VimEnter * call VimEnterCallback()
 "au BufAdd *.[ch] call FindGtags(expand('<afile>'))
-au BufWritePost *.[ch] call UpdateGtags(expand('<afile>'))
+"au BufWritePost *.[ch] call UpdateGtags(expand('<afile>'))
 
 "function! FindFiles(pat, ...)
     "let path = ''
@@ -620,6 +697,50 @@ function! UpdateGtags(f)
     "exe '!echo' filename '| gtags -i -f -'
     "' | global -u &> /dev/null &'
 endfunction
+
+
+function! Terminal_MetaMode(mode)
+    set ttimeout
+    if $TMUX != ''
+        set ttimeoutlen=30
+    elseif &ttimeoutlen > 80 || &ttimeoutlen <= 0
+        set ttimeoutlen=80
+    endif
+    if has('nvim') || has('gui_running')
+        return
+    endif
+    function! s:metacode(mode, key)
+        if a:mode == 0
+            exec "set <M-".a:key.">=\e".a:key
+        else
+            exec "set <M-".a:key.">=\e]{0}".a:key."~"
+        endif
+    endfunc
+    for i in range(10)
+        call s:metacode(a:mode, nr2char(char2nr('0') + i))
+    endfor
+    for i in range(26)
+        call s:metacode(a:mode, nr2char(char2nr('a') + i))
+        call s:metacode(a:mode, nr2char(char2nr('A') + i))
+    endfor
+    if a:mode != 0
+        for c in [',', '.', '/', ';', '[', ']', '{', '}']
+            call s:metacode(a:mode, c)
+        endfor
+        for c in ['?', ':', '-', '_']
+            call s:metacode(a:mode, c)
+        endfor
+    else
+        for c in [',', '.', '/', ';', '{', '}']
+            call s:metacode(a:mode, c)
+        endfor
+        for c in ['?', ':', '-', '_']
+            call s:metacode(a:mode, c)
+        endfor
+    endif
+endfunc
+
+call Terminal_MetaMode(0)
 "}}}
 
 " Key Bindings: {{{
@@ -672,7 +793,7 @@ nmap <C-E> :b#<CR>
 " ########################
 
 " Don't use Ex mode, use Q for formatting
-map Q gq
+" map Q gq
 
 "make Y consistent with C and D
 nnoremap Y y$
@@ -689,17 +810,26 @@ map! <S-Insert> <MiddleMouse>
 nmap <silent> <C-N> :silent noh<CR>
 
 "cscope hotkey mapping
-nmap <leader>sh :cs show<cr>
-nmap <leader>ll :cs find f 
-nmap <leader>ss :cs find s <C-R>=expand("<cword>")<cr><cr>
-nmap <leader>ss :cs find s <C-R>=expand("<cword>")<cr><cr>
-nmap <leader>sg :cs find g <C-R>=expand("<cword>")<cr><cr>
-nmap <leader>sc :cs find c <C-R>=expand("<cword>")<cr><cr>
-nmap <leader>st :cs find t <C-R>=expand("<cword>")<cr><cr>
-nmap <leader>se :cs find e <C-R>=expand("<cword>")<cr><cr>
-nmap <leader>sf :cs find f <C-R>=expand("<cfile>")<cr><cr>
-nmap <leader>si :cs find i <C-R>=expand("<cfile>")<cr><cr>
-nmap <leader>sd :cs find d <C-R>=expand("<cword>")<cr><cr>
+"nmap <leader>sh :cs show<cr>
+"nmap <leader>ll :cs find f 
+"nmap <leader>ss :cs find s <C-R>=expand("<cword>")<cr><cr>
+"nmap <leader>ss :cs find s <C-R>=expand("<cword>")<cr><cr>
+"nmap <leader>sg :cs find g <C-R>=expand("<cword>")<cr><cr>
+"nmap <leader>sc :cs find c <C-R>=expand("<cword>")<cr><cr>
+"nmap <leader>st :cs find t <C-R>=expand("<cword>")<cr><cr>
+"nmap <leader>se :cs find e <C-R>=expand("<cword>")<cr><cr>
+"nmap <leader>sf :cs find f <C-R>=expand("<cfile>")<cr><cr>
+"nmap <leader>si :cs find i <C-R>=expand("<cfile>")<cr><cr>
+"nmap <leader>sd :cs find d <C-R>=expand("<cword>")<cr><cr>
+noremap <silent> <leader>ss :GscopeFind s <C-R><C-W><cr>
+noremap <silent> <leader>sg :GscopeFind g <C-R><C-W><cr>
+noremap <silent> <leader>sc :GscopeFind c <C-R><C-W><cr>
+noremap <silent> <leader>st :GscopeFind t <C-R><C-W><cr>
+noremap <silent> <leader>se :GscopeFind e <C-R><C-W><cr>
+noremap <silent> <leader>sf :GscopeFind f <C-R>=expand("<cfile>")<cr><cr>
+noremap <silent> <leader>si :GscopeFind i <C-R>=expand("<cfile>")<cr><cr>
+noremap <silent> <leader>sd :GscopeFind d <C-R><C-W><cr>
+noremap <silent> <leader>sa :GscopeFind a <C-R><C-W><cr>
 
 " FuzzyFinder
 "nnoremap <silent> sb     :FufBuffer<CR>
@@ -746,9 +876,22 @@ nnoremap #   #zz
 nnoremap g*  g*zz
 nnoremap g#  g#z
 
+" vim-preview
+noremap <m-u> :PreviewScroll -1<cr>
+noremap <m-d> :PreviewScroll +1<cr>
+inoremap <m-u> <c-\><c-o>:PreviewScroll -1<cr>
+inoremap <m-d> <c-\><c-o>:PreviewScroll +1<cr>
+autocmd FileType qf nnoremap <silent><buffer> p :PreviewQuickfix<cr>
+autocmd FileType qf nnoremap <silent><buffer> P :PreviewClose<cr>
+noremap <m-t> :PreviewTag <cr>
+noremap <m-s> :PreviewSignature <cr>
+noremap <m-c> :PreviewClose <cr>
 
 
 "Airline 设置切换Buffer快捷键"
 "nnoremap <C-N> :bn<CR>
 nnoremap <C-P> :bp<CR>
+
+" close 
+nnoremap <m-q> <ESC> :q<cr> <ESC>
 "}}}
