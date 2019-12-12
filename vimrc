@@ -39,6 +39,7 @@ Plug 'skywind3000/asyncrun.vim'
 Plug 'skywind3000/gutentags_plus'
 Plug 'skywind3000/vim-preview'
 Plug 'Valloric/YouCompleteMe'
+Plug 'Shougo/echodoc.vim'
 
 " Good plugin, but not need now
 "Plug 'tpope/vim-fugitive' " Git wrapper 
@@ -493,7 +494,7 @@ let g:ycm_server_log_level = 'info'
 let g:ycm_min_num_identifier_candidate_chars = 2
 let g:ycm_collect_identifiers_from_comments_and_strings = 1
 let g:ycm_complete_in_strings=1
-let g:ycm_key_invoke_completion = '<c-z>'
+let g:ycm_key_invoke_completion = '<m-y>'
 set completeopt=menu,menuone
 
 noremap <c-z> <NOP>
@@ -511,6 +512,8 @@ let g:ycm_filetype_whitelist = {
             \ "zsh":1,
             \ "zimbu":1,
             \ }
+highlight PMenu ctermfg=0 ctermbg=242 guifg=black guibg=darkgrey
+highlight PMenuSel ctermfg=242 ctermbg=8 guifg=darkgrey guibg=black
 
 "let g:ycm_global_ycm_extra_conf='~/.ycm_extra_conf.py'  "设置全局配置文件的路径
 "let g:ycm_seed_identifiers_with_syntax=1    " 语法关键字补全
@@ -518,6 +521,14 @@ let g:ycm_confirm_extra_conf=0  " 打开vim时不再询问是否加载ycm_extra_
 "let g:ycm_key_invoke_completion = '<C-a>' " ctrl + a 触发补全，防止与其他插件冲突
 "set completeopt=longest,menu    "让Vim的补全菜单行为与一般IDE一致(参考VimTip1228)
 "nnoremap <leader>jd :YcmCompleter GoToDefinitionElseDeclaration<CR> "定义跳转快捷键
+
+
+
+" Echodoc
+let g:echodoc#type = "echo" " Default value
+set noshowmode
+"set cmdheight=2
+let g:echodoc_enable_at_startup = 1
 "}}}
 
 " Lemon Mao - configure: {{{
@@ -606,9 +617,9 @@ let g:gutentags_project_root = ['.root', '.svn', '.git', '.hg', '.project']
 let g:gutentags_ctags_tagfile = '.tags'
 " 同时开启 ctags 和 gtags 支持：
 let g:gutentags_modules = []
-"if executable('ctags')
-    "let g:gutentags_modules += ['ctags']
-"endif
+if executable('ctags')
+    let g:gutentags_modules += ['ctags']
+endif
 if executable('gtags-cscope') && executable('gtags')
     let g:gutentags_modules += ['gtags_cscope']
 else
@@ -886,7 +897,6 @@ autocmd FileType qf nnoremap <silent><buffer> P :PreviewClose<cr>
 noremap <m-t> :PreviewTag <cr>
 noremap <m-s> :PreviewSignature <cr>
 noremap <m-c> :PreviewClose <cr>
-
 
 "Airline 设置切换Buffer快捷键"
 "nnoremap <C-N> :bn<CR>
