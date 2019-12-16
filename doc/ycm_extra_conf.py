@@ -57,6 +57,7 @@ flags = [
 # use when compiling headers. So it will guess. Badly. So C++ headers will be
 # compiled as C headers. You don't want that so ALWAYS specify the '-x' flag.
 # For a C project, you would set this to 'c' instead of 'c++'.
+'-std=c++11',
 '-x',
 'c++',
 # get include path from command 'gcc -x c -v -E /dev/null'
@@ -77,11 +78,21 @@ flags = [
 '/usr/include/x86_64-linux-gnu',
 '-isystem',
 '/usr/include',
-# /usr/lib/gcc/x86_64-linux-gnu/8/include
-# /usr/local/include
-# /usr/lib/gcc/x86_64-linux-gnu/8/include-fixed
-# /usr/include/x86_64-linux-gnu
-# /usr/include
+'-isystem',
+'/usr/include/boost/',
+# This is c headers path                                                                                                                                                              
+'-isystem',                                                                                                                                                                           
+'/usr/lib/gcc/x86_64-linux-gnu/8/include',                                                                                                                                            
+'-isystem',                                                                                                                                                                           
+'/usr/local/include',                                                                                                                                                                 
+'-isystem',                                                                                                                                                                           
+'/usr/lib/gcc/x86_64-linux-gnu/8/include-fixed',                                                                                                                                      
+'-isystem',                                                                                                                                                                           
+'/usr/include/x86_64-linux-gnu',                                                                                                                                                      
+'-isystem',                                                                                                                                                                           
+'/usr/include',
+#
+'-isystem',                                                                                                                                                                           
 'cpp/pybind11',
 '-isystem',
 'cpp/whereami',
