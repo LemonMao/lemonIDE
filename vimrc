@@ -81,9 +81,9 @@ set scrolloff=5                     " minimal number of screen lines to keep bey
 set autoindent                      " automatically indent new line
 set cinoptions=:0,l1,g0,t0,(0,(s    " C kind language indent options
 
-set tabstop=4                       " number of spaces in a tab
-set softtabstop=4                   " insert and delete space of <tab>
-set shiftwidth=4                    " number of spaces for indent
+set tabstop=2                       " number of spaces in a tab
+set softtabstop=2                   " insert and delete space of <tab>
+set shiftwidth=2                   " number of spaces for indent
 set expandtab                       " expand tabs into spaces
 set incsearch                       " incremental search
 set hlsearch                        " highlight search match
@@ -173,8 +173,8 @@ let g:NERDTreeQuitOnOpen=1
 
 " snipMate
 let g:snip_author   = "Lemon Mao"
-let g:snip_mail     = "maoss1@lenovo.com"
-let g:snip_company  = "Lenovo Corporation."
+let g:snip_mail     = "shmao@sonicwall.com"
+let g:snip_company  = "Sonicwall Corporation."
 
 " man.vim - view man page in VIM
 source $VIMRUNTIME/ftplugin/man.vim
@@ -495,6 +495,7 @@ let g:ycm_min_num_identifier_candidate_chars = 2
 let g:ycm_collect_identifiers_from_comments_and_strings = 1
 let g:ycm_complete_in_strings=1
 let g:ycm_key_invoke_completion = '<m-y>'
+" stop completion is <c-y>
 set completeopt=menu,menuone
 
 "noremap <c-z> <NOP>
@@ -586,7 +587,7 @@ function! ChangeCurWind(flag)
     let winName = bufname(winbufnr(0))
     let objFind = match(winName, "NERD_tree_")
     let objFind = objFind >= 0 ? objFind : match(winName, "Tag_List")
-    echo "old:" objFind winName
+    "echo "old:" objFind winName
     if objFind != -1
         exe "normal 5\<C-W>|"
     endif
@@ -597,7 +598,7 @@ function! ChangeCurWind(flag)
     let winName = bufname(winbufnr(0))
     let objFind = match(winName, "NERD_tree_")
     let objFind = objFind >= 0 ? objFind : match(winName, "Tag_List")
-    echo "new:" objFind winName
+    "echo "new:" objFind winName
     if objFind != -1
         exe "normal 60\<C-W>|"
     endif
@@ -793,6 +794,10 @@ map <leader>tm :tabmove
 " ---move from the multiple screen
 nmap <C-h> :call ChangeCurWind("h")<ESC><cr>
 nmap <C-l> :call ChangeCurWind("l")<ESC><cr>
+unmap <C-h>
+unmap <C-l>
+nmap <C-h> :call ChangeCurWind("h")<ESC><cr>
+nmap <C-l> :call ChangeCurWind("l")<ESC><cr>
 nmap <C-j> <C-w>j
 nmap <C-k> <C-w>k
 nmap <leader>1 :vertical resize-10<CR> <ESC>
@@ -834,6 +839,8 @@ nmap <silent> <C-N> :silent noh<CR>
 "nmap <leader>sd :cs find d <C-R>=expand("<cword>")<cr><cr>
 noremap <silent> <leader>ss :GscopeFind s <C-R><C-W><cr>
 noremap <silent> <leader>sg :GscopeFind g <C-R><C-W><cr>
+" Add this for distinguish with preview window
+"noremap <silent> <leader>sgn :PreviewClose <cr> :GscopeFind g <C-R><C-W><cr>
 noremap <silent> <leader>sc :GscopeFind c <C-R><C-W><cr>
 noremap <silent> <leader>st :GscopeFind t <C-R><C-W><cr>
 noremap <silent> <leader>se :GscopeFind e <C-R><C-W><cr>
@@ -859,13 +866,13 @@ noremap <silent> <leader>sa :GscopeFind a <C-R><C-W><cr>
 " LeaderF
 nnoremap <silent> sb     :LeaderfBuffer<CR>
 nnoremap <silent> sm     :LeaderfMru<CR>
-nnoremap <silent> sf     :LeaderfFile<CR>
+nnoremap <silent> sfi     :LeaderfFile<CR>
 nnoremap <silent> st     :LeaderfBufTag<CR>
 nnoremap <silent> sta    :LeaderfBufTagAll<CR>
 nnoremap <silent> ss     :LeaderfLine<CR>
 nnoremap <silent> ssa    :LeaderfLineAll<CR>
-nnoremap <silent> sfu    :LeaderfFunction<CR>
-nnoremap <silent> sfua   :LeaderfFunctionAll<CR>
+nnoremap <silent> sf    :LeaderfFunction<CR>
+nnoremap <silent> sfa   :LeaderfFunctionAll<CR>
 
 
 " Align
@@ -903,5 +910,5 @@ noremap <m-c> :PreviewClose <cr>
 nnoremap <C-P> :bp<CR>
 
 " close 
-nnoremap <m-q> <ESC> :q<cr> <ESC>
+nnoremap <m-q> :cclose<cr>
 "}}}
