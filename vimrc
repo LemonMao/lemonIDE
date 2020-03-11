@@ -586,8 +586,8 @@ function! ChangeCurWind(flag)
     let objFind = -1
     let winName = bufname(winbufnr(0))
     let objFind = match(winName, "NERD_tree_")
-    let objFind = objFind >= 0 ? objFind : match(winName, "Tag_List")
-    "echo "old:" objFind winName
+    "let objFind = objFind >= 0 ? objFind : match(winName, "Tag_List")
+    echo "old:" objFind winName
     if objFind != -1
         exe "normal 5\<C-W>|"
     endif
@@ -597,8 +597,8 @@ function! ChangeCurWind(flag)
     let objFind = -1
     let winName = bufname(winbufnr(0))
     let objFind = match(winName, "NERD_tree_")
-    let objFind = objFind >= 0 ? objFind : match(winName, "Tag_List")
-    "echo "new:" objFind winName
+    "let objFind = objFind >= 0 ? objFind : match(winName, "Tag_List")
+    echo "new:" objFind winName
     if objFind != -1
         exe "normal 60\<C-W>|"
     endif
@@ -609,8 +609,8 @@ endfunction
 " " I use GNU global instead cscope because global is faster.
 " 第一个 GTAGSLABEL 告诉 gtags 默认 C/C++/Java 等六种原生支持的代码直接使用
 " gtags 本地分析器，而其他语言使用 pygments 模块。
-"let $GTAGSLABEL = 'native-pygments'
-"let $GTAGSCONF = '/path/to/share/gtags/gtags.conf'
+let $GTAGSLABEL = 'native-pygments'
+let $GTAGSCONF = '/home/sonicwall/.globalrc'
 
 " gutentags 搜索工程目录的标志，当前文件路径向上递归直到碰到这些文件/目录名
 let g:gutentags_project_root = ['.root', '.svn', '.git', '.hg', '.project']
@@ -794,10 +794,6 @@ map <leader>tm :tabmove
 " ---move from the multiple screen
 nmap <C-h> :call ChangeCurWind("h")<ESC><cr>
 nmap <C-l> :call ChangeCurWind("l")<ESC><cr>
-unmap <C-h>
-unmap <C-l>
-nmap <C-h> :call ChangeCurWind("h")<ESC><cr>
-nmap <C-l> :call ChangeCurWind("l")<ESC><cr>
 nmap <C-j> <C-w>j
 nmap <C-k> <C-w>k
 nmap <leader>1 :vertical resize-10<CR> <ESC>
@@ -871,7 +867,7 @@ nnoremap <silent> st     :LeaderfBufTag<CR>
 nnoremap <silent> sta    :LeaderfBufTagAll<CR>
 nnoremap <silent> ss     :LeaderfLine<CR>
 nnoremap <silent> ssa    :LeaderfLineAll<CR>
-nnoremap <silent> sf    :LeaderfFunction<CR>
+nnoremap <silent> sfu   :LeaderfFunction<CR>
 nnoremap <silent> sfa   :LeaderfFunctionAll<CR>
 
 
