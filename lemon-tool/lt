@@ -88,58 +88,64 @@ case $1 in
         echo 
         #}}}
         ;;
+    "d")
+        ;;
     "diff")
         # {{{
         submitNum=''
-        if [[ $2 == "co" ]]; then
-            diffco=1
+        if [[ $2 == "" ]]; then
+          echo "Choose diff between regions."
+          read -e -p "w:work<->stage, s:stage<->commit, c:work<->commit [W/s/c] : " ret
+          if [[ $ret == "W" || $ret == "w" || $ret == "" ]] ; then
+            git d  
+          elif [[ $ret == "S" || $ret == "s" ]]; then 
+            git d  --staged
+          elif [[ $ret == "C" || $ret == "c" ]]; then 
+            git d  HEAD
+          fi
+          # break switch case
+          exit
         else 
-            submitNum=$2
+          submitNum=$2
         fi
+
+        # continous diff
+        read -e -p "Index or Continuous diff ? [C/i] : " ret
+        if [[ $ret == "c" || $ret == "C" || $ret == "" ]] ; then
+          git log --name-status -1 $submitNum
+          git d  `git log -1 --pretty=format:"%h %p" $submitNum`
+          exit
+        fi
+
+        # Index diff
         tmp_file="./tmp_file"
         touch $tmp_file
-        submit info $submitNum > $tmp_file
-        longPath=(`cat $tmp_file| grep @@`)
-        shortPath=(`cat $tmp_file | grep @@ | awk 'BEGIN {FS="@@"} {print $1}'`)
-        submitInfo=(`cat $tmp_file | grep "^Status" | awk '{print $2}'`)
-        checkoutfile=(`cleartool lsco -avobs -cview -sh`)
+        git log -1 $submitNum
+        git log --name-only -1 --pretty=format:"%h %p" $submitNum | grep -v "$submitNum" > $tmp_file
 
-        cat $tmp_file | grep @@ | awk 'BEGIN {FS="@@";print "Index \t Name"} {print NR-1 $0}' > /tmp/mss
-        cat /tmp/mss
+        commitFiles=(`cat $tmp_file`)
+        commitNums=`git log -1 --pretty=format:"%h %p" $submitNum`
+        #shortPath=(`cat $tmp_file | grep @@ | awk 'BEGIN {FS="@@"} {print $1}'`)
+        #submitInfo=(`cat $tmp_file | grep "^Status" | awk '{print $2}'`)
+
+        echo ""
+        cat $tmp_file |  awk 'BEGIN {FS="@@";print "Index \t Name"} {print NR-1 "\t" $0}' > /tmp/mss-ci-diff
+        cat /tmp/mss-ci-diff
         rm $tmp_file 
 
         echo "------------"
         read -e -p "Please choose the diff file ! [Idx/Exit/show] : " ret
         while [[ $ret != "exit" && $ret != "e" && $ret != "" ]] ; do
-            if [[ $ret == "show" ]]; then
-                cat /tmp/mss
-            else    
-                let objNum=${longPath[$ret]##*/}-1
-                if [[ $submitInfo == "integrated" || $submitInfo == "submitted" ]]; then
-                    oldFile=${longPath[$ret]%/*}/$objNum
-                    curFile=${longPath[$ret]}
-                else    
-                    # submit status is "open"
-                    existco=(`echo ${checkoutfile[@]} | grep ${longPath[$ret]%@@*}`)
-                    #echo $existco
-                    if [[ $diffco == 1 && -n $existco ]]; then
-                        oldFile=${longPath[$ret]%/*}/0
-                        curFile=${longPath[$ret]%@@*}
-                    elif [[ $objNum == -1 || -n $existco ]]; then
-                        oldFile=${longPath[$ret]}
-                        curFile=${longPath[$ret]%@@*}
-                    else
-                        #oldFile=${longPath[$ret]%/*}/$objNum
-                        oldFile=${longPath[$ret]%/*}/0
-                        curFile=${longPath[$ret]}
-                    fi
-                fi
-                difCmd="vimdiff $oldFile $curFile" 
-                #echo $difCmd
-                $difCmd
-            fi
-            echo 
-            read -p "Please choose the diff file ! [Idx/Exit/show] : " -e ret
+          if [[ $ret == "show" ]]; then
+            cat /tmp/mss-ci-diff
+          else    
+            objFile="${commitFiles[$ret]}"
+            difCmd="git d $commitNums -- $objFile" 
+            echo $difCmd
+            $difCmd
+          fi
+          echo 
+          read -p "Please choose the diff file ! [Idx/Exit/show] : " -e ret
         done
 
         echo ""
