@@ -792,12 +792,12 @@ map <leader>tm :tabmove
 
 " ##### Moving Hotkeys #####
 " ---move from the multiple screen
-nmap <C-h> :call ChangeCurWind("h")<ESC><cr>
-nmap <C-l> :call ChangeCurWind("l")<ESC><cr>
-unmap <C-h>
-unmap <C-l>
-nmap <C-h> :call ChangeCurWind("h")<ESC><cr>
-nmap <C-l> :call ChangeCurWind("l")<ESC><cr>
+"unmap <C-h>
+"unmap <C-l>
+"nmap <C-h> :call ChangeCurWind("h")<ESC><cr>
+"nmap <C-l> :call ChangeCurWind("l")<ESC><cr>
+nmap <C-h> <C-w>h
+nmap <C-l> <C-w>l
 nmap <C-j> <C-w>j
 nmap <C-k> <C-w>k
 nmap <leader>1 :vertical resize-10<CR> <ESC>
