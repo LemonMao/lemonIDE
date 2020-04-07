@@ -93,54 +93,63 @@ case $1 in
     "diff")
         # {{{
         submitNum=''
-        if [[ $2 == "" ]]; then
+        gitdiffcmd="git d"
+        tmp_file="/tmp/tmp_file"
+        touch $tmp_file
+        # diff local 
+        if [[ $2 == "" || $2 == "." ]]; then
+          git status 
           echo "Choose diff between regions."
           read -e -p "w:work<->stage, s:stage<->commit, c:work<->commit [W/s/c] : " ret
           if [[ $ret == "W" || $ret == "w" || $ret == "" ]] ; then
-            git d  
+            gitdiffcmd="git d"  
           elif [[ $ret == "S" || $ret == "s" ]]; then 
-            git d  --staged
+            gitdiffcmd="git d  --staged"
           elif [[ $ret == "C" || $ret == "c" ]]; then 
-            git d  HEAD
+            gitdiffcmd="git d  HEAD"
           fi
-          # break switch case
-          exit
+          # 
+          git status -s | awk '{print $2}' > $tmp_file
+          git status -s | awk 'BEGIN {FS=" ";print "Index \t Name"} {print NR-1 "\t" $2}' > /tmp/mss-ci-diff
         else 
+          # diff commit
           submitNum=$2
+          # Index diff old -- new
+          git log -1 $submitNum
+          # todo: please consider the merge branch which have two parrents.
+          git log --name-only -1 --pretty=format:"%p %h" $submitNum | grep -v "$submitNum" > $tmp_file
+          commitNums=`git log -1 --pretty=format:"%p %h" $submitNum`
+          cat $tmp_file |  awk 'BEGIN {FS="@@";print "Index \t Name"} {print NR-1 "\t" $0}' > /tmp/mss-ci-diff
+          gitdiffcmd="git d $commitNums "
         fi
 
         # continous diff
-        read -e -p "Index or Continuous diff ? [C/i] : " ret
-        if [[ $ret == "c" || $ret == "C" || $ret == "" ]] ; then
-          git log --name-status -1 $submitNum
-          git d  `git log -1 --pretty=format:"%h %p" $submitNum`
-          exit
-        fi
+        #read -e -p "Index or Continuous diff ? [c/I] : " ret
+        #if [[ $ret == "c" || $ret == "C" ]] ; then
+          #git log --name-status -1 $submitNum
+          ## %p:old commit , %h:Current commit
+          #git d  `git log -1 --pretty=format:"%p %h" $submitNum`
+          #exit
+        #fi
 
-        # Index diff
-        tmp_file="./tmp_file"
-        touch $tmp_file
-        git log -1 $submitNum
-        git log --name-only -1 --pretty=format:"%h %p" $submitNum | grep -v "$submitNum" > $tmp_file
 
-        commitFiles=(`cat $tmp_file`)
-        commitNums=`git log -1 --pretty=format:"%h %p" $submitNum`
+
         #shortPath=(`cat $tmp_file | grep @@ | awk 'BEGIN {FS="@@"} {print $1}'`)
         #submitInfo=(`cat $tmp_file | grep "^Status" | awk '{print $2}'`)
 
         echo ""
-        cat $tmp_file |  awk 'BEGIN {FS="@@";print "Index \t Name"} {print NR-1 "\t" $0}' > /tmp/mss-ci-diff
+        commitFiles=(`cat $tmp_file`)
         cat /tmp/mss-ci-diff
         rm $tmp_file 
 
-        echo "------------"
+        echo "------------ Old diff to New ----"
         read -e -p "Please choose the diff file ! [Idx/Exit/show] : " ret
         while [[ $ret != "exit" && $ret != "e" && $ret != "" ]] ; do
           if [[ $ret == "show" ]]; then
             cat /tmp/mss-ci-diff
           else    
             objFile="${commitFiles[$ret]}"
-            difCmd="git d $commitNums -- $objFile" 
+            difCmd="$gitdiffcmd -- $objFile" 
             echo $difCmd
             $difCmd
           fi

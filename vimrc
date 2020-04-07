@@ -83,7 +83,7 @@ set cinoptions=:0,l1,g0,t0,(0,(s    " C kind language indent options
 
 set tabstop=2                       " number of spaces in a tab
 set softtabstop=2                   " insert and delete space of <tab>
-set shiftwidth=2                   " number of spaces for indent
+set shiftwidth=4                   " number of spaces for indent
 set expandtab                       " expand tabs into spaces
 set incsearch                       " incremental search
 set hlsearch                        " highlight search match
@@ -255,27 +255,27 @@ function! AddProjectCscope()
     endfor
 endfunction
 
-if has("cscope")
-    set csto=0
-    set nocst
-    set nocsverb  " show the excute info
+"if has("cscope")
+    "set csto=0
+    "set nocst
+    "set nocsverb  " show the excute info
 
-    call AddProjectCscope()
-    "if isdirectory("project_vim")
-        "cd project_vim
-        "if filereadable("cscope.out")
-            "cs add cscope.out
-        "endif
-        "if filereadable("cscopedriv.out")
-            "cs add cscopedriv.out
-        "endif
-        "cd ..
-        "echo "hello ..."
-    "endif
-    "if filereadable("cscope.out")
-        "cs add cscope.out
-    "endif
-endif
+    "call AddProjectCscope()
+    ""if isdirectory("project_vim")
+        ""cd project_vim
+        ""if filereadable("cscope.out")
+            ""cs add cscope.out
+        ""endif
+        ""if filereadable("cscopedriv.out")
+            ""cs add cscopedriv.out
+        ""endif
+        ""cd ..
+        ""echo "hello ..."
+    ""endif
+    ""if filereadable("cscope.out")
+        ""cs add cscope.out
+    ""endif
+"endif
 
 
 " LookupFile setting
@@ -537,20 +537,28 @@ let g:echodoc_enable_at_startup = 1
 "
 " Utility Funtions
 function! RunShell(Msg, Shell)
-    "let s:curFile = getcwd() . '/' . bufname("%")
-    let s:curFile =  expand("%:p")
-	echo a:Msg . s:curFile
-    if filereadable(s:curFile)
-        let s:cmd = a:Shell . s:curFile
-        "echo s:cmd
-        call system(s:cmd)
-        exec "edit" 
-    endif
-    if match(a:Shell, "lg update ") > 0
-        call AddProjectCscope()
-        exec "cs reset"
-    endif
-	echo s:cmd "done"
+  echo a:Msg 
+  let s:curWord =  expand("<cword>")
+  let s:cmd = a:Shell . s:curWord
+  call system(s:cmd)
+  echo s:cmd "done"
+endfunction
+
+function! UpdateFile(Msg, Shell)
+  "let s:curFile = getcwd() . '/' . bufname("%")
+  let s:curFile =  expand("%:p")
+  echo a:Msg . s:curFile
+  if filereadable(s:curFile)
+    let s:cmd = a:Shell . s:curFile
+    "echo s:cmd
+    call system(s:cmd)
+    exec "edit" 
+  endif
+  if match(a:Shell, "lg update ") > 0
+    call AddProjectCscope()
+    exec "cs reset"
+  endif
+  echo s:cmd "done"
 endfunction
 
 function! ToggleMouse()                                                          
@@ -623,8 +631,8 @@ if executable('ctags')
 endif
 if executable('gtags-cscope') && executable('gtags')
     let g:gutentags_modules += ['gtags_cscope']
-else
-    let g:gutentags_modules += ['ctags']
+"else
+    "let g:gutentags_modules += ['ctags']
 endif
 " 将自动生成的 ctags/gtags 文件全部放入 ~/.cache/tags 目录中，避免污染工程目录
 let s:vim_tags = expand('~/.cache/tags')
@@ -634,7 +642,7 @@ let g:gutentags_ctags_extra_args = ['--fields=+niazS', '--extra=+q']
 let g:gutentags_ctags_extra_args += ['--c++-kinds=+px']
 let g:gutentags_ctags_extra_args += ['--c-kinds=+px']
 " 如果使用 universal ctags 需要增加下面一行
-"let g:gutentags_ctags_extra_args += ['--output-format=e-ctags']
+let g:gutentags_ctags_extra_args += ['--output-format=e-ctags']
 " 禁用 gutentags 自动加载 gtags 数据库的行为
 let g:gutentags_auto_add_gtags_cscope = 0
 " 检测 ~/.cache/tags 不存在就新建
@@ -646,6 +654,8 @@ let g:gutentags_define_advanced_commands = 1
 let g:gutentags_plus_switch = 1
 let g:gutentags_plus_nomap = 1
 
+set csto=1 "1 find ctags first, 0 find cscope db first
+set cst  " cst jump to definition derectly, nocst show info 
 set cscopetag
 set cscopeprg=gtags-cscope
 "set cscopequickfix=c+,d+,e+,f+,i+,s+,t+
@@ -772,15 +782,15 @@ nmap <Leader>F :NERDTreeFind<CR>
 " F1 ~~ F12 hotkey mapping
 "nmap <F2>  :AsyncRun lt find zebos/
 nmap <F3>  :diffput<cr>
-nmap <F4>  :AsyncRun lt find zebos/
+nmap <F4>  :AsyncRun find . -type f \| xargs grep -n ""
 "nmap <F4>  :vimgrep //g zebos/**/*.[ch]
 "nmap <F5> <Plug>LookupFile " This has been mapped in lookupfile plugin 
 nmap <F5>  <leader>#
 nmap <F6>  <leader>*
-nmap <F7>  :AsyncRun cd /vobs/nosx/nos/build/mars; make 
-nmap <F9>  :call RunShell("Check out file : ", "/usr/atria/bin/cleartool co ")<cr>
-nmap <F10> :call RunShell("Uncheck out file : ", "/usr/atria/bin/cleartool unco -rm ")<cr>
-nmap <F11> :call RunShell("Update current project_vim info! ", "cd /vobs/nosx;lg update ")<cr>
+nmap <F7>  :AsyncRun cd ;make 
+nmap <F9>  :call UpdateFile("Check out file : ", "/usr/atria/bin/cleartool co ")<cr>
+nmap <F10> :call UpdateFile("Uncheck out file : ", "/usr/atria/bin/cleartool unco -rm ")<cr>
+nmap <F11> :call UpdateFile("Update current project_vim info! ", "cd /vobs/nosx;lg update ")<cr>
 nmap <F12> :call ToggleMouse() <CR> 
 "nmap <silent> <C-1> *<CR>
 
@@ -904,6 +914,11 @@ noremap <m-c> :PreviewClose <cr>
 "Airline 设置切换Buffer快捷键"
 "nnoremap <C-N> :bn<CR>
 nnoremap <C-P> :bp<CR>
+
+" cppman
+" apt install cppman
+" noremap <m-k> :call RunShell("Cppman: ", "cppman  ")<cr>
+noremap <m-k> :!cppman <C-R>=expand("<cword>")<cr><cr>
 
 " close 
 nnoremap <m-q> :cclose<cr>
