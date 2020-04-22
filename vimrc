@@ -81,8 +81,8 @@ set scrolloff=5                     " minimal number of screen lines to keep bey
 set autoindent                      " automatically indent new line
 set cinoptions=:0,l1,g0,t0,(0,(s    " C kind language indent options
 
-set tabstop=2                       " number of spaces in a tab
-set softtabstop=2                   " insert and delete space of <tab>
+set tabstop=4                       " number of spaces in a tab
+set softtabstop=4                   " insert and delete space of <tab>
 set shiftwidth=4                   " number of spaces for indent
 set expandtab                       " expand tabs into spaces
 set incsearch                       " incremental search
