@@ -564,16 +564,17 @@ endfunction
 function! ToggleMouse()                                                          
     if  s:numberf == 1
         let s:numberf = 0
-        exec "IndentLinesToggle" 
+        exec "IndentLinesDisable" 
         set nonumber
+        set nopaste
     else 
         let s:numberf = 1
-        exec "IndentLinesToggle" 
+        exec "IndentLinesEnable" 
         set number
+        set paste
     endif
-    "<cr>
-    "exec "<cr>"
     echo "Done!"                                                      
+    "exec "<cr>"
     "if &mouse == 'a'                                                                 
         "set mouse=                                                                                                                                    
         "set nonumber                                                                     
@@ -791,7 +792,7 @@ nmap <F7>  :AsyncRun cd ;make
 nmap <F9>  :call UpdateFile("Check out file : ", "/usr/atria/bin/cleartool co ")<cr>
 nmap <F10> :call UpdateFile("Uncheck out file : ", "/usr/atria/bin/cleartool unco -rm ")<cr>
 nmap <F11> :call UpdateFile("Update current project_vim info! ", "cd /vobs/nosx;lg update ")<cr>
-nmap <F12> :call ToggleMouse() <CR> 
+nmap <F12> :call ToggleMouse() <cr> <CR>
 "nmap <silent> <C-1> *<CR>
 
 " useful mappings for managing tabs
