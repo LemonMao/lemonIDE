@@ -619,7 +619,7 @@ endfunction
 " 第一个 GTAGSLABEL 告诉 gtags 默认 C/C++/Java 等六种原生支持的代码直接使用
 " gtags 本地分析器，而其他语言使用 pygments 模块。
 let $GTAGSLABEL = 'native-pygments'
-let $GTAGSCONF = '/home/sonicwall/.globalrc'
+" let $GTAGSCONF = '/home/sonicwall/.globalrc'
 
 " gutentags 搜索工程目录的标志，当前文件路径向上递归直到碰到这些文件/目录名
 let g:gutentags_project_root = ['.root', '.svn', '.git', '.hg', '.project']
@@ -920,6 +920,12 @@ nnoremap <C-P> :bp<CR>
 " apt install cppman
 " noremap <m-k> :call RunShell("Cppman: ", "cppman  ")<cr>
 noremap <m-k> :!cppman <C-R>=expand("<cword>")<cr><cr>
+
+" git merge tool
+map <silent> <leader>g1 :diffget 1<CR> :diffupdate<CR>
+map <silent> <leader>g2 :diffget 2<CR> :diffupdate<CR>
+map <silent> <leader>g3 :diffget 3<CR> :diffupdate<CR>
+map <silent> <leader>g4 :diffget 4<CR> :diffupdate<CR>
 
 " close 
 nnoremap <m-q> :cclose<cr>

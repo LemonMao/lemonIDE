@@ -1,9 +1,18 @@
 export PATH=$PATH:~/.vim/lemon-tool/
 
 #Lemon Aliases
+alias lsalias="cat ~/.bashrc | grep -A 1000 'Lemon Aliases' | grep alias"
 alias ll="ls -lthr"
 alias ld="ls -lthr -F | grep /$"
 alias la="ls -lathr"
 alias tmnew="tmux -2 new -s "
 alias tmls="tmux ls"
 alias tmat="tmux -2 att -t "
+alias lxc="sudo /usr/bin/lxc "
+alias serfind='sudo systemctl list-units | grep '
+alias lscpu="cat /proc/cpuinfo | grep 'physical id' | sort | uniq | wc -l;\
+             cat /proc/cpuinfo | grep 'cpu cores' | sort | uniq;\
+             cat /proc/cpuinfo | grep 'siblings' | sort | uniq;\
+             total=`cat /proc/cpuinfo | grep process | uniq | wc -l` && \
+             echo -e '\ntotal logical cores: ${total}';\
+             "
