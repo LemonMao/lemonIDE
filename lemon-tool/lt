@@ -117,10 +117,10 @@ case $1 in
           # Index diff old -- new
           git log -1 $submitNum
           # todo: please consider the merge branch which have two parrents.
-          git log --name-status -1 --pretty=format:"%p %h" $submitNum | grep -v "$submitNum" > $tmp_file
-          commitNums=`git log -1 --pretty=format:"%p %h" $submitNum`
+          #git log --name-status -1 --pretty=format:"%p %h" $submitNum | grep -v "$submitNum" > $tmp_file
+          git diff --name-status $2 $2^ > $tmp_file
           cat $tmp_file |  awk 'BEGIN {FS="@@";print "Index\tStatus\tName"} {print NR-1 "\t" $0}' > /tmp/mss-ci-diff
-          gitdiffcmd="git d -y $commitNums "
+          gitdiffcmd="git d -y $submitNum $submitNum^"
         fi
 
         # continous diff

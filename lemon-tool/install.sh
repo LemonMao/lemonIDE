@@ -33,10 +33,15 @@ echo " "
 #cp ../doc ~/.vim/ -rf
 
 ###########  Install plugins online
-echo "Get in the VIM to install plugin with BundleInstall command ..."
-sleep 3
-vim +PlugInstall +qall
-echo " "
+read -e -p "Remotely install plugin [Y/n]" ret
+if [[ $ret != "n" ]] ; then
+    vim +PlugInstall +qall
+    echo " "
+else
+    cd ~/.vim/
+    tar zxvf plugged.tar.gz 
+    cd -
+fi
 
 ###########  Customize private plugins 
 # my theme
