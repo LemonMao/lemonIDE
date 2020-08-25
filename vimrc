@@ -566,12 +566,12 @@ function! ToggleMouse()
         let s:numberf = 0
         exec "IndentLinesDisable" 
         set nonumber
-        set nopaste
+        set paste
     else 
         let s:numberf = 1
         exec "IndentLinesEnable" 
         set number
-        set paste
+        set nopaste
     endif
     echo "Done!"                                                      
     "exec "<cr>"
@@ -789,7 +789,8 @@ nmap <F4>  :AsyncRun find . -type f \| xargs grep -n ""
 nmap <F5>  <leader>#
 nmap <F6>  <leader>*
 nmap <F7>  :AsyncRun cd ;make 
-nmap <F9>  :call UpdateFile("Check out file : ", "/usr/atria/bin/cleartool co ")<cr>
+nmap <F9>  :GscopeFind s 
+"nmap <F9>  :call UpdateFile("Check out file : ", "/usr/atria/bin/cleartool co ")<cr>
 nmap <F10> :call UpdateFile("Uncheck out file : ", "/usr/atria/bin/cleartool unco -rm ")<cr>
 nmap <F11> :call UpdateFile("Update current project_vim info! ", "cd /vobs/nosx;lg update ")<cr>
 nmap <F12> :call ToggleMouse() <cr> <CR>
@@ -921,7 +922,7 @@ nnoremap <C-P> :bp<CR>
 " noremap <m-k> :call RunShell("Cppman: ", "cppman  ")<cr>
 noremap <m-k> :!cppman <C-R>=expand("<cword>")<cr><cr>
 
-" git merge tool
+" run #git mergetool
 map <silent> <leader>g1 :diffget 1<CR> :diffupdate<CR>
 map <silent> <leader>g2 :diffget 2<CR> :diffupdate<CR>
 map <silent> <leader>g3 :diffget 3<CR> :diffupdate<CR>

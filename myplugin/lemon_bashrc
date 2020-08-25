@@ -8,11 +8,17 @@ alias la="ls -lathr"
 alias tmnew="tmux -2 new -s "
 alias tmls="tmux ls"
 alias tmat="tmux -2 att -t "
+alias apt="sudo apt "
 alias lxc="sudo /usr/bin/lxc "
-alias serfind='sudo systemctl list-units | grep '
-alias lscpu="cat /proc/cpuinfo | grep 'physical id' | sort | uniq | wc -l;\
+alias docker="sudo /usr/bin/docker "
+alias servfind='sudo systemctl list-units | grep '
+alias lscpu="cat /proc/cpuinfo | grep 'model name' | uniq;\
              cat /proc/cpuinfo | grep 'cpu cores' | sort | uniq;\
              cat /proc/cpuinfo | grep 'siblings' | sort | uniq;\
-             total=`cat /proc/cpuinfo | grep process | uniq | wc -l` && \
+             total=`cat /proc/cpuinfo | grep processor | uniq | wc -l` && \
              echo -e '\ntotal logical cores: ${total}';\
              "
+
+# project aliases
+alias gcfs5="cd ~/lemon/project/cfs5/cfs_server_5"
+alias gcfs5cli="cd ~/lemon/project/cfs5-client"
