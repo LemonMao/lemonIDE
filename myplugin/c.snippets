@@ -78,11 +78,13 @@ snippet wh
 snippet for
 	for (${2:i} = 0; $2 < ${1:count}; $2${3:++}) 
 	{
+	    ${4}
 	}
 # for each iteration Loop container
 snippet fore
 	for (auto &it : ${1})
 	{
+	    ${2}
 	}
 snippet forx
 	for (${1:i = 0}; ${2:i < 10}; ${3:i++}) 
@@ -197,6 +199,14 @@ snippet seg
 	// ${1}
 	//==============================================================================
 # }}}
+
+# -- useful tricks
+snippet [
+	${1}[${2}]${3}
+snippet [[
+	${1}[${2}][${3}]${4}
+snippet {
+	${1}{${2}}${3}
 
 #	 * History:
 #	 * --------

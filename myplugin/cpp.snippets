@@ -7,12 +7,51 @@ snippet readfile
 			v.insert(v.end(), buf, buf + len);
 		fclose($2);
 	}${3}
+
+## -- structure
 # std::map
 snippet map
-	std::map<${1:key}, ${2:value}> map${3};
+	std::map<${1:key}, ${2:value}> ${3}
 # std::vector
 snippet vec
-	std::vector<${1:char}> v${2};
+	std::vector<${1:std::string}> ${2}
+# std::string
+snippet str
+	std::string ${1}
+# std::array
+snippet arr
+	std::array<${1:std::string}, ${2:length}> ${3}
+# std::list
+snippet lis
+	std::list<${1}> ${2}
+# std::deque
+snippet deq
+	std::deque<${1}> ${2}
+# std::queue
+snippet que
+	std::queue<${1}> ${2}
+# std::umap
+snippet uno
+	std::unordered_map<${1:std::string}, ${2:val}> ${3}
+# std::shared_ptr
+snippet sptr
+	std::shared_ptr<${1}> ${2}
+# std::unique_ptr
+snippet uptr
+	std::unique_ptr<${1}> ${2}
+snippet enu 
+	enum class ${1:name} {${2}};
+snippet loc 
+	std::lock_guard<std::mutex> lock{${1:mutex_name}};
+
+
+# std::make_shared()
+snippet makesha
+	auto ${1} = std::make_shared<${2}>(${3});
+snippet makesha2
+	std::make_shared<${1}>(${2});
+
+
 # Namespace
 snippet ns
 	namespace ${1:`Filename('', 'my')`} 
@@ -20,13 +59,71 @@ snippet ns
 		${2}
 	} /* $1 */
 # Class
-snippet cl
+snippet clc
 	class ${1:`Filename('$1', 'name')`} 
 	{
 	public:
+		// ctor and dtor
 		$1();
-		~$1();
+		~$1() = default;
+
+		// default copyable and moveable
+		$1(const $1 &) = default;
+		$1& operator=(const $1 &) = default;
+		$1($1 &&) noexcept = default;
+		$1& operator=($1 &&) noexcept = default;
 	
 	private:
 	};
 
+snippet cl
+	class ${1:`Filename('$1', 'name')`} 
+	{
+	public:
+		// ctor and dtor
+		$1();
+		~$1() = default;
+
+		// non-copyable and non-moveable
+		$1(const $1 &) = delete;
+		$1& operator=(const $1 &) = delete;
+	
+	private:
+	};
+
+# default function
+
+## -- function
+# std::cout
+snippet cout
+	std::cout << ${1} << std::endl;
+snippet cerr
+	std::cerr << ${1} << std::endl;
+
+## -- Header file
+# <string>
+snippet strhdr
+	#include <string>
+snippet maphdr
+	#include <map>
+snippet vechdr
+	#include <vector>
+snippet deqhdr
+	#include <deque>
+snippet quehdr
+	#include <queue>
+snippet arrhdr
+	#include <array>
+snippet unohdr
+	#include <unordered_map>
+snippet ptrhdr
+	#include <memory>
+
+## -- Header file
+snippet tem
+	template <typename ${1}>
+snippet temf
+	template <typename ${1}>
+	${2:fun_name}()
+	{
+	}

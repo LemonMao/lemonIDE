@@ -162,6 +162,39 @@ case $1 in
         echo "------------"
         # }}}
         ;;
+    "br")
+        # {{{
+        tmp_file="/tmp/tmp_file"
+        touch $tmp_file
+        git branch > $tmp_file
+        cat $tmp_file |  awk 'BEGIN {print "Index\tBranch"} {print NR-1 "\t" $0}' > /tmp/mss-ci-diff
+        gitdiffcmd="git d -y $submitNum^ $submitNum"
+
+        echo ""
+        #cat $tmp_file
+        branchList=(`cat $tmp_file | awk '{if($1 == "*") {print $2} else {print $1} }'`)
+        cat /tmp/mss-ci-diff
+        rm $tmp_file 
+        read -e -p "Please choose the branch you want! [Idx/Exit/show] : " ret
+
+        while [[ $ret != "exit" && $ret != "e" && $ret != "" ]] ; do
+          if [[ $ret == "show" ]]; then
+            cat /tmp/mss-ci-diff
+          else    
+            #echo ${branchList}
+            difCmd="git checkout ${branchList[$ret]}" 
+            echo $difCmd
+            $difCmd
+          fi
+          break
+        done
+
+        echo ""
+        echo "Bye !"
+        echo "------------"
+        # }}}
+        ;;
+
     "lstr")
         # {{{ 
         lsvtreeCmd="sct lsvtree -short "

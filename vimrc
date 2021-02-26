@@ -175,6 +175,14 @@ let g:NERDTreeQuitOnOpen=1
 let g:snip_author   = "Lemon Mao"
 let g:snip_mail     = "shmao@sonicwall.com"
 let g:snip_company  = "Sonicwall Corporation."
+" show the short key mappings
+ino <silent> <tab> <c-r>=TriggerSnippet()<cr>
+snor <silent> <tab> <esc>i<right><c-r>=TriggerSnippet()<cr>
+"ino <silent> <m-y> <c-r>=TriggerSnippet()<cr>
+"snor <silent> <m-y> <esc>i<right><c-r>=TriggerSnippet()<cr>
+"ino <silent> <s-tab> <c-r>=BackwardsSnippet()<cr>
+"snor <silent> <s-tab> <esc>i<right><c-r>=BackwardsSnippet()<cr>
+"ino <silent> <c-r><tab> <c-r>=ShowAvailableSnips()<cr>
 
 " man.vim - view man page in VIM
 source $VIMRUNTIME/ftplugin/man.vim
@@ -253,6 +261,15 @@ function! AddProjectCscope()
             let s:csCnt+=1
         endif
     endfor
+    nmap <leader>ss :cs find s <C-R>=expand("<cword>")<cr><cr>
+    nmap <leader>ss :cs find s <C-R>=expand("<cword>")<cr><cr>
+    nmap <leader>sg :cs find g <C-R>=expand("<cword>")<cr><cr>
+    nmap <leader>sc :cs find c <C-R>=expand("<cword>")<cr><cr>
+    nmap <leader>st :cs find t <C-R>=expand("<cword>")<cr><cr>
+    nmap <leader>se :cs find e <C-R>=expand("<cword>")<cr><cr>
+    nmap <leader>sf :cs find f <C-R>=expand("<cfile>")<cr><cr>
+    nmap <leader>si :cs find i <C-R>=expand("<cfile>")<cr><cr>
+    nmap <leader>sd :cs find d <C-R>=expand("<cword>")<cr><cr>
 endfunction
 
 "if has("cscope")
@@ -488,6 +505,9 @@ let g:ale_linters = {
 let s:numberf = 1
 
 " YCM
+" YouCompleteMe
+let g:ycm_key_list_select_completion = ['<Down>']
+let g:ycm_key_list_previous_completion = ['<Up>']
 let g:ycm_add_preview_to_completeopt = 0
 let g:ycm_show_diagnostics_ui = 0
 let g:ycm_server_log_level = 'info'
@@ -530,6 +550,7 @@ let g:echodoc#type = "echo" " Default value
 set noshowmode
 "set cmdheight=2
 let g:echodoc_enable_at_startup = 1
+
 "}}}
 
 " Lemon Mao - configure: {{{
@@ -632,18 +653,17 @@ if executable('ctags')
 endif
 if executable('gtags-cscope') && executable('gtags')
     let g:gutentags_modules += ['gtags_cscope']
-"else
-    "let g:gutentags_modules += ['ctags']
 endif
 " 将自动生成的 ctags/gtags 文件全部放入 ~/.cache/tags 目录中，避免污染工程目录
 let s:vim_tags = expand('~/.cache/tags')
 let g:gutentags_cache_dir = s:vim_tags
 " 配置 ctags 的参数
-let g:gutentags_ctags_extra_args = ['--fields=+niazS', '--extra=+q']
+let g:gutentags_ctags_extra_args = ['--fields=+niazS', '--extras=+q']
 let g:gutentags_ctags_extra_args += ['--c++-kinds=+px']
 let g:gutentags_ctags_extra_args += ['--c-kinds=+px']
 " 如果使用 universal ctags 需要增加下面一行
 let g:gutentags_ctags_extra_args += ['--output-format=e-ctags']
+"let g:gutentags_gtags_extra_args += ['--skip-unreadable']
 " 禁用 gutentags 自动加载 gtags 数据库的行为
 let g:gutentags_auto_add_gtags_cscope = 0
 " 检测 ~/.cache/tags 不存在就新建
