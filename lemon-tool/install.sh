@@ -59,12 +59,9 @@ fi
 [ -e ~/.NERDTreeBookmarks ] && mv ~/.NERDTreeBookmarks $vimbak/NERDTreeBookmarks-bak
 ln -s $srcPluginPath/NERDTreeBookmarks ~/.NERDTreeBookmarks
 # c&sh snippets.
-[ -e $dstPluginPath/snipMate/snippets/c.snippets ] && mv $dstPluginPath/snipMate/snippets/c.snippets $vimbak/
-[ -e $dstPluginPath/snipMate/snippets/cpp.snippets ] && mv $dstPluginPath/snipMate/snippets/cpp.snippets $vimbak/
-[ -e $dstPluginPath/snipMate/snippets/sh.snippets ] && mv $dstPluginPath/snipMate/snippets/sh.snippets $vimbak/
-ln -s $srcPluginPath/c.snippets  $dstPluginPath/snipMate/snippets/c.snippets 
-ln -s $srcPluginPath/cpp.snippets  $dstPluginPath/snipMate/snippets/cpp.snippets 
-ln -s $srcPluginPath/sh.snippets $dstPluginPath/snipMate/snippets/sh.snippets
+rm -rf $dstPluginPath/snipMate/snippets/c.snippets && ln -s $srcPluginPath/c.snippets  $dstPluginPath/snipMate/snippets/c.snippets 
+rm -rf $dstPluginPath/snipMate/snippets/cpp.snippets && ln -s $srcPluginPath/cpp.snippets  $dstPluginPath/snipMate/snippets/cpp.snippets 
+rm -rf $dstPluginPath/snipMate/snippets/sh.snippets && ln -s $srcPluginPath/sh.snippets $dstPluginPath/snipMate/snippets/sh.snippets
 #[ -e  ] && mv 
 
 

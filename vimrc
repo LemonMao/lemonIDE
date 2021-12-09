@@ -681,7 +681,7 @@ let g:gutentags_ctags_extra_args += ['--c-kinds=+px']
 let g:gutentags_ctags_extra_args += ['--output-format=e-ctags', '--extras=+q']
 "let g:gutentags_gtags_extra_args += ['--skip-unreadable']
 " 禁用 gutentags 自动加载 gtags 数据库的行为
-let g:gutentags_auto_add_gtags_cscope = 0
+let g:gutentags_auto_add_gtags_cscope = 1
 " 检测 ~/.cache/tags 不存在就新建
 if !isdirectory(s:vim_tags)
     silent! call mkdir(s:vim_tags, 'p')
