@@ -55,6 +55,44 @@ case $1 in
                 ;;
         esac
         ;;
+    "ssh")
+        [ -e ~/.sshhosts ] || echo "Not found SSH hosts file. Please create first"
+        [ -e ~/.sshhosts ] || exit 2
+
+        let num=0
+        declare -a hosts 
+
+        echo "Hosts info(.sshhosts):"
+        
+        echo "---------------------"
+        oLDIFS=$IFS ; IFS=$'\n' hosts=(`cat ~/.sshhosts`) 
+        for host in ${hosts[*]}; do
+            echo -e "$num\t$host"
+            num=$(($num + 1))
+        done
+        IFS=$oLDIFS
+        echo "---------------------"
+        
+
+        read -e -p "Please choose the host: " num
+        read -e -p "Please choose the user: [Lmao|Root|other]: " user
+        [[ $user == 'l' || $user == 'L' ]] && user="lmao"
+        [[ $user == 'r' || $user == 'R' ]] && user="root"
+        [[ -z $user ]] && user="root"
+
+        if [[ $num =~ [0-9]-[0-9] ]]; then
+            sep="*-"
+            nodenum=$((${num#*-}-1))
+            host=`echo ${hosts[${num%-*}]} | awk '{print $1}'`
+            [ $nodenum -gt 0 ] && host=${host%.*}"."$((${host##*.} + $nodenum))
+            echo $nodenum , $host
+        else
+            host=`echo ${hosts[$num]} | awk '{print $1}'`
+        fi
+        CMD="ssh $user@$host"
+        echo $CMD
+        $CMD
+        ;;
     "tar")
         tar -zcvpf ${2}.tar.gz $2
         #zip -r ${2}.zip $2

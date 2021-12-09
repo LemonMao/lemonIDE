@@ -38,8 +38,11 @@ Plug 'ludovicchabant/vim-gutentags'
 Plug 'skywind3000/asyncrun.vim'
 Plug 'skywind3000/gutentags_plus'
 Plug 'skywind3000/vim-preview'
-Plug 'Valloric/YouCompleteMe'
+"Plug 'Valloric/YouCompleteMe'
+Plug 'roxma/nvim-yarp'
+Plug 'roxma/vim-hug-neovim-rpc'
 Plug 'Shougo/echodoc.vim'
+Plug 'Shougo/deoplete.nvim'
 
 " Good plugin, but not need now
 "Plug 'tpope/vim-fugitive' " Git wrapper 
@@ -240,7 +243,7 @@ let g:Lf_WildIgnore = {
     \ 'file': ['*.sw?','~$*','*.bak','*.exe','*.o','*.so','*.py[co]']
     \}
 let g:Lf_CtagsFuncOpts = {
-    \ 'c': '--c-kinds=fp',
+    \ 'c': '--c-kinds=f',
     \ }
 
 
@@ -504,44 +507,49 @@ let g:ale_linters = {
 
 let s:numberf = 1
 
-" YCM
-" YouCompleteMe
-let g:ycm_key_list_select_completion = ['<Down>']
-let g:ycm_key_list_previous_completion = ['<Up>']
-let g:ycm_add_preview_to_completeopt = 0
-let g:ycm_show_diagnostics_ui = 0
-let g:ycm_server_log_level = 'info'
-let g:ycm_min_num_identifier_candidate_chars = 2
-let g:ycm_collect_identifiers_from_comments_and_strings = 1
-let g:ycm_complete_in_strings=1
-let g:ycm_key_invoke_completion = '<m-y>'
-" stop completion is <c-y>
-set completeopt=menu,menuone
-
-"noremap <c-z> <NOP>
-
-let g:ycm_semantic_triggers =  {
-            \ 'c,cpp,python,java,go,erlang,perl': ['re!\w{3}'],
-            \ 'cs,lua,javascript': ['re!\w{2}'],
-            \ }
-
-let g:ycm_filetype_whitelist = { 
-            \ "c":1,
-            \ "cpp":1, 
-            \ "objc":1,
-            \ "sh":1,
-            \ "zsh":1,
-            \ "zimbu":1,
-            \ }
+" Deoplete : Dark powered asynchronous completion framework for neovim/Vim8
+let g:deoplete#enable_at_startup = 1
 highlight PMenu ctermfg=0 ctermbg=242 guifg=black guibg=darkgrey
 highlight PMenuSel ctermfg=242 ctermbg=8 guifg=darkgrey guibg=black
 
-"let g:ycm_global_ycm_extra_conf='~/.ycm_extra_conf.py'  "设置全局配置文件的路径
-"let g:ycm_seed_identifiers_with_syntax=1    " 语法关键字补全
-let g:ycm_confirm_extra_conf=0  " 打开vim时不再询问是否加载ycm_extra_conf.py配置
-"let g:ycm_key_invoke_completion = '<C-a>' " ctrl + a 触发补全，防止与其他插件冲突
-"set completeopt=longest,menu    "让Vim的补全菜单行为与一般IDE一致(参考VimTip1228)
-"nnoremap <leader>jd :YcmCompleter GoToDefinitionElseDeclaration<CR> "定义跳转快捷键
+" YCM
+" YouCompleteMe
+"let g:ycm_key_list_select_completion = ['<Down>']
+"let g:ycm_key_list_previous_completion = ['<Up>']
+"let g:ycm_add_preview_to_completeopt = 0
+"let g:ycm_show_diagnostics_ui = 0
+"let g:ycm_server_log_level = 'info'
+"let g:ycm_min_num_identifier_candidate_chars = 2
+"let g:ycm_collect_identifiers_from_comments_and_strings = 1
+"let g:ycm_complete_in_strings=1
+"let g:ycm_key_invoke_completion = '<m-y>'
+"" stop completion is <c-y>
+"set completeopt=menu,menuone
+
+""noremap <c-z> <NOP>
+
+"let g:ycm_semantic_triggers =  {
+            "\ 'c,cpp,python,java,go,erlang,perl': ['re!\w{3}'],
+            "\ 'cs,lua,javascript': ['re!\w{2}'],
+            "\ }
+
+"let g:ycm_filetype_whitelist = { 
+            "\ "c":1,
+            "\ "cpp":1, 
+            "\ "objc":1,
+            "\ "sh":1,
+            "\ "zsh":1,
+            "\ "zimbu":1,
+            "\ }
+"highlight PMenu ctermfg=0 ctermbg=242 guifg=black guibg=darkgrey
+"highlight PMenuSel ctermfg=242 ctermbg=8 guifg=darkgrey guibg=black
+
+""let g:ycm_global_ycm_extra_conf='~/.ycm_extra_conf.py'  "设置全局配置文件的路径
+""let g:ycm_seed_identifiers_with_syntax=1    " 语法关键字补全
+"let g:ycm_confirm_extra_conf=0  " 打开vim时不再询问是否加载ycm_extra_conf.py配置
+""let g:ycm_key_invoke_completion = '<C-a>' " ctrl + a 触发补全，防止与其他插件冲突
+""set completeopt=longest,menu    "让Vim的补全菜单行为与一般IDE一致(参考VimTip1228)
+""nnoremap <leader>jd :YcmCompleter GoToDefinitionElseDeclaration<CR> "定义跳转快捷键
 
 
 
@@ -550,6 +558,13 @@ let g:echodoc#type = "echo" " Default value
 set noshowmode
 "set cmdheight=2
 let g:echodoc_enable_at_startup = 1
+
+" Or, you could use vim's popup window feature.
+"let g:echodoc#enable_at_startup = 1
+"let g:echodoc#type = 'popup'
+" To use a custom highlight for the popup window,
+" change Pmenu to your highlight group
+"highlight link EchoDocPopup Pmenu
 
 "}}}
 
@@ -640,10 +655,11 @@ endfunction
 " 第一个 GTAGSLABEL 告诉 gtags 默认 C/C++/Java 等六种原生支持的代码直接使用
 " gtags 本地分析器，而其他语言使用 pygments 模块。
 let $GTAGSLABEL = 'native-pygments'
-" let $GTAGSCONF = '/home/sonicwall/.globalrc'
+let $GTAGSCONF = '/ifs/home/lmao/.globalrc'
 
 " gutentags 搜索工程目录的标志，当前文件路径向上递归直到碰到这些文件/目录名
-let g:gutentags_project_root = ['.root', '.svn', '.git', '.hg', '.project']
+let g:gutentags_project_root = ['.root', '.project']
+"let g:gutentags_project_root = ['.root', '.svn', '.git', '.hg', '.project']
 " 所生成的数据文件的名称
 let g:gutentags_ctags_tagfile = '.tags'
 " 同时开启 ctags 和 gtags 支持：
@@ -658,11 +674,11 @@ endif
 let s:vim_tags = expand('~/.cache/tags')
 let g:gutentags_cache_dir = s:vim_tags
 " 配置 ctags 的参数
-let g:gutentags_ctags_extra_args = ['--fields=+niazS', '--extras=+q']
+let g:gutentags_ctags_extra_args = ['--fields=+niazS']
 let g:gutentags_ctags_extra_args += ['--c++-kinds=+px']
 let g:gutentags_ctags_extra_args += ['--c-kinds=+px']
 " 如果使用 universal ctags 需要增加下面一行
-let g:gutentags_ctags_extra_args += ['--output-format=e-ctags']
+let g:gutentags_ctags_extra_args += ['--output-format=e-ctags', '--extras=+q']
 "let g:gutentags_gtags_extra_args += ['--skip-unreadable']
 " 禁用 gutentags 自动加载 gtags 数据库的行为
 let g:gutentags_auto_add_gtags_cscope = 0
@@ -671,8 +687,6 @@ if !isdirectory(s:vim_tags)
     silent! call mkdir(s:vim_tags, 'p')
 endif
 let g:gutentags_define_advanced_commands = 1
-" change focus to quickfix window after search (optional).
-let g:gutentags_plus_switch = 1
 let g:gutentags_plus_nomap = 1
 
 set csto=1 "1 find ctags first, 0 find cscope db first
@@ -809,7 +823,7 @@ nmap <F4>  :AsyncRun find . -type f \| xargs grep -n ""
 nmap <F5>  <leader>#
 nmap <F6>  <leader>*
 nmap <F7>  :AsyncRun cd ;make 
-nmap <F9>  :GscopeFind s 
+nmap <F9>  :GscopeFind g 
 "nmap <F9>  :call UpdateFile("Check out file : ", "/usr/atria/bin/cleartool co ")<cr>
 nmap <F10> :call UpdateFile("Uncheck out file : ", "/usr/atria/bin/cleartool unco -rm ")<cr>
 nmap <F11> :call UpdateFile("Update current project_vim info! ", "cd /vobs/nosx;lg update ")<cr>
@@ -830,8 +844,8 @@ nmap <C-j> <C-w>j
 nmap <C-k> <C-w>k
 nmap <leader>1 :vertical resize-10<CR> <ESC>
 nmap <leader>2 :vertical resize+10<CR> <ESC>
-"nmap <C-h> <C-w>h
-"nmap <C-l> <C-w>l
+"nmap <C-H> <C-w>W
+"nmap <C-L> <C-w>w
 " ---Ctrol-E to switch between 2 last buffers
 nmap <C-E> :b#<CR>
 " ########################
