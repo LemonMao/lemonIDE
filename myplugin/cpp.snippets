@@ -39,31 +39,31 @@ snippet sptr
 # std::unique_ptr
 snippet uptr
 	std::unique_ptr<${1}> ${2}
-snippet enu 
+snippet enu
 	enum class ${1:name} {${2}};
-snippet loc 
+snippet loc
 	std::lock_guard<std::mutex> lock{${1:mutex_name}};
 
 
 # std::make_shared()
-snippet makesha
+snippet makesh auto xx = make_shared<>()
 	auto ${1} = std::make_shared<${2}>(${3});
-snippet makesha2
+snippet makesh make_shared<>()
 	std::make_shared<${1}>(${2});
 
 
 # Namespace
 snippet ns
-	namespace ${1:`Filename('', 'my')`} 
+	namespace ${1:`Filename('', 'my')`}
 	{
 		${2}
 	} /* $1 */
 # Class
-snippet clc
-	class ${1:`Filename('$1', 'name')`} 
+snippet class class - default copyable/moveable
+	class ${1:`Filename('$1', 'name')`}
 	{
 	public:
-		// ctor and dtor
+		// constructor and destructor
 		$1();
 		~$1() = default;
 
@@ -72,26 +72,25 @@ snippet clc
 		$1& operator=(const $1 &) = default;
 		$1($1 &&) noexcept = default;
 		$1& operator=($1 &&) noexcept = default;
-	
+
 	private:
 	};
 
-snippet cl
-	class ${1:`Filename('$1', 'name')`} 
+snippet class class - non-copyable/moveable
+	class ${1:`Filename('$1', 'name')`}
 	{
 	public:
-		// ctor and dtor
+		// constructor and destructor
 		$1();
 		~$1() = default;
 
 		// non-copyable and non-moveable
 		$1(const $1 &) = delete;
 		$1& operator=(const $1 &) = delete;
-	
+
 	private:
 	};
 
-# default function
 
 ## -- function
 # std::cout
@@ -102,27 +101,27 @@ snippet cerr
 
 ## -- Header file
 # <string>
-snippet strhdr
+snippet hdr #include <string>
 	#include <string>
-snippet maphdr
+snippet hdr #include <map>
 	#include <map>
-snippet vechdr
+snippet hdr #include <vector>
 	#include <vector>
-snippet deqhdr
+snippet hdr #include <deque>
 	#include <deque>
-snippet quehdr
+snippet hdr #include <queue>
 	#include <queue>
-snippet arrhdr
+snippet hdr #include <array>
 	#include <array>
-snippet unohdr
+snippet hdr #include <unordered_map>
 	#include <unordered_map>
-snippet ptrhdr
+snippet hdr #include <memory>
 	#include <memory>
 
-## -- Header file
-snippet tem
+## -- Template
+snippet tem template <>
 	template <typename ${1}>
-snippet temf
+snippet tem template <> func() {}
 	template <typename ${1}>
 	${2:fun_name}()
 	{

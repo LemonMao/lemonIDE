@@ -3,7 +3,7 @@
 function show_help_info()
 {
     echo "<-----lemon tools usage:----->"
-    echo "=lt find (:dir) (:str)"
+    echo "=lt grep (:dir) (:file_type) (:str)"
     echo -e "\tuse: check every *.c or *.h in path with (string)"
     echo " "
     echo "=lt svn ci "
@@ -40,8 +40,20 @@ case $1 in
                 ;;
         esac
         ;;
-    "find")
-        find $2 -name "*.[ch]" | xargs grep "$3" -n
+    "grep")
+        pattern=$2
+        path=$3
+        if [[ $4 == 'c' ]]; then
+            file_type="-name '*.*[chp]'"
+        elif [[ $4 == '' ]]; then
+            file_type=""
+        else
+            file_type="-name '$4'"
+        fi
+        cmd="find $path -type f $file_type | xargs grep -n $pattern"
+        echo $cmd
+        find $path -type f $file_type | xargs grep -n "$pattern"
+        #-exec grep -n $4 {} \;
         ;;
     "vim")
         case $2 in
@@ -63,16 +75,14 @@ case $1 in
         declare -a hosts 
 
         echo "Hosts info(.sshhosts):"
-        
         echo "---------------------"
-        oLDIFS=$IFS ; IFS=$'\n' hosts=(`cat ~/.sshhosts`) 
+        oLDIFS=$IFS ; IFS=$'\n' hosts=(`cat ~/.sshhosts`)
         for host in ${hosts[*]}; do
             echo -e "$num\t$host"
             num=$(($num + 1))
         done
         IFS=$oLDIFS
         echo "---------------------"
-        
 
         read -e -p "Please choose the host: " num
         read -e -p "Please choose the user: [Lmao|Root|other]: " user
@@ -156,7 +166,7 @@ case $1 in
           git log -1 $submitNum
           # todo: please consider the merge branch which have two parrents.
           #git log --name-status -1 --pretty=format:"%p %h" $submitNum | grep -v "$submitNum" > $tmp_file
-          git diff --name-status $2 $2^ > $tmp_file
+          git diff --name-status $2^ $2 > $tmp_file
           cat $tmp_file |  awk 'BEGIN {FS="@@";print "Index\tStatus\tName"} {print NR-1 "\t" $0}' > /tmp/mss-ci-diff
           gitdiffcmd="git d -y $submitNum^ $submitNum"
         fi

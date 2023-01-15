@@ -1,174 +1,11 @@
-# main  ==> main() {...}
-# {{{
-snippet main
-	int main(int argc, const char *argv[])
-	{
-		${1}
-		return 0;
-	} /* end of main */ 
-#}}}
-
-# Inc   ==> include <...>
-# inc   ==> include "..."
-#{{{
-snippet inc
-	#include <${1:stdio}.h>${2}
-snippet Inc
-	#include "${1:`Filename("$1.h")`}"${2}
-#}}}
-
-# def   ==> #define xxx 
-# ifdef ==> #ifdef xx #endif
-# if    ==> #if ... #endif
-# Def   ==> #ifndef xx #define xx ... #endif 
-# {{{
-snippet Def
-	#ifndef $1
-	#define ${1:SYMBOL} ${2:value}
-	#endif${3}
-snippet def
-	#define 
-snippet ifdef
-	#ifdef ${1:FOO}
-		${2:#define }
-	#endif
-snippet #if
-	#if ${1:FOO}
-		${2}
-	#endif
-# }}}
-
-
-# if    ==> if () {...}
-# el    ==> else  {...}
-# elif  ==> elif(){...}
-#{{{
-#If Condition
-snippet if
-	if (${1:/* condition */}) 
-	{
-	}
-snippet el
-	else 
-	{
-		${1}
-	}
-snippet elif
-	else if (${1}) 
-	{
-		${2}
-	}
-# }}}
-
-# do    ==> do{...}while()
-# wh    ==> while(){...}
-# for   ==> for()  {...}
-# {{{
-# Do While Loop
-snippet do
-	do 
-	{
-	} while (${1:/* condition */});
-# While Loop
-snippet wh
-	while (${1:/* condition */}) 
-	{
-	}
-# For Loop
-snippet for
-	for (${2:i} = 0; $2 < ${1:count}; $2${3:++}) 
-	{
-	    ${4}
-	}
-# for each iteration Loop container
-snippet fore
-	for (auto &it : ${1})
-	{
-	    ${2}
-	}
-snippet forx
-	for (${1:i = 0}; ${2:i < 10}; ${3:i++}) 
-	{
-	}
-# switch
-snippet switch
-	switch (${1:0}) 
-	{
-	    case ${2:1}:
-	    default:
-		    ${3:doing};
-		    break;
-	}
-
-# }}}
-
-# td    ==> typedef XXXX YYYY
-# st    ==> struct XXX_s {...} YYY_t
-# tds   ==> typedef struct {...} YYY_t
-# tde   ==> typedef enum   {...} YYY_t
-# {{{
-# Typedef
-snippet type
-	typedef ${1:int} ${2:MyCustomType};${3}
-snippet st
-	struct ${1:`Filename('$1_t', 'name')`}
-	{
-		${3:/* data */}
-	}${2: /* optional variable list */};${4}
-snippet tds
-	typedef struct _${1:MyStruct}
-	{
-		${3:/* data */}
-	} ${2:$1};
-snippet tde
-	typedef enum _${1:MyEnum}
-	{
-		${3:/* data */}
-	} ${2:$1};
-# }}}
-
-# pr    ==> printf(...);
-# prd   ==> printf(for Debug);
-# prk   ==> printk(...);
-# prkd  ==> printk(for Debug);
-# fpr   ==> fprintf(...);
-# {{{
-# unfortunately version this isn't as nice as TextMates's, given the lack of a
-# dynamic `...`
-# fprintf (again, this isn't as nice as TextMate's version, but it works)
-snippet pr
-	printf("==> ${1} \n"${2});${3}
-snippet prd
-	printf("==>%s, %d\n", __FUNCTION__, __LINE__);${1}
-snippet prk
-	printk("==> ${1} \n"${2});${3}
-snippet prkd
-	printf("==>%s, %d\n", __FUNCTION__, __LINE__);${1}
-snippet fpr
-	fprintf(${1:stderr}, " %${2:s}\n"${3});${4}
-# }}}
-
-# t     ==> X ? Y : Z
-# un    ==> unsigned
-# {{{
-snippet t
-	${1:/* condition */} ? ${2:a} : ${3:b}
-snippet un
-	unsigned
-# }}}
-
 # fileh  ==> File head
 # fileg  ==> File guard
-# funh  ==> Function comment
-# fun   ==> void funtion(xx){...}
-# seg   ==> //================
-# {{{
-# Function
-snippet fun
-	${1:void} ${2:function_name}(${3})
-	{
-	}
 snippet fileh
+	/* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 4 -*-
+	 * ex: set softtabstop=4 tabstop=8 expandtab shiftwidth=4: *
+	 * Editor Settings: expandtabs and use 4 spaces for indentation
+	 */
+
 	/*
 	 * `expand("%:t")` - ${1}
 	 *
@@ -186,27 +23,168 @@ snippet fileg
 	${2}
 
 	#endif /* end of include guard: $1 */
+
+# main  ==> main() {...}
+snippet main
+	int main(int argc, const char *argv[])
+	{
+		${1}
+		return 0;
+	} /* end of main */
+
+# Inc   ==> include <...>
+# inc   ==> include "..."
+snippet inc include<>
+	#include <${1:stdio}.h>${2}
+snippet inc include''
+	#include "${1:`Filename("$1.h")`}"${2}
+
+# def   ==> #define xxx
+# ifdef ==> #ifdef xx #endif
+# if    ==> #if ... #endif
+# Def   ==> #ifndef xx #define xx ... #endif
+snippet def #define macro
+	#define
+snippet def #ifdef macro ... #endif
+	#ifdef ${1:FOO}
+		${2:#define }
+	#endif
+snippet def #if ... #endif
+	#if ${1:FOO}
+		${2}
+	#endif
+snippet def #ifndef macro #define macro #endif
+	#ifndef $1
+	#define ${1:SYMBOL} ${2:value}
+	#endif${3}
+
+
+# if    ==> if () {...}
+# el    ==> else  {...}
+# elif  ==> elif(){...}
+#If Condition
+snippet if
+	if (${1:/* condition */})
+	{
+	}
+snippet el
+	else
+	{
+		${1}
+	}
+snippet elif
+	else if (${1})
+	{
+		${2}
+	}
+
+# do    ==> do{...}while()
+# wh    ==> while(){...}
+# for   ==> for()  {...}
+snippet wh do{}while
+	do
+	{
+	} while (${1:/* condition */});
+snippet wh while{}
+	while (${1:/* condition */})
+	{
+	}
+snippet for i=0
+	for (${2:i} = 0; $2 < ${1:count}; $2${3:++})
+	{
+	    ${4}
+	}
+snippet for x=x
+	for (${1:i = 0}; ${2:i < 10}; ${3:i++})
+	{
+	}
+snippet for for each
+	for (auto &it : ${1})
+	{
+	    ${2}
+	}
+snippet switch
+	switch (${1:0})
+	{
+	    case ${2:1}:
+	    default:
+		    ${3:doing};
+		    break;
+	}
+
+# st    ==> struct XXX_s {...} YYY_t
+snippet type
+	typedef ${1:int} ${2:MyCustomType};${3}
+snippet st struct XXX_s {...}
+	struct ${1:`Filename('$1_t', 'name')`}
+	{
+		${3:/* data */}
+	}${2: /* optional variable list */};${4}
+snippet st typedef struct {...} YYY_t
+	typedef struct _${1:MyStruct}
+	{
+		${4:/* data */}
+	} ${2:$1}, *P${3:$1};
+snippet st typedef enum   {...} YYY_t
+	typedef enum _${1:MyEnum}
+	{
+		${3:/* data */}
+	} ${2:$1};
+
+# pr    ==> printf(...);
+# prd   ==> printf(for Debug);
+# prk   ==> printk(...);
+# prkd  ==> printk(for Debug);
+# fpr   ==> fprintf(...);
+# unfortunately version this isn't as nice as TextMates's, given the lack of a
+# dynamic `...`
+# fprintf (again, this isn't as nice as TextMate's version, but it works)
+snippet pr
+	printf("==> ${1} \n"${2});${3}
+snippet prd
+	printf("==>%s, %d\n", __FUNCTION__, __LINE__);${1}
+snippet prk
+	printk("==> ${1} \n"${2});${3}
+snippet prkd
+	printf("==>%s, %d\n", __FUNCTION__, __LINE__);${1}
+snippet fpr
+	fprintf(${1:stderr}, " %${2:s}\n"${3});${4}
+
+# t     ==> X ? Y : Z
+# un    ==> unsigned
+snippet t
+	${1:/* condition */} ? ${2:a} : ${3:b}
+snippet un
+	unsigned
+
+# funh  ==> Function comment
+# fun   ==> void funtion(xx){...}
+# seg   ==> //================
+# Function
+snippet fun
+	${1:void} ${2:function_name}(${3})
+	{
+	}
 snippet funh
 	/**************************************************************************
 	**  Description: ${2: N/A}
-	**    
+	**
 	**  Parameters: [In] ${3:N/A}
-	**              [Out]${4:N/A} 
+	**              [Out]${4:N/A}
 	**  Return:  ${5:N/A}
 	**************************************************************************/
 snippet seg
-	//==============================================================================
+	//=============================================================================
 	// ${1}
-	//==============================================================================
-# }}}
+	//=============================================================================
 
 # -- useful tricks
-snippet [
-	${1}[${2}]${3}
-snippet [[
-	${1}[${2}][${3}]${4}
-snippet {
-	${1}{${2}}${3}
+#snippet [
+#	${1}[${2}]${3}
+#snippet [[
+#	${1}[${2}][${3}]${4}
+#snippet {
+#	${1}{${2}}${3}
 
 #	 * History:
 #	 * --------

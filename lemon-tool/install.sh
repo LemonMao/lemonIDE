@@ -11,7 +11,7 @@
 srcPluginPath=~/.vim/myplugin
 dstPluginPath=~/.vim/plugged
 vimbak=~/vim-bak
-vimrc=~/.vimrc 
+vimrc=~/.vimrc
 
 
 ############ backup the old vim stuff
@@ -39,41 +39,60 @@ if [[ $ret != "n" ]] ; then
     echo " "
 else
     cd ~/.vim/
-    tar zxvf plugged.tar.gz 
+    tar zxvf plugged.tar.gz
     cd -
 fi
 
-###########  Customize private plugins 
+###########  Customize private plugins
 # my theme
 cp $srcPluginPath/desertmss.vim $dstPluginPath/desertEx/colors/
 # tmux config
 [ -e ~/.tmux.conf ] && mv ~/.tmux.conf $vimbak/tmux.conf-bak
-ln -s $srcPluginPath/tmux.conf ~/.tmux.conf
-# bash alias
-#[ -e ~/.bash_aliases ] && cat $srcPluginPath/bash_aliases >> ~/.bash_aliases || ln -s $srcPluginPath/bash_aliases ~/.bash_aliases
-read -e -p "Shell alias config, additional apply[Y/n]:" ret
-if [[ $ret != "n" ]] ; then
-    cat $srcPluginPath/lemon_bashrc >> ~/.bashrc
+[ -e ~/.tmux.conf.local ] && mv ~/.tmux.conf.local $vimbak/tmux.conf.local-bak
+read -e -p "Install tmux config? [Y/n]" ret
+if [[ $ret != "y" ]] ; then
+    git clone https://github.com/gpakosz/.tmux.git ~/.tmux
+    ln -s -f .tmux/.tmux.conf ~/.tmux.conf
 fi
+ln -s -f $srcPluginPath/tmux.conf.local ~/.tmux.conf.local
+
+# bash-it config
+[ -e ~/.bash_aliases ] && mv ~/.bash_aliases $vimbak/bash_aliases-bak
+ln -s -f $srcPluginPath/bash_aliases ~/.bash_aliases
+ln -s -f $srcPluginPath/bash_aliases ~/.bash_it/custom/bash_aliases.bash
+read -e -p "Install bash-it ? [Y/n]" ret
+if [[ $ret != "y" ]] ; then
+    git clone --depth=1 https://github.com/Bash-it/bash-it.git ~/.bash_it
+    cd ~/.bash_it/ && ./install.sh
+    echo -e "\n\nComment 116 line for git status" && sleep 2
+    vim +116 .bash_it/themes/powerline/powerline.base.bash
+    ln -s -f .tmux/.tmux.conf ~/.tmux.conf
+    bash-it enable completion git docker ssh tmux pip makefile
+    bash-it enable plugin man docker history-eternal less-pretty-cat ssh history history-substring-search history-search colors
+    mkdir -p ~/.bash_it/custom
+    ln -s -f $srcPluginPath/bash_aliases ~/.bash_it/custom/bash_aliases.bash
+fi
+
 # Bookmark
 [ -e ~/.NERDTreeBookmarks ] && mv ~/.NERDTreeBookmarks $vimbak/NERDTreeBookmarks-bak
 ln -s $srcPluginPath/NERDTreeBookmarks ~/.NERDTreeBookmarks
 # c&sh snippets.
-rm -rf $dstPluginPath/snipMate/snippets/c.snippets && ln -s $srcPluginPath/c.snippets  $dstPluginPath/snipMate/snippets/c.snippets 
-rm -rf $dstPluginPath/snipMate/snippets/cpp.snippets && ln -s $srcPluginPath/cpp.snippets  $dstPluginPath/snipMate/snippets/cpp.snippets 
+rm -rf $dstPluginPath/snipMate/snippets/c.snippets && ln -s $srcPluginPath/c.snippets  $dstPluginPath/snipMate/snippets/c.snippets
+rm -rf $dstPluginPath/snipMate/snippets/cpp.snippets && ln -s $srcPluginPath/cpp.snippets  $dstPluginPath/snipMate/snippets/cpp.snippets
 rm -rf $dstPluginPath/snipMate/snippets/sh.snippets && ln -s $srcPluginPath/sh.snippets $dstPluginPath/snipMate/snippets/sh.snippets
-#[ -e  ] && mv 
-
 
 #echo "Comment the 122 lines of vimrc"
 #sleep 2
 #vim +122 ~/.vimrc
 #echo " "
 
-echo "Comment the 95 lines of mark.vim file"
-sleep 2
+echo -e "\n\nComment the 95 lines of mark.vim file" && sleep 2
 vim +95 $dstPluginPath/Mark/plugin/mark.vim
+echo -e "\n\nAdd '--skip-unreadable', option for gtags" && sleep 2
+vim +91 $dstPluginPath/vim-gutentags/autoload/gutentags/gtags_cscope.vim
+#let l:cmd += ['--incremental', '--skip-unreadable', '"'.l:db_path.'"']
 echo " "
+
 
 ########### Other actions
 echo "Manual actions:"

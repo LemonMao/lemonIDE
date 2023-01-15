@@ -1,62 +1,77 @@
 " Vim config file.
 
-" Vim-plug setting {{{
+" Install plug {{{
 call plug#begin('~/.vim/plugged')
 " Unused - old plugin
-"Plug 'lookupfile'
 "Plug 'taglist.vim'
 "Plug 'mru.vim'
 "Plug 'bufexplorer.zip'
-"Plug 'vim-scripts/AutoComplPop'
-"Plug 'vim-scripts/OmniCppComplete'
-"Plug 'kien/ctrlp.vim'
-"Plug 'FuzzyFinder'
 
 " Used
 Plug 'majutsushi/tagbar'
 Plug 'vim-scripts/DoxygenToolkit.vim'
-Plug 'vim-scripts/a.vim' " swtich between source files and header files quickly 
+Plug 'vim-scripts/a.vim' " swtich between source files and header files quickly
 Plug 'scrooloose/nerdtree'
 Plug 'scrooloose/nerdcommenter'
-"Plug 'scrooloose/syntastic'
-Plug 'vim-scripts/Mark' " highlight some key variables 
+Plug 'vim-scripts/Mark' " highlight some key variables
 Plug 'vim-scripts/snipMate'
 Plug 'vim-scripts/genutils' " Vim-script library
-Plug 'vim-scripts/L9' " Vim-script library 
+Plug 'vim-scripts/L9' " Vim-script library
 Plug 'vim-scripts/desertEx'
-"Plug 'https://github.com/Lokaltog/vim-powerline.git'
 Plug 'vim-airline/vim-airline'
 Plug 'vim-airline/vim-airline-themes'
 Plug 'vim-scripts/Align'
 Plug 'junegunn/vim-easy-align'
-"Plug 'python-mode/python-mode', { 'branch': 'develop' }
-Plug 'w0rp/ale' " syntax checker
-Plug 'Yggdroot/LeaderF', {'do':'./install.sh'} " Fuzzy finder buffer, mru, files, tags, strings
-Plug 'Yggdroot/indentLine' " display vertical lines
-"Plug 'CoatiSoftware/vim-sourcetrail'
-Plug 'ludovicchabant/vim-gutentags'
+Plug 'jiangmiao/auto-pairs'
+Plug 'bitc/vim-bad-whitespace'
+Plug 'andymass/vim-matchup'
+Plug 'luochen1990/rainbow'
+
+" display vertical lines
+Plug 'Yggdroot/indentLine'
+" Fuzzy finder buffer, mru, files, tags, strings
+Plug 'Yggdroot/LeaderF', {'do':'./install.sh'}
+" Async run shell/vim commands and get the result in quick fix window
 Plug 'skywind3000/asyncrun.vim'
+" Static tags/Definition/Reference
+Plug 'ludovicchabant/vim-gutentags'
 Plug 'skywind3000/gutentags_plus'
 Plug 'skywind3000/vim-preview'
-"Plug 'Valloric/YouCompleteMe'
-Plug 'roxma/nvim-yarp'
-Plug 'roxma/vim-hug-neovim-rpc'
-Plug 'Shougo/echodoc.vim'
-Plug 'Shougo/deoplete.nvim'
+" LSP - Dynamic tags/Completion/Definition/Reference backend server
+Plug 'autozimu/LanguageClient-neovim', {
+    \ 'branch': 'next',
+    \ 'do': 'bash install.sh',
+    \ }
+"Plug 'prabirshrestha/vim-lsp'
+"Plug 'mattn/vim-lsp-settings'
 
-" Good plugin, but not need now
-"Plug 'tpope/vim-fugitive' " Git wrapper 
-"Plug 'Pydiction'
-"Plug 'http://github.com/kevinw/pyflakes-vim'
+" Completion
+Plug 'roxma/nvim-yarp'  " Framework to support deoplete
+Plug 'roxma/vim-hug-neovim-rpc'  " Framework to support deoplete
+Plug 'Shougo/deoplete.nvim'
+" cpp syntax highlight
+Plug 'octol/vim-cpp-enhanced-highlight'
+" surround 插件可以快速编辑围绕在内容两端的字符（pairs of things surrounding
+" things），比如成对出现的括号、引号，甚至HTML/XML标签等。
+Plug 'tpope/vim-surround'
+"  filetype icons
+Plug 'ryanoasis/vim-devicons'
+" Git staff
+Plug 'tpope/vim-fugitive'
+Plug 'tpope/vim-rhubarb'
+"dashboard
+Plug 'KyleJKC/Vim-dashboard'
+
 " Haven tested, not good for me
 call plug#end()
 " vim-plug setting end }}}
 
-" Global Settings: {{{
+" Basic Settings {{{
 syntax on                           " highlight syntax
 
 set nocompatible                    " out of Vi compatible mode
 set number                          " show line number
+set relativenumber                  " show relative line number
 set numberwidth=3                   " minimal culumns for line numbers
 set textwidth=0                     " do not wrap words (insert)
 set nowrap                          " do not wrap words (view)
@@ -65,9 +80,9 @@ set ruler                           " line and column number of the cursor posit
 set wildmenu                        " enhanced command completion
 set wildmode=list:longest,full      " command completion mode
 set laststatus=2                    " always show the status line
-set mouse=                         " use mouse in all mode
+set mouse=                          " use mouse in all mode
 set foldenable                      " fold lines
-set foldmethod=marker               " fold as marker 
+set foldmethod=marker               " fold as marker
 set noerrorbells                    " do not use error bell
 set novisualbell                    " do not use visual bell
 set t_vb=                           " do not use terminal bell
@@ -95,6 +110,9 @@ set smartcase                       " do not ignore if search pattern has CAPS
 set nobackup                        " do not create backup file
 set noswapfile                      " do not create swap file
 set backupcopy=yes                  " overwrite the original file
+set formatoptions-=o                " Newline by 'o' is not inherit the last comment
+"set formatoptions-=O
+set timeoutlen=700                  " timeout length for key sequences
 
 set encoding=utf-8
 set termencoding=utf-8
@@ -108,7 +126,6 @@ set t_Co=256
 "colorscheme vividchalk
 "let g:CSApprox_attr_map = { 'bold' : 'bold', 'italic' : '', 'sp' : '' }
 "colorscheme desert2
-"colorscheme desertEx
 colorscheme desertmss
 "colorscheme grayvim
 
@@ -137,11 +154,11 @@ autocmd BufReadPost *
 " which causes a startup delay of about 14 seconds.
 set clipboard=autoselect,exclude:.*
 
-" remove the old Plugin 
+" remove the old Plugin
 " set runtimepath-=/usr/share/vim/vim74
 "}}}
 
-" Plugin Settings: {{{
+" Plugin Settings {{{
 if has("win32") " win32 system
     let $HOME  = $VIM
     let $VIMFILES = $HOME . "/vimfiles"
@@ -150,26 +167,15 @@ else " unix
     let $VIMFILES = $HOME . "/.vim"
 endif
 
-" mru
-"let MRU_Window_Height = 10
-
-"Tagbar
+"tagbar
 let g:tagbar_left = 1
-
-" taglist
-"let g:Tlist_WinWidth = 25
-"let g:Tlist_Use_Right_Window = 0
-"let g:Tlist_Auto_Update = 1
-"let g:Tlist_Process_File_Always = 1
-"let g:Tlist_Exit_OnlyWindow = 1
-"let g:Tlist_Show_One_File = 1
-"let g:Tlist_Enable_Fold_Column = 0
-"let g:Tlist_Auto_Highlight_Tag = 1
-"let g:Tlist_GainFocus_On_ToggleOpen = 1
+let g:tagbar_autofocus = 1
+let g:tagbar_show_linenumbers = 2
+let g:tagbar_foldlevel = 1
 
 " nerdtree
 let g:NERDTreeWinPos = "right"
-let g:NERDTreeWinSize = 30
+let g:NERDTreeWinSize = 50
 let g:NERDTreeShowLineNumbers = 1
 let g:NERDTreeShowBookmarks=1
 let g:NERDTreeQuitOnOpen=1
@@ -190,22 +196,8 @@ snor <silent> <tab> <esc>i<right><c-r>=TriggerSnippet()<cr>
 " man.vim - view man page in VIM
 source $VIMRUNTIME/ftplugin/man.vim
 
-"ctags
-set nocp
-let s:tagsFile = system("find $(pwd)/project_vim -type f -name \"cscope_sp_*.tags\" ")
-let s:tagsList = split(s:tagsFile, '\n')
-for ctagsObj in s:tagsList
-    if filereadable(ctagsObj)
-        exec "set tags+=".ctagsObj
-    endif
-endfor
-
-" vim-Powerline
-"set guifont=PowerlineSymbols\ for\ Powerline
-let g:Powerline_symbols = 'fancy'
-
 " airline
-let g:airline_theme='dark'   
+let g:airline_theme='dark'
 " 使用powerline打过补丁的字体
 let g:airline_powerline_fonts=1
 if !exists('g:airline_symbols')
@@ -222,21 +214,29 @@ let g:airline_symbols.branch = ''
 let g:airline_symbols.readonly = ''
 let g:airline_symbols.linenr = '☰'
 let g:airline_symbols.maxlinenr = ''
+"let g:airline_inactive_collapse=1
 " Tabline
 "let g:airline#extensions#tabline#enabled = 1
 "let g:airline#extensions#tabline#buffer_nr_show = 1
-
-
-
-" FuzzyFinder
-"let g:fuf_modesDisable = []
-"let g:fuf_mrufile_maxItem = 100
-"let g:fuf_mrucmd_maxItem = 100
-"let g:fuf_mrufile_exclude = ''
+let g:airline#extensions#branch#displayed_head_limit = 8
+let g:airline#extensions#wordcount#enabled = 0
 
 " LeaderF
 let g:Lf_StlColorscheme = 'powerline'
 let g:Lf_MruMaxFiles = 250
+let g:Lf_ShowRelativePath = 1
+let g:Lf_WindowPosition = 'popup'
+let g:Lf_PopupPreviewPosition = 'bootom'
+let g:Lf_PopupPosition = [28, 0]
+let g:Lf_PreviewInPopup = 1
+let g:Lf_PreviewHorizontalPosition = 'right'
+let g:Lf_PreviewResult = { 'BufTag': 0 , 'Function': 0 }
+let g:Lf_CursorBlink = 1
+let g:Lf_EmptyQuery = 0
+let g:Lf_DiscardEmptyBuffer = 1
+let g:airline#extensions#gutentags#enabled = 0
+let g:airline#extensions#tagbar#enabled = 0
+au User AirlineAfterInit  :let g:airline_section_z = airline#section#create(['windowswap', 'obsession', '%3p%%', 'maxlinenr', ' :%3v'])
 "let g:Lf_ExternalCommand = 'find %s -path /vobs/nosx/nos/platform/asic/sdk -a -prune -o -type f -name *.[ch]'
 let g:Lf_WildIgnore = {
     \ 'dir': ['.svn','.git','.hg', 'lost+found', 'nos/platform/asic', 'project_vim'],
@@ -246,69 +246,9 @@ let g:Lf_CtagsFuncOpts = {
     \ 'c': '--c-kinds=f',
     \ }
 
-
-
-" cscope
-function! CloseManualCsc()
-    echo s:csCnt
-    exec "cs del" s:csCnt
-endfunction
-
-function! AddProjectCscope()
-    let s:csCnt = 0
-    let s:csDir = system("find $(pwd)/project_vim -type f -name \"*cscope_sp_*.out\" ")
-    let s:csList = split(s:csDir, '\n')
-    for csObjFile in s:csList
-        if filereadable(csObjFile)
-            exec "cs add" csObjFile
-            let s:csCnt+=1
-        endif
-    endfor
-    nmap <leader>ss :cs find s <C-R>=expand("<cword>")<cr><cr>
-    nmap <leader>ss :cs find s <C-R>=expand("<cword>")<cr><cr>
-    nmap <leader>sg :cs find g <C-R>=expand("<cword>")<cr><cr>
-    nmap <leader>sc :cs find c <C-R>=expand("<cword>")<cr><cr>
-    nmap <leader>st :cs find t <C-R>=expand("<cword>")<cr><cr>
-    nmap <leader>se :cs find e <C-R>=expand("<cword>")<cr><cr>
-    nmap <leader>sf :cs find f <C-R>=expand("<cfile>")<cr><cr>
-    nmap <leader>si :cs find i <C-R>=expand("<cfile>")<cr><cr>
-    nmap <leader>sd :cs find d <C-R>=expand("<cword>")<cr><cr>
-endfunction
-
-"if has("cscope")
-    "set csto=0
-    "set nocst
-    "set nocsverb  " show the excute info
-
-    "call AddProjectCscope()
-    ""if isdirectory("project_vim")
-        ""cd project_vim
-        ""if filereadable("cscope.out")
-            ""cs add cscope.out
-        ""endif
-        ""if filereadable("cscopedriv.out")
-            ""cs add cscopedriv.out
-        ""endif
-        ""cd ..
-        ""echo "hello ..."
-    ""endif
-    ""if filereadable("cscope.out")
-        ""cs add cscope.out
-    ""endif
-"endif
-
-
-" LookupFile setting
-"let g:LookupFile_TagExpr='"./project_vim/tags.filename"'
-"let g:LookupFile_MinPatLength=2
-"let g:LookupFile_PreserveLastPattern=0
-"let g:LookupFile_PreservePatternHistory=1
-"let g:LookupFile_AlwaysAcceptFirst=1
-"let g:LookupFile_AllowNewFiles=0
-
 " EasyAlign
 xmap ga <Plug>(EasyAlign)
-nmap ga <Plug>(EasyAlign)
+vmap <Enter> <Plug>(EasyAlign)
 let g:easy_align_delimiters = {
 \ '>': { 'pattern': '>>\|=>\|>' },
 \ '/': {
@@ -334,35 +274,9 @@ let g:easy_align_delimiters = {
 \   }
 \ }
 
-" vimgdb.vim
-"if has("gdb")
-	"set asm=0
-	"let g:vimgdb_debug_file=""
-	"run macros/gdb_mappings.vim
-"endif
-
-" Async
-let g:asyncrun_open = 8 "Automatically open window 
-let g:asyncrun_bell = 1 " After finished, make a bell to notify 
-
-"CtrlP
-"let g:ctrlp_map      = '<c-p>'
-"let g:ctrlp_cmd      = 'CtrlP'
-"let g:ctrlp_mruf_max = 300
-"let g:ctrlp_by_filename = 1 " default search by full path, set to 1 by filename only, change with <c-d>
-"let g:ctrlp_custom_ignore = {
-    "\ 'dir':  '\v[\/]\.(git|hg|svn|rvm)$',
-    "\ 'file': '\v\.(exe|so|dll|zip|tar|tar.gz|pyc)$',
-    "\ }
-"let g:ctrlp_custom_ignore = {
-    "\ 'dir':  'lost+found/',
-    "\ }
-"let g:ctrlp_regexp = 0 "默认不使用正则表达式，置1改为默认使用正则表达式，可以用<C-r>进行切换
-"let g:ctrlp_clear_cache_on_exit = 0
-"let g:ctrlp_user_command = 'find %s -path /vobs/nosx/nos/platform/asic/sdk -a -prune -o -type f -name *.[ch]'
-"let g:ctrlp_match_window = 'bottom,order:btt,min:1,max:20,results:20'
-"let g:ctrlp_working_path_mode = ''
-
+" asyncrun
+let g:asyncrun_open = 30 "Automatically open window
+let g:asyncrun_bell = 1 " After finished, make a bell to notify
 
 "DoxygenToolkit
 let g:DoxygenToolkit_briefTag_pre="@Brife  "
@@ -373,284 +287,12 @@ let g:DoxygenToolkit_blockFooter="----------------------------------------------
 let g:DoxygenToolkit_authorName="Mathias Lorente"
 
 
-" syntastic
-"set statusline+=%#warningmsg#
-"set statusline+=%{SyntasticStatuslineFlag()}
-"set statusline+=%*
-"let g:syntastic_always_populate_loc_list=1
-"let g:syntastic_auto_loc_list=1
-"let g:syntastic_enable_signs=1
-"let g:syntastic_check_on_wq=0
-"let g:syntastic_aggregate_errors=1
-"let g:syntastic_loc_list_height=5
-"let g:syntastic_error_symbol='X'
-"let g:syntastic_style_error_symbol='X'
-"let g:syntastic_warning_symbol='>'
-"let g:syntastic_style_warning_symbol='>'
-"let g:syntastic_python_checkers=['flake8', 'pydocstyle', 'python']
-"let g:syntastic_quiet_messages = {"regex": 'No such file or directory'}
-"let g:syntastic_mode_map = {"mode": "passive", "active_filetypes": ["python"], "passive_filetypes": [""] } 
-
-"python-mode
-" syntax highlight
-"let g:pymode_python = 'python2'
-let g:pymode=0
-let g:pymode_options_max_line_length = 120
-let g:pymode_options_colorcolumn = 0
-let g:pymode_syntax=1
-let g:pymode_syntax_slow_sync=1
-let g:pymode_syntax_all=1
-let g:pymode_syntax_print_as_function=g:pymode_syntax_all
-let g:pymode_syntax_highlight_async_await=g:pymode_syntax_all
-let g:pymode_syntax_highlight_equal_operator=g:pymode_syntax_all
-let g:pymode_syntax_highlight_stars_operator=g:pymode_syntax_all
-let g:pymode_syntax_highlight_self=g:pymode_syntax_all
-let g:pymode_syntax_indent_errors=g:pymode_syntax_all
-let g:pymode_syntax_string_formatting=g:pymode_syntax_all
-"let g:pymode_syntax_space_errors=g:pymode_syntax_all
-let g:pymode_syntax_string_format=g:pymode_syntax_all
-let g:pymode_syntax_string_templates=g:pymode_syntax_all
-let g:pymode_syntax_doctests=g:pymode_syntax_all
-let g:pymode_syntax_builtin_objs=g:pymode_syntax_all
-let g:pymode_syntax_builtin_types=g:pymode_syntax_all
-let g:pymode_syntax_highlight_exceptions=g:pymode_syntax_all
-let g:pymode_syntax_docstrings=g:pymode_syntax_all
-""开启警告
-let g:pymode_warnings = 0
-let g:pymode_quickfix_minheight = 3
-let g:pymode_quickfix_maxheight = 10
-let g:pymode_python = 'python3'
-"使用PEP8风格的缩进
-let g:pymode_indent = 1
-""取消代码折叠
-let g:pymode_folding = 0
-"开启python-mode定义的移动方式
-let g:pymode_motion = 0
-""启用python-mode内置的python文档，使用K进行查找
-let g:pymode_doc = 1
-let g:pymode_doc_bind = 'K'
-"自动检测并启用virtualenv
-let g:pymode_virtualenv = 1
-"不使用python-mode运行python代码
-let g:pymode_run = 0
-let g:pymode_run_bind = '<Leader>r'
-"不使用python-mode设置断点
-let g:pymode_breakpoint = 0
-"let g:pymode_breakpoint_bind = '<leader>b'
-"启用python语法检查
-let g:pymode_lint = 1
-"修改后保存时进行检查
-let g:pymode_lint_on_write = 0
-"编辑时进行检查
-let g:pymode_lint_on_fly = 0
-let g:pymode_lint_checkers = ['pyflakes', 'pep8']
-"发现错误时不自动打开QuickFix窗口
-let g:pymode_lint_cwindow = 0
-"侧边栏不显示python-mode相关的标志
-let g:pymode_lint_signs = 1
-let g:pymode_lint_todo_symbol = 'WW'
-let g:pymode_lint_comment_symbol = 'CC'
-let g:pymode_lint_visual_symbol = 'RR'
-let g:pymode_lint_error_symbol = 'EE'
-let g:pymode_lint_info_symbol = 'II'
-let g:pymode_lint_pyflakes_symbol = 'FF'
-"启用重构
-let g:pymode_rope = 0
-""不在父目录下查找.ropeproject，能提升响应速度
-"let g:pymode_rope_lookup_project = 0
-""光标下单词查阅文档
-"let g:pymode_rope_show_doc_bind = '<C-c>d'
-"""项目修改后重新生成缓存
-"let g:pymode_rope_regenerate_on_write = 1
-""开启补全，并设置<C-Tab>为默认快捷键
-"let g:pymode_rope_completion = 1
-"let g:pymode_rope_complete_on_dot = 1
-"let g:pymode_rope_completion_bind = '<C-Tab>'
-"""<C-c>g跳转到定义处，同时新建竖直窗口打开
-"let g:pymode_rope_goto_definition_bind = '<C-c>g'
-"let g:pymode_rope_goto_definition_cmd = 'vnew'
-""重命名光标下的函数，方法，变量及类名
-"let g:pymode_rope_rename_bind = '<C-c>rr'
-"""重命名光标下的模块或包
-"let g:pymode_rope_rename_module_bind = '<C-c>r1r'
-
-" ale
-"ale
-""始终开启标志列
-let g:ale_enabled = 0
-let g:ale_sign_column_always = 1
-let g:ale_set_highlights = 0
-"自定义error和warning图标
-let g:ale_sign_error = 'X'
-let g:ale_sign_warning = 'W'
-"在vim自带的状态栏中整合ale
-let g:ale_statusline_format = ['✗ %d', '⚡ %d', '✔ OK']
-"显示Linter名称,出错或警告等相关信息
-let g:ale_echo_msg_error_str = 'E'
-let g:ale_echo_msg_warning_str = 'W'
-let g:ale_echo_msg_format = '[%linter%] %s [%severity%]'
-""普通模式下，sp前往上一个错误或警告，sn前往下一个错误或警告
-nmap cp <Plug>(ale_previous_wrap)
-nmap cn <Plug>(ale_next_wrap)
-"<Leader>s触发/关闭语法检查
-"nmap <Leader>c :ALEToggle<CR>
-""<Leader>d查看错误或警告的详细信息
-"nmap <Leader>cl :ALEDetail<CR>
-"文件内容发生变化时不进行检查
-"let g:ale_lint_on_text_changed = 'never'
-""打开文件时不进行检查
-"let g:ale_lint_on_enter = 0
-"使用clang对c和c++进行语法检查，对python使用pylint进行语法检查
-let g:ale_linters = {
-\   'python': ['pylint'],
-\}
-
-let s:numberf = 1
-
 " Deoplete : Dark powered asynchronous completion framework for neovim/Vim8
 let g:deoplete#enable_at_startup = 1
 highlight PMenu ctermfg=0 ctermbg=242 guifg=black guibg=darkgrey
 highlight PMenuSel ctermfg=242 ctermbg=8 guifg=darkgrey guibg=black
 
-" YCM
-" YouCompleteMe
-"let g:ycm_key_list_select_completion = ['<Down>']
-"let g:ycm_key_list_previous_completion = ['<Up>']
-"let g:ycm_add_preview_to_completeopt = 0
-"let g:ycm_show_diagnostics_ui = 0
-"let g:ycm_server_log_level = 'info'
-"let g:ycm_min_num_identifier_candidate_chars = 2
-"let g:ycm_collect_identifiers_from_comments_and_strings = 1
-"let g:ycm_complete_in_strings=1
-"let g:ycm_key_invoke_completion = '<m-y>'
-"" stop completion is <c-y>
-"set completeopt=menu,menuone
-
-""noremap <c-z> <NOP>
-
-"let g:ycm_semantic_triggers =  {
-            "\ 'c,cpp,python,java,go,erlang,perl': ['re!\w{3}'],
-            "\ 'cs,lua,javascript': ['re!\w{2}'],
-            "\ }
-
-"let g:ycm_filetype_whitelist = { 
-            "\ "c":1,
-            "\ "cpp":1, 
-            "\ "objc":1,
-            "\ "sh":1,
-            "\ "zsh":1,
-            "\ "zimbu":1,
-            "\ }
-"highlight PMenu ctermfg=0 ctermbg=242 guifg=black guibg=darkgrey
-"highlight PMenuSel ctermfg=242 ctermbg=8 guifg=darkgrey guibg=black
-
-""let g:ycm_global_ycm_extra_conf='~/.ycm_extra_conf.py'  "设置全局配置文件的路径
-""let g:ycm_seed_identifiers_with_syntax=1    " 语法关键字补全
-"let g:ycm_confirm_extra_conf=0  " 打开vim时不再询问是否加载ycm_extra_conf.py配置
-""let g:ycm_key_invoke_completion = '<C-a>' " ctrl + a 触发补全，防止与其他插件冲突
-""set completeopt=longest,menu    "让Vim的补全菜单行为与一般IDE一致(参考VimTip1228)
-""nnoremap <leader>jd :YcmCompleter GoToDefinitionElseDeclaration<CR> "定义跳转快捷键
-
-
-
-" Echodoc
-let g:echodoc#type = "echo" " Default value
-set noshowmode
-"set cmdheight=2
-let g:echodoc_enable_at_startup = 1
-
-" Or, you could use vim's popup window feature.
-"let g:echodoc#enable_at_startup = 1
-"let g:echodoc#type = 'popup'
-" To use a custom highlight for the popup window,
-" change Pmenu to your highlight group
-"highlight link EchoDocPopup Pmenu
-
-"}}}
-
-" Lemon Mao - configure: {{{
-"
-"
-" Utility Funtions
-function! RunShell(Msg, Shell)
-  echo a:Msg 
-  let s:curWord =  expand("<cword>")
-  let s:cmd = a:Shell . s:curWord
-  call system(s:cmd)
-  echo s:cmd "done"
-endfunction
-
-function! UpdateFile(Msg, Shell)
-  "let s:curFile = getcwd() . '/' . bufname("%")
-  let s:curFile =  expand("%:p")
-  echo a:Msg . s:curFile
-  if filereadable(s:curFile)
-    let s:cmd = a:Shell . s:curFile
-    "echo s:cmd
-    call system(s:cmd)
-    exec "edit" 
-  endif
-  if match(a:Shell, "lg update ") > 0
-    call AddProjectCscope()
-    exec "cs reset"
-  endif
-  echo s:cmd "done"
-endfunction
-
-function! ToggleMouse()                                                          
-    if  s:numberf == 1
-        let s:numberf = 0
-        exec "IndentLinesDisable" 
-        set nonumber
-        set paste
-    else 
-        let s:numberf = 1
-        exec "IndentLinesEnable" 
-        set number
-        set nopaste
-    endif
-    echo "Done!"                                                      
-    "exec "<cr>"
-    "if &mouse == 'a'                                                                 
-        "set mouse=                                                                                                                                    
-        "set nonumber                                                                     
-        "IndentLinesToggle
-        "echo "Mouse usage disabled"                                                      
-    "else                                                                             
-        "set mouse=a                                                                      
-        "set number                                                                       
-        "IndentLinesToggle
-        "echo "Mouse usage enabled"                                                       
-    "endif                                                                            
-endfunction
-"map gd gD
-"
-":vertical resize+40<CR>
-" move between windows
-function! ChangeCurWind(flag)
-    let objFind = -1
-    let winName = bufname(winbufnr(0))
-    let objFind = match(winName, "NERD_tree_")
-    "let objFind = objFind >= 0 ? objFind : match(winName, "Tag_List")
-    echo "old:" objFind winName
-    if objFind != -1
-        exe "normal 5\<C-W>|"
-    endif
-
-    exec "wincmd" a:flag
-
-    let objFind = -1
-    let winName = bufname(winbufnr(0))
-    let objFind = match(winName, "NERD_tree_")
-    "let objFind = objFind >= 0 ? objFind : match(winName, "Tag_List")
-    echo "new:" objFind winName
-    if objFind != -1
-        exe "normal 60\<C-W>|"
-    endif
-endfunction
-
-
-" settings of cscope.
+" settings of gtags.
 " " I use GNU global instead cscope because global is faster.
 " 第一个 GTAGSLABEL 告诉 gtags 默认 C/C++/Java 等六种原生支持的代码直接使用
 " gtags 本地分析器，而其他语言使用 pygments 模块。
@@ -658,7 +300,7 @@ let $GTAGSLABEL = 'native-pygments'
 let $GTAGSCONF = '/ifs/home/lmao/.globalrc'
 
 " gutentags 搜索工程目录的标志，当前文件路径向上递归直到碰到这些文件/目录名
-let g:gutentags_project_root = ['.root', '.project']
+let g:gutentags_project_root = ['.root', '.project', 'GTAGS']
 "let g:gutentags_project_root = ['.root', '.svn', '.git', '.hg', '.project']
 " 所生成的数据文件的名称
 let g:gutentags_ctags_tagfile = '.tags'
@@ -679,7 +321,8 @@ let g:gutentags_ctags_extra_args += ['--c++-kinds=+px']
 let g:gutentags_ctags_extra_args += ['--c-kinds=+px']
 " 如果使用 universal ctags 需要增加下面一行
 let g:gutentags_ctags_extra_args += ['--output-format=e-ctags', '--extras=+q']
-"let g:gutentags_gtags_extra_args += ['--skip-unreadable']
+" gtags extra parameters, manually modify gutentags/gtags_cscope.vim:91
+"let l:cmd += ['--incremental --skip-unreadable', '"'.l:db_path.'"']
 " 禁用 gutentags 自动加载 gtags 数据库的行为
 let g:gutentags_auto_add_gtags_cscope = 1
 " 检测 ~/.cache/tags 不存在就新建
@@ -690,71 +333,203 @@ let g:gutentags_define_advanced_commands = 1
 let g:gutentags_plus_nomap = 1
 
 set csto=1 "1 find ctags first, 0 find cscope db first
-set cst  " cst jump to definition derectly, nocst show info 
+set cst  " cst jump to definition derectly, nocst show info
 set cscopetag
 set cscopeprg=gtags-cscope
 "set cscopequickfix=c+,d+,e+,f+,i+,s+,t+
-"nmap <silent> <leader>j <ESC>:cstag <c-r><c-w><CR>
-"nmap <silent> <leader>g <ESC>:lcs f c <c-r><c-w><cr>:lw<cr>
-"nmap <silent> <leader>s <ESC>:lcs f s <c-r><c-w><cr>:lw<cr>
-"command! -nargs=+ -complete=dir FindFiles :call FindFiles(<f-args>)
-"au VimEnter * call VimEnterCallback()
-"au BufAdd *.[ch] call FindGtags(expand('<afile>'))
-"au BufWritePost *.[ch] call UpdateGtags(expand('<afile>'))
 
-"function! FindFiles(pat, ...)
-    "let path = ''
-    "for str in a:000
-        "let path .= str . ','
-    "endfor
 
-    "if path == ''
-        "let path = &path
-    "endif
+" LSP
+set formatexpr=LanguageClient#textDocument_rangeFormatting_sync()
+let g:LanguageClient_loadSettings = 1
+let g:LanguageClient_diagnosticsEnable = 0
+let g:LanguageClient_selectionUI = 'quickfix'
+let g:LanguageClient_diagnosticsList = v:null
+"let g:LanguageClient_hoverPreview = 'Never'
+let g:LanguageClient_serverCommands = {}
+let g:LanguageClient_rootMarkers = ['.root', '.project', 'GTAGS']
+"let g:LanguageClient_serverCommands.c = ['clangd']
+"let g:LanguageClient_serverCommands.cpp = ['clangd']
+let g:LanguageClient_serverCommands = {
+    \ 'c': {
+    \   'name' : 'clangd',
+    \   'command' : ['clangd'],
+    \   'initializationOptions': {
+    \     'cacheDirectory': "/ifs/home/lmao/.cache/LanguageClient"
+    \   },
+    \ },
+    \ 'cpp': {
+    \   'name' : 'clangd',
+    \   'command' : ['clangd'],
+    \   'initializationOptions': {
+    \     'cacheDirectory': "/ifs/home/lmao/.cache/LanguageClient"
+    \   },
+    \ },
+\ }
 
-    "echo 'finding...'
-    "redraw
-    "call append(line('$'), split(globpath(path, a:pat), '\n'))
-    "echo 'finding...done!'
-    "redraw
-"endfunc
 
-function! VimEnterCallback()
-    if filereadable("GTAGS")
-        cs add GTAGS
-    endif
+" Or, you could use vim's popup window feature.
+"let g:echodoc#enable_at_startup = 1
+"let g:echodoc#type = 'popup'
+" To use a custom highlight for the popup window,
+" change Pmenu to your highlight group
+"highlight link EchoDocPopup Pmenu
 
-    "for f in argv()
-        "if fnamemodify(f, ':e') != 'c' && fnamemodify(f, ':e') != 'h'
-            "continue
-        "endif
+" vim-cpp-enhanced-highlight
+let g:cpp_class_scope_highlight = 1
+let g:cpp_member_variable_highlight = 0
+let g:cpp_class_decl_highlight = 1
+let g:cpp_posix_standard = 1
+"let g:cpp_no_function_highlight = 0
 
-        "call FindGtags(f)
-    "endfor
-endfunc
+" surround
+" 不定义任何快捷键
+let g:surround_no_mappings = 1
 
-"function! FindGtags(f)
-    "let dir = fnamemodify(a:f, ':p:h')
-    "while 1
-        "let tmp = dir . '/GTAGS'
-        "if filereadable(tmp)
-            "exe 'cs add ' . tmp . ' ' . dir
-            "break
-        "elseif dir == '/'
-            "break
-        "endif
+" rainbow
+let g:rainbow_active = 1
+let g:rainbow_conf = {
+\	'guifgs': ['royalblue3', 'darkorange3', 'seagreen3', 'firebrick'],
+\	'ctermfgs': ['lightblue', 'lightyellow', 'lightcyan', 'lightmagenta'],
+\	'operators': '_,_',
+\	'parentheses': ['start=/(/ end=/)/ fold', 'start=/\[/ end=/\]/ fold', 'start=/{/ end=/}/ fold'],
+\	'separately': {
+\		'*': {},
+\		'tex': {
+\			'parentheses': ['start=/(/ end=/)/', 'start=/\[/ end=/\]/'],
+\		},
+\		'lisp': {
+\			'guifgs': ['royalblue3', 'darkorange3', 'seagreen3', 'firebrick', 'darkorchid3'],
+\		},
+\		'vim': {
+\			'parentheses': ['start=/(/ end=/)/', 'start=/\[/ end=/\]/', 'start=/{/ end=/}/ fold', 'start=/(/ end=/)/ containedin=vimFuncBody', 'start=/\[/ end=/\]/ containedin=vimFuncBody', 'start=/{/ end=/}/ fold containedin=vimFuncBody'],
+\		},
+\		'html': {
+\			'parentheses': ['start=/\v\<((area|base|br|col|embed|hr|img|input|keygen|link|menuitem|meta|param|source|track|wbr)[ >])@!\z([-_:a-zA-Z0-9]+)(\s+[-_:a-zA-Z0-9]+(\=("[^"]*"|'."'".'[^'."'".']*'."'".'|[^ '."'".'"><=`]*))?)*\>/ end=#</\z1># fold'],
+\		},
+\		'css': 0,
+\		'nerdtree': 0,
+\	}
+\}
 
-        "let dir = fnamemodify(dir, ":h")
-    "endwhile
-"endfunc
+" vim-matchup
+let g:loaded_matchit = 1
 
-function! UpdateGtags(f)
-    let s:filename = fnamemodify(a:f, ':p')
-    echo s:filename "lemon !!"
-    "exe '!echo' filename '| gtags -i -f -'
-    "' | global -u &> /dev/null &'
+" fugitive
+let g:github_enterprise_urls = ['https://eos2git.cec.lab.emc.com']
+
+" autopair surround
+let g:AutoPairsShortcutBackInsert = '<M-6>'
+" dashboard
+let g:dashboard_default_executive ='leaderf'
+let g:indentLine_fileTypeExclude = ['dashboard']
+let g:dashboard_custom_section={
+  \ 'MRU': [' Most Recently Used'],
+  \ }
+function! MRU()
+LeaderfMru
+endfunction
+let g:dashboard_enable_session=0
+let g:indentLine_fileTypeExclude = ['dashboard']
+let g:dashboard_custom_header = [
+    \ '                                                        ',
+    \ '                                                        ',
+    \ '██╗     ███████╗███╗   ███╗ ██████╗ ███╗   ██╗    ██╗   ██╗██╗███╗   ███╗',
+    \ '██║     ██╔════╝████╗ ████║██╔═══██╗████╗  ██║    ██║   ██║██║████╗ ████║',
+    \ '██║     █████╗  ██╔████╔██║██║   ██║██╔██╗ ██║    ██║   ██║██║██╔████╔██║',
+    \ '██║     ██╔══╝  ██║╚██╔╝██║██║   ██║██║╚██╗██║    ╚██╗ ██╔╝██║██║╚██╔╝██║',
+    \ '███████╗███████╗██║ ╚═╝ ██║╚██████╔╝██║ ╚████║     ╚████╔╝ ██║██║ ╚═╝ ██║',
+    \ '╚══════╝╚══════╝╚═╝     ╚═╝ ╚═════╝ ╚═╝  ╚═══╝      ╚═══╝  ╚═╝╚═╝     ╚═╝',
+    \ '                                                        ',
+    \ '                            [ Happy Coding ! ]               ',
+    \ '                                                        ',
+    \ ]
+let g:dashboard_custom_footer = [
+    \ '',
+    \ '   ⠀⠀⠀⠀⠀⠀⠀⠀⠀⡴⠞⠉⢉⣭⣿⣿⠿⣳⣤⠴⠖⠛⣛⣿⣿⡷⠖⣶⣤⡀⠀⠀⠀   ',
+    \ '    ⠀⠀⠀⠀⠀⠀⠀⣼⠁⢀⣶⢻⡟⠿⠋⣴⠿⢻⣧⡴⠟⠋⠿⠛⠠⠾⢛⣵⣿⠀⠀⠀⠀  ',
+    \ '    ⣼⣿⡿⢶⣄⠀⢀⡇⢀⡿⠁⠈⠀⠀⣀⣉⣀⠘⣿⠀⠀⣀⣀⠀⠀⠀⠛⡹⠋⠀⠀⠀⠀  ',
+    \ '    ⣭⣤⡈⢑⣼⣻⣿⣧⡌⠁⠀⢀⣴⠟⠋⠉⠉⠛⣿⣴⠟⠋⠙⠻⣦⡰⣞⠁⢀⣤⣦⣤⠀  ',
+    \ '    ⠀⠀⣰⢫⣾⠋⣽⠟⠑⠛⢠⡟⠁⠀⠀⠀⠀⠀⠈⢻⡄⠀⠀⠀⠘⣷⡈⠻⣍⠤⢤⣌⣀  ',
+    \ '    ⢀⡞⣡⡌⠁⠀⠀⠀⠀⢀⣿⠁⠀⠀⠀⠀⠀⠀⠀⠀⢿⡀⠀⠀⠀⠸⣇⠀⢾⣷⢤⣬⣉  ',
+    \ '    ⡞⣼⣿⣤⣄⠀⠀⠀⠀⢸⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⡇⠀⠀⠀⠀⣿⠀⠸⣿⣇⠈⠻  ',
+    \ '    ⢰⣿⡿⢹⠃⠀⣠⠤⠶⣼⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⡇⠀⠀⠀⠀⣿⠀⠀⣿⠛⡄⠀  ',
+    \ '    ⠈⠉⠁⠀⠀⠀⡟⡀⠀⠈⡗⠲⠶⠦⢤⣤⣤⣄⣀⣀⣸⣧⣤⣤⠤⠤⣿⣀⡀⠉⣼⡇⠀  ',
+    \ '    ⣿⣴⣴⡆⠀⠀⠻⣄⠀⠀⠡⠀⠀⠀⠈⠛⠋⠀⠀⠀⡈⠀⠻⠟⠀⢀⠋⠉⠙⢷⡿⡇⠀  ',
+    \ '    ⣻⡿⠏⠁⠀⠀⢠⡟⠀⠀⠀⠣⡀⠀⠀⠀⠀⠀⢀⣄⠀⠀⠀⠀⢀⠈⠀⢀⣀⡾⣴⠃⠀  ',
+    \ '    ⢿⠛⠀⠀⠀⠀⢸⠁⠀⠀⠀⠀⠈⠢⠄⣀⠠⠼⣁⠀⡱⠤⠤⠐⠁⠀⠀⣸⠋⢻⡟⠀⠀  ',
+    \ '    ⠈⢧⣀⣤⣶⡄⠘⣆⠀⠀⠀⠀⠀⠀⠀⢀⣤⠖⠛⠻⣄⠀⠀⠀⢀⣠⡾⠋⢀⡞⠀⠀⠀  ',
+    \ '    ⠀⠀⠻⣿⣿⡇⠀⠈⠓⢦⣤⣤⣤⡤⠞⠉⠀⠀⠀⠀⠈⠛⠒⠚⢩⡅⣠⡴⠋⠀⠀⠀⠀  ',
+    \ '    ⠀⠀⠀⠈⠻⢧⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠐⣻⠿⠋⠀⠀⠀⠀⠀⠀  ',
+    \ '    ⠀⠀⠀⠀⠀⠀⠉⠓⠶⣤⣄⣀⡀⠀⠀⠀⠀⠀⢀⣀⣠⡴⠖⠋⠁⠀⠀⠀⠀⠀⠀⠀⠀  ',
+    \ '                                       ',
+    \ '                                       ',
+    \ '                                       ',
+    \ '                                       ',
+    \ '                                       ',
+    \ '                                       ',
+    \ '                                       ',
+    \ '                                       ',
+    \ '                                       ',
+    \ '                                       ',
+    \ '                                       ',
+    \ '',
+    \ ]
+"}}}
+
+" Utility Functions {{{
+"
+"
+" run shell with current cursor
+function! RunShell(Msg, Shell)
+  echo a:Msg
+  let s:curWord =  expand("<cword>")
+  let s:cmd = a:Shell . s:curWord
+  call system(s:cmd)
+  echo s:cmd "done"
 endfunction
 
+let s:numberf = 1
+function! ToggleMouse()
+    if  s:numberf == 1
+        let s:numberf = 0
+        exec "IndentLinesDisable"
+        set norelativenumber
+        set nonumber
+        set paste
+    else
+        let s:numberf = 1
+        exec "IndentLinesEnable"
+        set number
+        set nopaste
+        set relativenumber
+    endif
+    echo "Done!"
+endfunction
+
+":vertical resize+40<CR>
+" move between windows
+function! ChangeCurWind(flag)
+    let objFind = -1
+    let winName = bufname(winbufnr(0))
+    let objFind = match(winName, "NERD_tree_")
+    "let objFind = objFind >= 0 ? objFind : match(winName, "Tag_List")
+    echo "old:" objFind winName
+    if objFind != -1
+        exe "normal 5\<C-W>|0"
+    endif
+
+    exec "wincmd" a:flag
+
+    let objFind = -1
+    let winName = bufname(winbufnr(0))
+    let objFind = match(winName, "NERD_tree_")
+    "let objFind = objFind >= 0 ? objFind : match(winName, "Tag_List")
+    echo "new:" objFind winName
+    if objFind != -1
+        exe "normal 60\<C-W>|0"
+    endif
+endfunction
 
 function! Terminal_MetaMode(mode)
     set ttimeout
@@ -798,144 +573,60 @@ function! Terminal_MetaMode(mode)
 endfunc
 
 call Terminal_MetaMode(0)
+
 "}}}
 
-" Key Bindings: {{{
+" Key Bindings {{{
+"}}}
 let mapleader = ","
 let maplocalleader = "\\"
 
+" ## -------------------------------------- ##
+" ## Global Hotkeys
+" ## -------------------------------------- ##
 " map : -> <space>
 map <Space> :
+map <leader><Space> :AsyncRun 
+" Make shift-insert work like in Xterm
+map <S-Insert> <MiddleMouse>
+map! <S-Insert> <MiddleMouse>
+" Ctrl-N to disable search match highlight
+nmap <silent> <C-N> :silent noh<CR>
+nmap <leader>d :Dashboard<CR>
 
-"nmap <Leader>r :MRU<cr>
-"nmap <Leader>R :MRU 
-"nmap <Leader>t :TlistToggle<cr>
-nmap <Leader>t :TagbarToggle<cr>
-nmap <Leader>f :NERDTreeToggle<CR>
-nmap <Leader>F :NERDTreeFind<CR>
-
-" F1 ~~ F12 hotkey mapping
-"nmap <F2>  :AsyncRun lt find zebos/
-nmap <F3>  :diffput<cr>
-nmap <F4>  :AsyncRun find . -type f \| xargs grep -n ""
-"nmap <F4>  :vimgrep //g zebos/**/*.[ch]
-"nmap <F5> <Plug>LookupFile " This has been mapped in lookupfile plugin 
+" ## -------------------------------------- ##
+" ## F1 ~~ F12 Hotkeys
+" ## -------------------------------------- ##
+"nmap <F1> :AsyncRun 
+nmap <F2>  :scriptnames<cr>
+"nmap <F3>  :diffget<cr>
+nmap <F4>  :AsyncRun lt grep <C-R><C-W> 
 nmap <F5>  <leader>#
 nmap <F6>  <leader>*
-nmap <F7>  :AsyncRun cd ;make 
+"nmap <F7>  :AsyncRun cd ;make
+nmap <F8>  :AsyncRun docker exec onefs_build /bin/sh -c "cd /home/cross-compiler/output.cross && make -j24"
 nmap <F9>  :GscopeFind g 
-"nmap <F9>  :call UpdateFile("Check out file : ", "/usr/atria/bin/cleartool co ")<cr>
-nmap <F10> :call UpdateFile("Uncheck out file : ", "/usr/atria/bin/cleartool unco -rm ")<cr>
-nmap <F11> :call UpdateFile("Update current project_vim info! ", "cd /vobs/nosx;lg update ")<cr>
-nmap <F12> :call ToggleMouse() <cr> <CR>
-"nmap <silent> <C-1> *<CR>
+nmap <F10> :EraseBadWhitespace<CR>
+"nmap <F11> :<CR>
+nmap <F12> :call ToggleMouse()<CR>
 
-" useful mappings for managing tabs
-map <leader>tn :tabnew 
-map <leader>to :tabonly<cr>
-map <leader>tc :tabclose<cr>
-map <leader>tm :tabmove
-
-" ##### Moving Hotkeys #####
+" ## -------------------------------------- ##
+" ## Windows Hotkeys
+" ## Moving/Switch/Paging/Zooming
+" ## -------------------------------------- ##
 " ---move from the multiple screen
 nmap <C-h> :call ChangeCurWind("h")<ESC><cr>
 nmap <C-l> :call ChangeCurWind("l")<ESC><cr>
 nmap <C-j> <C-w>j
 nmap <C-k> <C-w>k
-nmap <leader>1 :vertical resize-10<CR> <ESC>
-nmap <leader>2 :vertical resize+10<CR> <ESC>
+nmap <leader>1 :vertical resize-20<CR> <ESC>
+nmap <leader>2 :vertical resize+20<CR> <ESC>
+nmap <leader>3 :abo resize-20<CR> <ESC>
+nmap <leader>4 :abo resize+20<CR> <ESC>
 "nmap <C-H> <C-w>W
 "nmap <C-L> <C-w>w
-" ---Ctrol-E to switch between 2 last buffers
+"Ctrol-E to switch between 2 last buffers
 nmap <C-E> :b#<CR>
-" ########################
-
-" Don't use Ex mode, use Q for formatting
-" map Q gq
-
-"make Y consistent with C and D
-nnoremap Y y$
-
-" Make shift-insert work like in Xterm
-map <S-Insert> <MiddleMouse>
-map! <S-Insert> <MiddleMouse>
-
-" ,n to get the next location (compilation errors, grep etc)
-"nmap <leader>n :cn<CR>
-"nmap <leader>p :cp<CR>
-
-" Ctrl-N to disable search match highlight
-nmap <silent> <C-N> :silent noh<CR>
-
-"cscope hotkey mapping
-"nmap <leader>sh :cs show<cr>
-"nmap <leader>ll :cs find f 
-"nmap <leader>ss :cs find s <C-R>=expand("<cword>")<cr><cr>
-"nmap <leader>ss :cs find s <C-R>=expand("<cword>")<cr><cr>
-"nmap <leader>sg :cs find g <C-R>=expand("<cword>")<cr><cr>
-"nmap <leader>sc :cs find c <C-R>=expand("<cword>")<cr><cr>
-"nmap <leader>st :cs find t <C-R>=expand("<cword>")<cr><cr>
-"nmap <leader>se :cs find e <C-R>=expand("<cword>")<cr><cr>
-"nmap <leader>sf :cs find f <C-R>=expand("<cfile>")<cr><cr>
-"nmap <leader>si :cs find i <C-R>=expand("<cfile>")<cr><cr>
-"nmap <leader>sd :cs find d <C-R>=expand("<cword>")<cr><cr>
-noremap <silent> <leader>ss :GscopeFind s <C-R><C-W><cr>
-noremap <silent> <leader>sg :GscopeFind g <C-R><C-W><cr>
-" Add this for distinguish with preview window
-"noremap <silent> <leader>sgn :PreviewClose <cr> :GscopeFind g <C-R><C-W><cr>
-noremap <silent> <leader>sc :GscopeFind c <C-R><C-W><cr>
-noremap <silent> <leader>st :GscopeFind t <C-R><C-W><cr>
-noremap <silent> <leader>se :GscopeFind e <C-R><C-W><cr>
-noremap <silent> <leader>sf :GscopeFind f <C-R>=expand("<cfile>")<cr><cr>
-noremap <silent> <leader>si :GscopeFind i <C-R>=expand("<cfile>")<cr><cr>
-noremap <silent> <leader>sd :GscopeFind d <C-R><C-W><cr>
-noremap <silent> <leader>sa :GscopeFind a <C-R><C-W><cr>
-
-" FuzzyFinder
-"nnoremap <silent> sb     :FufBuffer<CR>
-"nnoremap <silent> sm     :FufMruFile<CR>
-"nnoremap <silent> smc    :FufMruCmd<CR>
-"nnoremap <silent> su     :FufBookmarkFile<CR>
-"nnoremap <silent> s<C-u> :FufBookmarkFileAdd<CR>
-"vnoremap <silent> s<C-u> :FufBookmarkFileAddAsSelectedText<CR>
-"nnoremap <silent> sf     :FufFile<CR>
-"nnoremap <silent> st     :FufTaggedFile<CR>
-
-" CtrlP
-"nnoremap <silent> sb     :CtrlPBuffer<CR>
-"nnoremap <silent> sm     :CtrlPMRUFiles<CR>
-
-" LeaderF
-nnoremap <silent> sb     :LeaderfBuffer<CR>
-nnoremap <silent> sm     :LeaderfMru<CR>
-nnoremap <silent> sfi     :LeaderfFile<CR>
-nnoremap <silent> st     :LeaderfBufTag<CR>
-nnoremap <silent> sta    :LeaderfBufTagAll<CR>
-nnoremap <silent> ss     :LeaderfLine<CR>
-nnoremap <silent> ssa    :LeaderfLineAll<CR>
-nnoremap <silent> sfu   :LeaderfFunction<CR>
-nnoremap <silent> sfa   :LeaderfFunctionAll<CR>
-
-
-" Align
-",ascom
-
-" Pydiction
-"let g:pydiction_location = '~/.vim/bundle/Pydiction/complete-dict'
-
-"LookupFile hotkey mapping
-"nmap <silent> <leader>l :LUTags<cr>
-"nmap <silent> <leader>lb :LUBufs<cr>
-"nmap <silent> <leader>lw :LUWalk<cr>
-
-" center display after searching
-nnoremap n   nzz
-nnoremap N   Nzz
-nnoremap *   *zz
-nnoremap #   #zz
-nnoremap g*  g*zz
-nnoremap g#  g#z
-
 " vim-preview
 noremap <m-u> :PreviewScroll -1<cr>
 noremap <m-d> :PreviewScroll +1<cr>
@@ -943,25 +634,87 @@ inoremap <m-u> <c-\><c-o>:PreviewScroll -1<cr>
 inoremap <m-d> <c-\><c-o>:PreviewScroll +1<cr>
 autocmd FileType qf nnoremap <silent><buffer> p :PreviewQuickfix<cr>
 autocmd FileType qf nnoremap <silent><buffer> P :PreviewClose<cr>
-noremap <m-t> :PreviewTag <cr>
-noremap <m-s> :PreviewSignature <cr>
-noremap <m-c> :PreviewClose <cr>
+nmap <m-t> :PreviewTag <cr>
+nmap <m-s> :PreviewSignature <cr>
+nmap <m-c> :PreviewClose <cr>
+" close quickfix window
+nmap <m-q> :cclose<cr>
+nmap <leader>q :q<cr>
 
-"Airline 设置切换Buffer快捷键"
-"nnoremap <C-N> :bn<CR>
-nnoremap <C-P> :bp<CR>
+" ## -------------------------------------- ##
+" ## Find Hotkeys
+" ## tags/files/MRU/direcotry
+" ## -------------------------------------- ##
+" -- LSP def/ref/hover
+" You can apply these mappings only for buffers with supported filetypes
+function LC_maps()
+    if has_key(g:LanguageClient_serverCommands, &filetype)
+        nmap <buffer> <leader>sr :call LanguageClient#textDocument_references()<cr>
+        nmap <buffer> <leader>sd :call LanguageClient#textDocument_definition()<cr>
+        nmap <buffer> <leader>sh :call LanguageClient#textDocument_hover()<cr>
+    endif
+endfunction
+autocmd FileType * call LC_maps()
+" -- -- cscope hotkey mapping
+noremap <silent> <leader>ss :GscopeFind s <C-R><C-W><cr>
+noremap <silent> <leader>sg :GscopeFind g <C-R><C-W><cr>
+noremap <silent> <leader>sc :GscopeFind c <C-R><C-W><cr>
+noremap <silent> <leader>st :GscopeFind t <C-R><C-W><cr>
+noremap <silent> <leader>se :GscopeFind e <C-R><C-W><cr>
+noremap <silent> <leader>sf :GscopeFind f <C-R>=expand("<cfile>")<cr><cr>
+noremap <silent> <leader>si :GscopeFind i <C-R>=expand("<cfile>")<cr><cr>
+noremap <silent> <leader>sb :GscopeFind d <C-R><C-W><cr>
+noremap <silent> <leader>sa :GscopeFind a <C-R><C-W><cr>
+" -- -- LeaderF find files/MRU/buffers
+nnoremap <silent> sb     :LeaderfBuffer<CR>
+nnoremap <silent> sm     :LeaderfMru<CR>
+nnoremap <silent> sfi    :LeaderfFile<CR>
+nnoremap <silent> st     :LeaderfBufTag<CR>
+nnoremap <silent> sta    :LeaderfBufTagAll<CR>
+nnoremap <silent> ss     :LeaderfLine<CR>
+nnoremap <silent> ssa    :LeaderfLineAll<CR>
+nnoremap <silent> sfu    :LeaderfFunction<CR>
+nnoremap <silent> sfua   :LeaderfFunctionAll<CR>
+" -- open directory
+nmap <Leader>f :NERDTreeToggle<CR>
+nmap <Leader>F :NERDTreeFind<CR>
 
-" cppman
-" apt install cppman
-" noremap <m-k> :call RunShell("Cppman: ", "cppman  ")<cr>
+" ## -------------------------------------- ##
+" ## Coding Hotkeys
+" ## -------------------------------------- ##
+nnoremap Y y$
+"insert 模式下，跳到行首行尾
+inoremap <C-a> <Home>
+inoremap <C-e> <End>
+inoremap <C-d> <Delete>
+inoremap <C-h> <BS>
+inoremap <C-f> <Right>
+inoremap <C-b> <Left>
+inoremap <m-f> <S-Right>
+inoremap <m-b> <S-Left>
+" cppman; apt install cppman
 noremap <m-k> :!cppman <C-R>=expand("<cword>")<cr><cr>
-
 " run #git mergetool
 map <silent> <leader>g1 :diffget 1<CR> :diffupdate<CR>
 map <silent> <leader>g2 :diffget 2<CR> :diffupdate<CR>
 map <silent> <leader>g3 :diffget 3<CR> :diffupdate<CR>
 map <silent> <leader>g4 :diffget 4<CR> :diffupdate<CR>
+" Align, av:aliagn variables, am: align micros, ac:align comments, af:align functions
+vmap av ,adec
+vmap am ,adef
+vmap ac ,acom
+vmap af ,afnc
+" surround maps come from surround.vim
+nmap ys <Plug>Ysurround
+nmap ds <Plug>Dsurround
+nmap cs <Plug>Csurround
+" tagbar
+nnoremap <silent> <leader>t :TagbarToggle<CR>
+nnoremap <silent> <leader>tp :TagbarTogglePause<CR>
+" git fugitive, blame / diff
+nmap <leader>gb :G blame<CR>
+vmap <leader>gb :G blame<CR>
+nmap <leader>gd :Gvdiffsplit<CR>
+nmap <leader>gs :G<cr>
+" highlight
 
-" close 
-nnoremap <m-q> :cclose<cr>
-"}}}

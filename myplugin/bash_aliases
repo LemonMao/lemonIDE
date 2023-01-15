@@ -1,0 +1,52 @@
+export PATH=$PATH:~/.vim/lemon-tool/:/usr/local/share/gtags/script:/usr/lib/python3/dist-packages/:/usr/local/bin/lmao:~/usr/bin/
+git config --global core.pager 'less -FMRX'
+
+# man colorful
+#export LESS_TERMCAP_mb=$'\E[1m\E[32m'
+#export LESS_TERMCAP_mh=$'\E[2m'
+#export LESS_TERMCAP_mr=$'\E[7m'
+#export LESS_TERMCAP_md=$'\E[1m\E[36m'
+#export LESS_TERMCAP_ZW=""
+#export LESS_TERMCAP_us=$'\E[4m\E[1m\E[37m'
+#export LESS_TERMCAP_me=$'\E(B\E[m'
+#export LESS_TERMCAP_ue=$'\E[24m\E(B\E[m'
+#export LESS_TERMCAP_ZO=""
+#export LESS_TERMCAP_ZN=""
+#export LESS_TERMCAP_se=$'\E[27m\E(B\E[m'
+#export LESS_TERMCAP_ZV=""
+#export LESS_TERMCAP_so=$'\E[1m\E[33m\E[44m'
+export LESS_TERMCAP_so=$'\033[43;37;1;4m'
+export LESS_TERMCAP_se=$'\e[0m'
+
+# Lemon Aliases
+alias lsalias="cat ~/.bash_aliases | grep -A 1000 'Lemon Aliases' | grep alias"
+alias ll="ls -lthr"
+alias ld="ls -lthr -F | grep /$"
+alias la="ls -lathr"
+alias tmnew="tmux -2 new -s "
+alias tmls="tmux ls"
+alias tmat="tmux -2 att -t "
+alias apt="sudo apt "
+alias lxc="sudo /usr/bin/lxc "
+alias docker="sudo /usr/bin/docker "
+alias serfind='sudo systemctl list-units | grep '
+alias serlist='sudo systemctl list-units'
+alias df="[ `which duf`  ] && duf -hide special -style ascii || df -h"
+alias lscrt="openssl x509 -noout -text -in "
+
+#alias lsip="ifconfig | grep inet | sort | uniq | awk '{print(\"\033[0m\" \$1 \" - \" \"\033[31m\" \$2)}'"
+alias lsip="ifconfig | grep -e \"^[a-z]\" -e \"inet\" | \
+            awk '{if (\$1==\"inet\" || \$1==\"inet6\") printf(\"%s %s\n\",\$2,dev); else dev = \$1}' |\
+            sort | uniq | awk '{printf(\"\033[0m%-13s  - \033[31m%s\n\",\$2,\$1)}'"
+alias lscpu="cat /proc/cpuinfo | grep 'model name' | uniq;\
+             cat /proc/cpuinfo | grep 'cpu cores' | sort | uniq;\
+             cat /proc/cpuinfo | grep 'siblings' | sort | uniq;\
+             total=`cat /proc/cpuinfo | grep processor | uniq | wc -l` && \
+             echo -e '\ntotal logical cores: ${total}';\
+             "
+
+# project aliases
+alias gonefs="cd ~/onefs"
+alias vonefs="cd ~/onefs ; vim"
+alias bonefs="sudo docker container run --name onefs_build --mount type=bind,source=/home/lmao/project/onefs,target=/onefs,readonly -e DESKTOP=lmao -i -t docker.west.isilon.com/cclayton/docker-onefs-cross:latest"
+alias conefs="rm -rf ~/"

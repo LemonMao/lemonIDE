@@ -1,3 +1,4 @@
 bashrc ~/.bashrc
 HomeDir ~/
 VIM ~/.vim
+onefs ~/onefs
