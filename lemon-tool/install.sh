@@ -50,23 +50,22 @@ cp $srcPluginPath/desertmss.vim $dstPluginPath/desertEx/colors/
 [ -e ~/.tmux.conf ] && mv ~/.tmux.conf $vimbak/tmux.conf-bak
 [ -e ~/.tmux.conf.local ] && mv ~/.tmux.conf.local $vimbak/tmux.conf.local-bak
 read -e -p "Install tmux config? [Y/n]" ret
-if [[ $ret != "y" ]] ; then
+if [[ $ret != "n" ]] ; then
     git clone https://github.com/gpakosz/.tmux.git ~/.tmux
-    ln -s -f .tmux/.tmux.conf ~/.tmux.conf
+    ln -s -f ~/.tmux/.tmux.conf ~/.tmux.conf
 fi
 ln -s -f $srcPluginPath/tmux.conf.local ~/.tmux.conf.local
 
 # bash-it config
 [ -e ~/.bash_aliases ] && mv ~/.bash_aliases $vimbak/bash_aliases-bak
-ln -s -f $srcPluginPath/bash_aliases ~/.bash_aliases
-ln -s -f $srcPluginPath/bash_aliases ~/.bash_it/custom/bash_aliases.bash
+#ln -s -f $srcPluginPath/bash_aliases ~/.bash_aliases
 read -e -p "Install bash-it ? [Y/n]" ret
-if [[ $ret != "y" ]] ; then
+if [[ $ret != "n" ]] ; then
+    [ -e ~/.bash_it ] && mv ~/.bash_aliases $vimbak/bash_it-bak
     git clone --depth=1 https://github.com/Bash-it/bash-it.git ~/.bash_it
     cd ~/.bash_it/ && ./install.sh
     echo -e "\n\nComment 116 line for git status" && sleep 2
     vim +116 .bash_it/themes/powerline/powerline.base.bash
-    ln -s -f .tmux/.tmux.conf ~/.tmux.conf
     bash-it enable completion git docker ssh tmux pip makefile
     bash-it enable plugin man docker history-eternal less-pretty-cat ssh history history-substring-search history-search colors
     mkdir -p ~/.bash_it/custom
