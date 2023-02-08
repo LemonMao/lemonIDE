@@ -53,6 +53,8 @@ read -e -p "Install tmux config? [Y/n]" ret
 if [[ $ret != "n" ]] ; then
     git clone https://github.com/gpakosz/.tmux.git ~/.tmux
     ln -s -f ~/.tmux/.tmux.conf ~/.tmux.conf
+    echo -e "\n\nComment 14/19/20 line for git status and repalce resize-pane from 2 to 5" && sleep 2
+    vim +14 ~/.tmux.conf
 fi
 ln -s -f $srcPluginPath/tmux.conf.local ~/.tmux.conf.local
 
