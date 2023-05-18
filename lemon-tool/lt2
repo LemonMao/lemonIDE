@@ -1,0 +1,310 @@
+#!/bin/bash
+
+function show_help_info()
+{
+    echo "<-----lemon tools usage:----->"
+    echo "=lt grep (:dir) (:file_type) (:str)"
+    echo -e "\tuse: check every *.c or *.h in path with (string)"
+    echo " "
+    echo "=lt svn ci "
+    echo -e "\tuse: This will check the ~/branch/svn-log.txt file and checkin the files wirten in it to svn"
+    echo " "
+    echo "=lt svn st "
+    echo -e "\tuse: svn status check "
+    echo "=lt tar (:target)"
+    echo -e "\tuse: tar one file or dir, just use xx.tar.gz format"
+    echo "=lt untar (:target)"
+    echo -e "\tuse: untar one tared file or dir, it will analyze the format auto "
+    echo "=lt tr (:target)"
+    echo -e "\tuse: trasport HEX string to ASCII, :target need use format \"xx xx xx\""
+    echo "-----------------------------"
+
+}
+
+#main
+path=$(pwd)
+start_time=`date +%s`
+#stty erase ^?
+
+case $1 in
+    "svn")
+        case $2 in
+            ci)
+                read -p "Please confirm svn checkin operation(y/n):" confirm
+                if [[ $confirm == 'y' ]]; then
+                    svn ci $(awk 'BEGIN {COUT=10000000} {if($1=="Change") COUT=NR} {if(NR>COUT) print $2 }' ~/branch/svn-log.txt | tr '\r\n' '   ') -F ~/branch/svn-log.txt
+                fi
+                ;;
+            st)
+                svn st -q | grep -v "^Per" | grep -v "^$"
+                ;;
+        esac
+        ;;
+    "grep")
+        pattern=$2
+        path=$3
+        if [[ $4 == 'c' ]]; then
+            file_type="-name '*.*[chp]'"
+        elif [[ $4 == '' ]]; then
+            file_type=""
+        else
+            file_type="-name '$4'"
+        fi
+        cmd="find $path -type f $file_type | xargs grep -n $pattern"
+        echo $cmd
+        find $path -type f $file_type | xargs grep -n "$pattern"
+        #-exec grep -n $4 {} \;
+        ;;
+    "vim")
+        case $2 in
+            "up")
+                git pull origin
+                ;;
+            "new")
+                git clone http://github.com/scrooloose/nerdtree.git
+                git clone http://github.com/scrooloose/nerdtree.git
+                git clone http://github.com/scrooloose/nerdtree.git
+                ;;
+        esac
+        ;;
+    "ssh")
+        [ -e ~/.sshhosts ] || echo "Not found SSH hosts file. Please create first"
+        [ -e ~/.sshhosts ] || exit 2
+
+        let num=0
+        declare -a hosts
+
+        echo "Hosts info(.sshhosts):"
+        echo "---------------------"
+        oLDIFS=$IFS ; IFS=$'\n' hosts=(`cat ~/.sshhosts`)
+        for host in ${hosts[*]}; do
+            echo -e "$num\t$host"
+            num=$(($num + 1))
+        done
+        IFS=$oLDIFS
+        echo "---------------------"
+
+        read -e -p "Please choose the host: " num
+        read -e -p "Please choose the user: [Lmao|Root|other]: " user
+        [[ $user == 'l' || $user == 'L' ]] && user="lmao"
+        [[ $user == 'r' || $user == 'R' ]] && user="root"
+        [[ -z $user ]] && user="root"
+
+        if [[ $num =~ [0-9]-[0-9] ]]; then
+            sep="*-"
+            nodenum=$((${num#*-}-1))
+            host=`echo ${hosts[${num%-*}]} | awk '{print $1}'`
+            [ $nodenum -gt 0 ] && host=${host%.*}"."$((${host##*.} + $nodenum))
+            echo $nodenum , $host
+        else
+            host=`echo ${hosts[$num]} | awk '{print $1}'`
+        fi
+        CMD="ssh $user@$host"
+        echo $CMD
+        $CMD
+        ;;
+    "tar")
+        tar -zcvpf ${2}.tar.gz $2
+        #zip -r ${2}.zip $2
+        ;;
+    "untar")
+        tarType=${2##*.}
+        #echo $tarType
+        case $tarType in
+            "gz")
+                tar -zxvf $2
+                ;;
+            "bz2")
+                tar -jxvf $2
+                ;;
+            "zip")
+                unzip $2
+                ;;
+            *)
+                echo "No supported type!"
+                ;;
+        esac
+        ;;
+    "tr")
+        #{{{ ~~
+        if [[ $3 != "" ]]; then
+            echo "Error: just use <lt tr "xx xx xx">"
+            echo "split xx and xx with blank space"
+        fi
+        hexList=$2
+        echo $hexList | awk '{for(i=1;i<=NF;i++){printf "%c",strtonum("0x"$i)}}'
+        echo
+        #}}}
+        ;;
+    "diff")
+        # {{{
+        submitNum=''
+        gitdiffcmd="git d -y"
+        tmp_file="/tmp/tmp_file"
+        touch $tmp_file
+        # diff local
+        if [[ $2 == "" || $2 == "." ]]; then
+          git status
+          echo "Choose diff between regions."
+          read -e -p "w:work<->stage, s:stage<->commit, c:work<->commit [W/s/c] : " ret
+          if [[ $ret == "W" || $ret == "w" || $ret == "" ]] ; then
+            gitdiffcmd="git d -y"
+          elif [[ $ret == "S" || $ret == "s" ]]; then
+            gitdiffcmd="git d -y  --staged"
+          elif [[ $ret == "C" || $ret == "c" ]]; then
+            gitdiffcmd="git d -y  HEAD"
+          fi
+          #
+          git status -s > $tmp_file
+          git status -s | awk 'BEGIN {FS=" ";print "Index\tName\tStatus"} {print NR-1"\t"$1"\t"$2}' > /tmp/mss-ci-diff
+        else
+          # diff commit
+          submitNum=$2
+          # Index diff old -- new
+          git log -1 $submitNum
+          # todo: please consider the merge branch which have two parrents.
+          #git log --name-status -1 --pretty=format:"%p %h" $submitNum | grep -v "$submitNum" > $tmp_file
+          git diff --name-status $2^ $2 > $tmp_file
+          cat $tmp_file |  awk 'BEGIN {FS="@@";print "Index\tStatus\tName"} {print NR-1 "\t" $0}' > /tmp/mss-ci-diff
+          gitdiffcmd="git d -y $submitNum^ $submitNum"
+        fi
+
+        # continous diff
+        #read -e -p "Index or Continuous diff ? [c/I] : " ret
+        #if [[ $ret == "c" || $ret == "C" ]] ; then
+          #git log --name-status -1 $submitNum
+          ## %p:old commit , %h:Current commit
+          #git d -y  `git log -1 --pretty=format:"%p %h" $submitNum`
+          #exit
+        #fi
+
+
+
+        #shortPath=(`cat $tmp_file | grep @@ | awk 'BEGIN {FS="@@"} {print $1}'`)
+        #submitInfo=(`cat $tmp_file | grep "^Status" | awk '{print $2}'`)
+
+        echo ""
+        commitFiles=(`cat $tmp_file | awk '{print $2}'`)
+        cat /tmp/mss-ci-diff
+        rm $tmp_file
+
+        echo "------------ Old diff to New ----"
+        read -e -p "Please choose the diff file ! [Idx/Exit/show] : " ret
+        while [[ $ret != "exit" && $ret != "e" && $ret != "" ]] ; do
+          if [[ $ret == "show" ]]; then
+            cat /tmp/mss-ci-diff
+          else
+            objFile="${commitFiles[$ret]}"
+            difCmd="$gitdiffcmd -- $objFile"
+            echo $difCmd
+            $difCmd
+          fi
+          echo
+          read -p "Please choose the diff file ! [Idx/Exit/show] : " -e ret
+        done
+
+        echo ""
+        echo "Bye !"
+        echo "------------"
+        # }}}
+        ;;
+    "br")
+        # {{{
+        tmp_file="/tmp/tmp_file"
+        touch $tmp_file
+        git branch > $tmp_file
+        cat $tmp_file |  awk 'BEGIN {print "Index\tBranch"} {print NR-1 "\t" $0}' > /tmp/mss-ci-diff
+        gitdiffcmd="git d -y $submitNum^ $submitNum"
+
+        echo ""
+        #cat $tmp_file
+        branchList=(`cat $tmp_file | awk '{if($1 == "*") {print $2} else {print $1} }'`)
+        cat /tmp/mss-ci-diff
+        rm $tmp_file
+        read -e -p "Please choose the branch you want! [Idx/Exit/show] : " ret
+
+        while [[ $ret != "exit" && $ret != "e" && $ret != "" ]] ; do
+          if [[ $ret == "show" ]]; then
+            cat /tmp/mss-ci-diff
+          else
+            #echo ${branchList}
+            difCmd="git checkout ${branchList[$ret]}"
+            echo $difCmd
+            $difCmd
+          fi
+          break
+        done
+
+        echo ""
+        echo "Bye !"
+        echo "------------"
+        # }}}
+        ;;
+    "lscrt")
+        # {{{
+        lt2 lssaml $2
+        # }}}
+        ;;
+    "lsjwt")
+        # {{{
+        lt2 lsjwt $2
+        # }}}
+        ;;
+    "lssaml")
+        # {{{
+        lt2 lssaml $2
+        # }}}
+        ;;
+    "upld")
+# {{{ ftp upload firmware
+#echo -n "[Choose Destination(vm/xx)] : "
+#read ret
+#if [[ $ret == "v" ]]; then
+    if [[ $2 == "sos" ]]; then
+        cmd="scp m2/target/oct_mips64/sw_x86v-sc-stdeb/sonicosv.st.eng m2/target/oct_mips64/sw_x86v-sc-stdeb/sonicosv.st.ns.eng ubuntu@10.103.219.149:sonicos/"
+    else
+        cmd="scp $2 maoss1@10.240.237.65:FW/"
+    fi
+    #cmd="curl -T $2 ftp://10.240.236.131/pub/lemon/$2"
+    #cmd="curl -T $2 ftp://10.240.237.61/pub/lemon/$2"
+    echo $cmd
+    $cmd
+#ftp -n<<!
+#open 10.240.236.131
+#user anonymous maoss1@lenovo.com
+#binary
+#cd pub/lemon/
+##lcd ~/workspace/nos/build/images-gen/
+#hash
+#prompt
+#put $2
+#close
+#bye
+#!
+#else
+    ##cmd="curl --progress-bar -s -u %s -T %s%s ftp://%s:%d%s%s"
+    ##if [[ $3 == home ]]; then
+        ##cmd="curl -u mss -T $2 ftp://10.96.192.92/FW/"
+    ##else
+        ##cmd="curl -u ftp -T $2 ftp://10.107.180.173/"
+    ##fi
+    #echo $cmd
+    #$cmd
+#fi
+# }}}
+        ;;
+    "help")
+        show_help_info
+        ;;
+    *)
+        show_help_info
+        ;;
+esac
+
+end_time=`date +%s`
+let uT=$end_time-$start_time
+let uT_m=$uT/60
+let uT_s=$uT%60
+echo "--- Finished Time:" `date`
+echo "Time usage: $uT_m m $uT_s s"
+echo " "

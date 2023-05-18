@@ -1,381 +1,137 @@
-#!/bin/bash
+#!/usr/bin/python3
 
-function show_help_info()
-{
-    echo "<-----lemon tools usage:----->"
-    echo "=lt grep (:dir) (:file_type) (:str)"
-    echo -e "\tuse: check every *.c or *.h in path with (string)"
-    echo " "
-    echo "=lt svn ci "
-    echo -e "\tuse: This will check the ~/branch/svn-log.txt file and checkin the files wirten in it to svn"
-    echo " "
-    echo "=lt svn st "
-    echo -e "\tuse: svn status check "
-    echo "=lt tar (:target)"
-    echo -e "\tuse: tar one file or dir, just use xx.tar.gz format"
-    echo "=lt untar (:target)"
-    echo -e "\tuse: untar one tared file or dir, it will analyze the format auto "
-    echo "=lt tr (:target)"
-    echo -e "\tuse: trasport HEX string to ASCII, :target need use format \"xx xx xx\""
-    echo "-----------------------------"
+import sys, os, signal
+import argparse, argcomplete
+import base64, json
+import ssl
+import xml.dom.minidom
+import zlib
 
-}
+import mutil
+import urllib.parse
+# pip install colorama argcomplete 
 
-#main
-path=$(pwd)
-start_time=`date +%s`
-#stty erase ^?
 
-case $1 in
-    "svn")
-        case $2 in
-            ci)
-                read -p "Please confirm svn checkin operation(y/n):" confirm
-                if [[ $confirm == 'y' ]]; then
-                    svn ci $(awk 'BEGIN {COUT=10000000} {if($1=="Change") COUT=NR} {if(NR>COUT) print $2 }' ~/branch/svn-log.txt | tr '\r\n' '   ') -F ~/branch/svn-log.txt
-                fi
-                ;;
-            st)
-                svn st -q | grep -v "^Per" | grep -v "^$"
-                ;;
-        esac
-        ;;
-    "grep")
-        pattern=$2
-        path=$3
-        if [[ $4 == 'c' ]]; then
+def lssaml(args):
+    saml_str = urllib.parse.unquote( args.saml_str )
+    print("--:", saml_str)
+    decoded_response = base64.b64decode(saml_str)
+    try:
+        xml_response = zlib.decompress(decoded_response, -zlib.MAX_WBITS).decode('utf-8')
+    except zlib.error:
+        xml_response = decoded_response.decode('utf-8')
+
+    pretty_xml = xml.dom.minidom.parseString(xml_response).toprettyxml()
+    print(mutil.pretty_print_xml(pretty_xml))
+
+def lscrt(args):
+    if os.path.exists(args.cert_str):
+        tempfile = args.cert_str
+    else:
+        cert_str = args.cert_str.replace("\\n", '')
+        decoded_cert = base64.b64decode(cert_str)
+        pem = ssl.DER_cert_to_PEM_cert(decoded_cert)
+        tempfile = "/tmp/temp_lt_saml_1234.txt"
+        with open(tempfile, "w") as file:
+            file.write(pem)
+    cmd = f"openssl x509 -noout -text -in {tempfile} | less"
+    os.system(cmd)
+
+def lsjwt(args):
+    """"""
+    alg, jwt, signature = args.jwt_str.split(".")
+    jwt = jwt.replace("%3D", "=")
+    print("\n---- The decoded JWT:")
+    print(json.loads(base64.b64decode(alg, altchars=b"-/")))
+    jwt = base64.b64decode(jwt, altchars=b"-/")
+    jwt = json.dumps(json.loads(jwt), indent=4, separators=(',', ':'), ensure_ascii=False)
+    print(jwt)
+
+def gitdiff(args):
+    if args.commit:
+        os.system(f"lt2 diff {args.commit}")
+    else:
+        os.system("lt2 diff")
+
+def gitbranch(args):
+    os.system("lt2 br")
+
+def decompress(args):
+    mutil.decompress(args.file)
+
+def grepindir(args):
+    path = args.dir
+    file_type = args.type
+    pattern = args.pattern
+
+    if file_type:
+        if file_type == 'c':
             file_type="-name '*.*[chp]'"
-        elif [[ $4 == '' ]]; then
-            file_type=""
-        else
-            file_type="-name '$4'"
-        fi
-        cmd="find $path -type f $file_type | xargs grep -n $pattern"
-        echo $cmd
-        find $path -type f $file_type | xargs grep -n "$pattern"
-        #-exec grep -n $4 {} \;
-        ;;
-    "vim")
-        case $2 in
-            "up")
-                git pull origin
-                ;;
-            "new")
-                git clone http://github.com/scrooloose/nerdtree.git
-                git clone http://github.com/scrooloose/nerdtree.git
-                git clone http://github.com/scrooloose/nerdtree.git
-                ;;
-        esac
-        ;;
-    "ssh")
-        [ -e ~/.sshhosts ] || echo "Not found SSH hosts file. Please create first"
-        [ -e ~/.sshhosts ] || exit 2
+        elif file_type == 'py':
+            file_type="-name '*.*[py]'"
+        else:
+            file_type=f"-name '{file_type}'"
+    else:
+        file_type=''
 
-        let num=0
-        declare -a hosts 
+    cmd=f"find {path} -type f { file_type } | xargs grep -n '{ pattern }'"
+    print(cmd)
+    os.system(cmd)
 
-        echo "Hosts info(.sshhosts):"
-        echo "---------------------"
-        oLDIFS=$IFS ; IFS=$'\n' hosts=(`cat ~/.sshhosts`)
-        for host in ${hosts[*]}; do
-            echo -e "$num\t$host"
-            num=$(($num + 1))
-        done
-        IFS=$oLDIFS
-        echo "---------------------"
+# tool options
+def parse_args():
+    parser = argparse.ArgumentParser(prog='lt', description='Lemon tools')
+    subparsers = parser.add_subparsers(title='subcommands', description='valid subcommands', help='additional help')
 
-        read -e -p "Please choose the host: " num
-        read -e -p "Please choose the user: [Lmao|Root|other]: " user
-        [[ $user == 'l' || $user == 'L' ]] && user="lmao"
-        [[ $user == 'r' || $user == 'R' ]] && user="root"
-        [[ -z $user ]] && user="root"
+    # lt lssaml xxx
+    saml_parser = subparsers.add_parser('lssaml', help='Decode an encoded SAML request/response')
+    saml_parser.add_argument('saml_str', metavar='<saml_str>', help='The encoded SAML request string')
+    saml_parser.set_defaults(func=lssaml)
 
-        if [[ $num =~ [0-9]-[0-9] ]]; then
-            sep="*-"
-            nodenum=$((${num#*-}-1))
-            host=`echo ${hosts[${num%-*}]} | awk '{print $1}'`
-            [ $nodenum -gt 0 ] && host=${host%.*}"."$((${host##*.} + $nodenum))
-            echo $nodenum , $host
-        else
-            host=`echo ${hosts[$num]} | awk '{print $1}'`
-        fi
-        CMD="ssh $user@$host"
-        echo $CMD
-        $CMD
-        ;;
-    "tar")
-        tar -zcvpf ${2}.tar.gz $2
-        #zip -r ${2}.zip $2
-        ;;
-    "untar")
-        tarType=${2##*.}
-        #echo $tarType
-        case $tarType in
-            "gz")
-                tar -zxvf $2
-                ;;
-            "bz2")
-                tar -jxvf $2
-                ;;
-            "zip")
-                unzip $2 
-                ;;
-            *)
-                echo "No supported type!"
-                ;;
-        esac
-        ;;
-    "tr")
-        #{{{ ~~ 
-        if [[ $3 != "" ]]; then
-            echo "Error: just use <lt tr "xx xx xx">"
-            echo "split xx and xx with blank space"
-        fi
-        hexList=$2
-        echo $hexList | awk '{for(i=1;i<=NF;i++){printf "%c",strtonum("0x"$i)}}'
-        echo 
-        #}}}
-        ;;
-    "d")
-        ;;
-    "diff")
-        # {{{
-        submitNum=''
-        gitdiffcmd="git d -y"
-        tmp_file="/tmp/tmp_file"
-        touch $tmp_file
-        # diff local 
-        if [[ $2 == "" || $2 == "." ]]; then
-          git status 
-          echo "Choose diff between regions."
-          read -e -p "w:work<->stage, s:stage<->commit, c:work<->commit [W/s/c] : " ret
-          if [[ $ret == "W" || $ret == "w" || $ret == "" ]] ; then
-            gitdiffcmd="git d -y"  
-          elif [[ $ret == "S" || $ret == "s" ]]; then 
-            gitdiffcmd="git d -y  --staged"
-          elif [[ $ret == "C" || $ret == "c" ]]; then 
-            gitdiffcmd="git d -y  HEAD"
-          fi
-          # 
-          git status -s > $tmp_file
-          git status -s | awk 'BEGIN {FS=" ";print "Index\tName\tStatus"} {print NR-1"\t"$1"\t"$2}' > /tmp/mss-ci-diff
-        else 
-          # diff commit
-          submitNum=$2
-          # Index diff old -- new
-          git log -1 $submitNum
-          # todo: please consider the merge branch which have two parrents.
-          #git log --name-status -1 --pretty=format:"%p %h" $submitNum | grep -v "$submitNum" > $tmp_file
-          git diff --name-status $2^ $2 > $tmp_file
-          cat $tmp_file |  awk 'BEGIN {FS="@@";print "Index\tStatus\tName"} {print NR-1 "\t" $0}' > /tmp/mss-ci-diff
-          gitdiffcmd="git d -y $submitNum^ $submitNum"
-        fi
+    # lt lscrt xxx
+    cert_parser = subparsers.add_parser('lscrt', help='Decode an x509 PEM certificate')
+    cert_parser.add_argument('cert_str', metavar='<cert_str>', help='The encoded certificate string')
+    cert_parser.set_defaults(func=lscrt)
 
-        # continous diff
-        #read -e -p "Index or Continuous diff ? [c/I] : " ret
-        #if [[ $ret == "c" || $ret == "C" ]] ; then
-          #git log --name-status -1 $submitNum
-          ## %p:old commit , %h:Current commit
-          #git d -y  `git log -1 --pretty=format:"%p %h" $submitNum`
-          #exit
-        #fi
+    # lt lsjwt xxx
+    jwt_parser = subparsers.add_parser('lsjwt', help='Decode an Isilon JWT string')
+    jwt_parser.add_argument('jwt_str', metavar='<jwt_str>', help='The encoded isilon JWT string')
+    jwt_parser.set_defaults(func=lsjwt)
+
+    # lt diff xxx
+    diff_parser = subparsers.add_parser('diff', help='Perform interactions with git diff')
+    diff_parser.add_argument('commit', nargs='?', metavar='<commit>', help='The commit number we want to check')
+    diff_parser.set_defaults(func=gitdiff)
+
+    # lt gitbr
+    gitbr_parser = subparsers.add_parser('gitbr', help='Perform interactions with git branch')
+    gitbr_parser.set_defaults(func=gitbranch)
+
+    # lt tar xxx
+    tar_parser = subparsers.add_parser('tar', help='Decompress a compressed file.')
+    tar_parser.add_argument("file", help="Path to the compressed file.")
+    tar_parser.set_defaults(func=decompress)
+
+    # lt grep
+    grep_parser = subparsers.add_parser('grep', help='Grep string in directory.')
+    grep_parser.add_argument("pattern", help="Pattern stands for the object.")
+    grep_parser.add_argument("dir", help="Directory where to find the object.")
+    grep_parser.add_argument("type", nargs='?', help="File type in dir.")
+    grep_parser.set_defaults(func=grepindir)
 
 
 
-        #shortPath=(`cat $tmp_file | grep @@ | awk 'BEGIN {FS="@@"} {print $1}'`)
-        #submitInfo=(`cat $tmp_file | grep "^Status" | awk '{print $2}'`)
 
-        echo ""
-        commitFiles=(`cat $tmp_file | awk '{print $2}'`)
-        cat /tmp/mss-ci-diff
-        rm $tmp_file 
+    # auto complete
+    argcomplete.autocomplete(parser)
 
-        echo "------------ Old diff to New ----"
-        read -e -p "Please choose the diff file ! [Idx/Exit/show] : " ret
-        while [[ $ret != "exit" && $ret != "e" && $ret != "" ]] ; do
-          if [[ $ret == "show" ]]; then
-            cat /tmp/mss-ci-diff
-          else    
-            objFile="${commitFiles[$ret]}"
-            difCmd="$gitdiffcmd -- $objFile" 
-            echo $difCmd
-            $difCmd
-          fi
-          echo 
-          read -p "Please choose the diff file ! [Idx/Exit/show] : " -e ret
-        done
+    return parser.parse_args()
 
-        echo ""
-        echo "Bye !"
-        echo "------------"
-        # }}}
-        ;;
-    "br")
-        # {{{
-        tmp_file="/tmp/tmp_file"
-        touch $tmp_file
-        git branch > $tmp_file
-        cat $tmp_file |  awk 'BEGIN {print "Index\tBranch"} {print NR-1 "\t" $0}' > /tmp/mss-ci-diff
-        gitdiffcmd="git d -y $submitNum^ $submitNum"
+def main():
+    args = parse_args()
+    args.func(args)
 
-        echo ""
-        #cat $tmp_file
-        branchList=(`cat $tmp_file | awk '{if($1 == "*") {print $2} else {print $1} }'`)
-        cat /tmp/mss-ci-diff
-        rm $tmp_file 
-        read -e -p "Please choose the branch you want! [Idx/Exit/show] : " ret
+if __name__ == "__main__":
+    exit(main())
 
-        while [[ $ret != "exit" && $ret != "e" && $ret != "" ]] ; do
-          if [[ $ret == "show" ]]; then
-            cat /tmp/mss-ci-diff
-          else    
-            #echo ${branchList}
-            difCmd="git checkout ${branchList[$ret]}" 
-            echo $difCmd
-            $difCmd
-          fi
-          break
-        done
 
-        echo ""
-        echo "Bye !"
-        echo "------------"
-        # }}}
-        ;;
-
-    "lstr")
-        # {{{ 
-        lsvtreeCmd="sct lsvtree -short "
-        lshistoryCmd="sct lshistory "
-        objFile="/tmp/file_hist_lemon"
-
-        echo "------------"
-        echo -n "Please choose the file , we will show its history and version ! [Name/exit] : "
-        read ret
-        if [[ -f $ret ]]; then
-            echo -e "\n\t #### Following is Version ###" > $objFile
-            $lsvtreeCmd $ret >> $objFile
-            echo -e "\n\t #### Following is History ###" >> $objFile
-            $lshistoryCmd $ret >> $objFile
-            echo "The file's version and history has been add in </tmp/file_hist_lemon>"
-            vim $objFile
-        fi
-
-        echo ""
-        echo "Bye !"
-        echo "------------"
-        # }}}
-        ;;
-    "cc")
-    #{{{
-        echo "###---ClearCase tool assist ! ---###"
-        echo "Function Choose"
-        echo -e "Func     \t Info"
-        echo -e "-diff   \t show the diff with submit Number"
-        echo -e "-lstree \t show the history and version of special Files"
-        echo " "
-        echo -n "[Choose function/Exit] : "
-        read ret
-        while [[ $ret != "exit" || $ret != "e" || $ret != "Exit" ]]; do
-            case $ret in
-                diff)
-                    echo -n "Input the submit number : "
-                    read number
-                    lt diff $number
-                    ;;
-                "lstree")
-                    lt lstr 
-                    ;;
-            esac
-
-            echo ""
-            echo ""
-            echo ""
-            echo ""
-            echo "Function Choose"
-            echo -e "Func     \t Info"
-            echo -e "-diff   \t show the diff with submit Number"
-            echo -e "-lstree \t show the history and version of special Files"
-            echo -n "[Choose function/Exit] : "
-            read ret
-
-        done
-        if [[ $ret == "exit" || $ret == "e" || $ret == "Exit" ]]; then
-            echo ""
-            echo "Bye !"
-            echo "------------"
-        fi
-    #}}}
-        ;;
-    "upld")
-# {{{ ftp upload firmware
-#echo -n "[Choose Destination(vm/xx)] : "
-#read ret
-#if [[ $ret == "v" ]]; then
-    if [[ $2 == "sos" ]]; then
-        cmd="scp m2/target/oct_mips64/sw_x86v-sc-stdeb/sonicosv.st.eng m2/target/oct_mips64/sw_x86v-sc-stdeb/sonicosv.st.ns.eng ubuntu@10.103.219.149:sonicos/"
-    else    
-        cmd="scp $2 maoss1@10.240.237.65:FW/"
-    fi
-    #cmd="curl -T $2 ftp://10.240.236.131/pub/lemon/$2"
-    #cmd="curl -T $2 ftp://10.240.237.61/pub/lemon/$2"
-    echo $cmd
-    $cmd
-#ftp -n<<!
-#open 10.240.236.131
-#user anonymous maoss1@lenovo.com
-#binary
-#cd pub/lemon/
-##lcd ~/workspace/nos/build/images-gen/
-#hash
-#prompt
-#put $2
-#close
-#bye
-#!
-#else
-    ##cmd="curl --progress-bar -s -u %s -T %s%s ftp://%s:%d%s%s"
-    ##if [[ $3 == home ]]; then
-        ##cmd="curl -u mss -T $2 ftp://10.96.192.92/FW/"
-    ##else    
-        ##cmd="curl -u ftp -T $2 ftp://10.107.180.173/"
-    ##fi
-    #echo $cmd
-    #$cmd
-#fi
-# }}}
-        ;;
-    "ci")
-        # {{{ 
-        lsvtreeCmd="sct lsvtree -short "
-        lshistoryCmd="sct lshistory "
-        objFile="/tmp/file_hist_lemon"
-
-        echo "------------"
-        echo "We will check in these files : "
-        echo "^^^^^^^^^"
-        lsco
-        echo -e "^^^^^^^^^\n"
-        echo -n "Please input the comment for this check in! [Comment] : "
-        read comment
-        if [[ -n $comment ]]; then
-            echo "sct ci -c \"$comment\" *"
-            sct ci -c "$comment" `lsco`
-        fi
-        # }}}
-        ;;
-    "help")
-        show_help_info
-        ;;
-    *)
-        show_help_info
-        ;;
-esac
-
-end_time=`date +%s`
-let uT=$end_time-$start_time
-let uT_m=$uT/60
-let uT_s=$uT%60
-echo "--- Finished Time:" `date`
-echo "Time usage: $uT_m m $uT_s s"
-echo " "

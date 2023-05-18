@@ -1,4 +1,5 @@
-export PATH=$PATH:~/.vim/lemon-tool/:/usr/local/share/gtags/script:/usr/lib/python3/dist-packages/:/usr/local/bin/lmao:~/usr/bin/
+export PATH=$PATH:/usr/local/bin/:~/.vim/lemon-tool/:/usr/local/share/gtags/script:/usr/lib/python3/dist-packages/:/usr/local/bin/lmao:~/usr/bin/
+export PWD=/ifs/home/lmao
 git config --global core.pager 'less -FMRX'
 
 # man colorful
@@ -18,6 +19,8 @@ git config --global core.pager 'less -FMRX'
 export LESS_TERMCAP_so=$'\033[43;37;1;4m'
 export LESS_TERMCAP_se=$'\e[0m'
 
+alias vi='vim'
+
 # Lemon Aliases
 alias lsalias="cat ~/.bash_aliases | grep -A 1000 'Lemon Aliases' | grep alias"
 alias ll="ls -lthr"
@@ -31,7 +34,7 @@ alias lxc="sudo /usr/bin/lxc "
 alias docker="sudo /usr/bin/docker "
 alias serfind='sudo systemctl list-units | grep '
 alias serlist='sudo systemctl list-units'
-alias df="[ `which duf`  ] && duf -hide special -style ascii || df -h"
+#alias df="[ `which duf`  ] 2&1>/dev/null && duf -hide special -style ascii || df -h"
 alias lscrt="openssl x509 -noout -text -in "
 
 #alias lsip="ifconfig | grep inet | sort | uniq | awk '{print(\"\033[0m\" \$1 \" - \" \"\033[31m\" \$2)}'"

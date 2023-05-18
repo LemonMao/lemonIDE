@@ -320,7 +320,7 @@ let g:gutentags_ctags_extra_args = ['--fields=+niazS']
 let g:gutentags_ctags_extra_args += ['--c++-kinds=+px']
 let g:gutentags_ctags_extra_args += ['--c-kinds=+px']
 " 如果使用 universal ctags 需要增加下面一行
-let g:gutentags_ctags_extra_args += ['--output-format=e-ctags', '--extras=+q']
+"let g:gutentags_ctags_extra_args += ['--output-format=e-ctags', '--extras=+q']
 " gtags extra parameters, manually modify gutentags/gtags_cscope.vim:91
 "let l:cmd += ['--incremental --skip-unreadable', '"'.l:db_path.'"']
 " 禁用 gutentags 自动加载 gtags 数据库的行为

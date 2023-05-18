@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/python3
 from __future__ import print_function
 
 import argparse
@@ -54,7 +54,7 @@ def dt_machines(user=None, what="Cluster"):
     try:
         import isilon.ducttape.client as dt
         if user is None:
-            user = raw_input(
+            user = input(
                 "Enter your DESKTOP username to pick a Ducttape IP (empty to skip): ").strip()
 
         if not user:
@@ -98,10 +98,10 @@ def get_ip(clusters=None, clients=None, servers=None, number=None):
 
     def get_digits(num):
         digits = 1
-        num = num / 10
+        num = num // 10
         while num != 0:
             digits += 1
-            num = num / 10
+            num = num // 10
         return digits
 
     def next_num():
@@ -168,7 +168,7 @@ def get_ip(clusters=None, clients=None, servers=None, number=None):
 
 
     while True:
-        answer = str(number) if number != -1 else raw_input(
+        answer = str(number) if number != -1 else input(
                 "Enter a IP or number for SSH login: ").strip()
 
         if is_valid_ipv4(answer):
@@ -216,7 +216,7 @@ def main():
     clients  = dt_machines(user, "Clients")
     servers  = my_machines()
     ip = get_ip(clusters, clients, servers, args.n)
-    user = raw_input("Please choose the user: [Lmao|Root|other]: ").strip()
+    user = input("Please choose the user: [Lmao|Root|other]: ").strip()
     if user == "l" or user == "L":
         user = "lmao"
     elif user == "r" or user == "R" or user == "":
@@ -231,7 +231,7 @@ def main():
         stdout, stderr = proc.communicate()
         result = proc.wait()
         # print("##--\n", stderr, stdout, "\n##--\n")
-        if stderr.find(ssh_warn) != -1:
+        if stderr and stderr.decode('utf-8').find(ssh_warn) != -1:
             cmd2 = "ssh-keygen -f ~/.ssh/known_hosts -R " + ip + " && " + cmd
             print("Perform SSH clean! ", cmd2)
             proc = subprocess.Popen(cmd2, shell=True)
@@ -243,8 +243,8 @@ def main():
     proc = subprocess.Popen(cmd, stderr=subprocess.PIPE, shell=True)
     stdout, stderr = proc.communicate()
     result = proc.wait()
-    print("##--\n", stderr, stdout, "\n##--\n")
-    if stderr.find(ssh_warn) != -1:
+    print("##--\n", "err:", stderr, "out:", stdout, "\n##--\n")
+    if stderr and stderr.decode('utf-8').find(ssh_warn) != -1:
         cmd2 = "ssh-keygen -f ~/.ssh/known_hosts -R " + ip + " && " + cmd
         print("Perform SSH clean! ", cmd2)
         proc = subprocess.Popen(cmd2, shell=True)
