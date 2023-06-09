@@ -1,5 +1,5 @@
 export PATH=$PATH:/usr/local/bin/:~/.vim/lemon-tool/:/usr/local/share/gtags/script:/usr/lib/python3/dist-packages/:/usr/local/bin/lmao:~/usr/bin/
-export PWD=/ifs/home/lmao
+#export PWD=/ifs/home/lmao
 git config --global core.pager 'less -FMRX'
 
 # man colorful
@@ -34,10 +34,10 @@ alias lxc="sudo /usr/bin/lxc "
 alias docker="sudo /usr/bin/docker "
 alias serfind='sudo systemctl list-units | grep '
 alias serlist='sudo systemctl list-units'
-#alias df="[ `which duf`  ] 2&1>/dev/null && duf -hide special -style ascii || df -h"
+alias df="[ `which duf`  ] 2&1>/dev/null && duf -hide special -style ascii || df -h"
 alias lscrt="openssl x509 -noout -text -in "
 
-#alias lsip="ifconfig | grep inet | sort | uniq | awk '{print(\"\033[0m\" \$1 \" - \" \"\033[31m\" \$2)}'"
+alias lsip="ifconfig | grep inet | sort | uniq | awk '{print(\"\033[0m\" \$1 \" - \" \"\033[31m\" \$2)}'"
 alias lsip="ifconfig | grep -e \"^[a-z]\" -e \"inet\" | \
             awk '{if (\$1==\"inet\" || \$1==\"inet6\") printf(\"%s %s\n\",\$2,dev); else dev = \$1}' |\
             sort | uniq | awk '{printf(\"\033[0m%-13s  - \033[31m%s\n\",\$2,\$1)}'"

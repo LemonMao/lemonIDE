@@ -297,7 +297,7 @@ highlight PMenuSel ctermfg=242 ctermbg=8 guifg=darkgrey guibg=black
 " 第一个 GTAGSLABEL 告诉 gtags 默认 C/C++/Java 等六种原生支持的代码直接使用
 " gtags 本地分析器，而其他语言使用 pygments 模块。
 let $GTAGSLABEL = 'native-pygments'
-let $GTAGSCONF = '/ifs/home/lmao/.globalrc'
+let $GTAGSCONF = '/home/lemon/.globalrc'
 
 " gutentags 搜索工程目录的标志，当前文件路径向上递归直到碰到这些文件/目录名
 let g:gutentags_project_root = ['.root', '.project', 'GTAGS']
@@ -355,14 +355,14 @@ let g:LanguageClient_serverCommands = {
     \   'name' : 'clangd',
     \   'command' : ['clangd'],
     \   'initializationOptions': {
-    \     'cacheDirectory': "/ifs/home/lmao/.cache/LanguageClient"
+    \     'cacheDirectory': "/home/lemon/.cache/LanguageClient"
     \   },
     \ },
     \ 'cpp': {
     \   'name' : 'clangd',
     \   'command' : ['clangd'],
     \   'initializationOptions': {
-    \     'cacheDirectory': "/ifs/home/lmao/.cache/LanguageClient"
+    \     'cacheDirectory': "/home/lemon/.cache/LanguageClient"
     \   },
     \ },
 \ }
