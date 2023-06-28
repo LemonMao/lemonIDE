@@ -18,6 +18,9 @@ snippet vec
 # std::string
 snippet str
 	std::string ${1}
+# std::string
+snippet cstr
+	const std::string ${1}
 # std::array
 snippet arr
 	std::array<${1:std::string}, ${2:length}> ${3}
@@ -57,7 +60,7 @@ snippet ns
 	namespace ${1:`Filename('', 'my')`}
 	{
 		${2}
-	} /* $1 */
+	} /* end of namespace $1 */
 # Class
 snippet class class - default copyable/moveable
 	class ${1:`Filename('$1', 'name')`}
@@ -70,8 +73,8 @@ snippet class class - default copyable/moveable
 		// default copyable and moveable
 		$1(const $1 &) = default;
 		$1& operator=(const $1 &) = default;
-		$1($1 &&) noexcept = default;
-		$1& operator=($1 &&) noexcept = default;
+		$1($1 &&) = default;
+		$1& operator=($1 &&) = default;
 
 	private:
 	};
@@ -87,6 +90,8 @@ snippet class class - non-copyable/moveable
 		// non-copyable and non-moveable
 		$1(const $1 &) = delete;
 		$1& operator=(const $1 &) = delete;
+		$1($1 &&) = delete;
+		$1& operator=($1 &&) = delete;
 
 	private:
 	};
@@ -124,5 +129,13 @@ snippet tem template <>
 snippet tem template <> func() {}
 	template <typename ${1}>
 	${2:fun_name}()
+	{
+	}
+## -- Template
+snippet try
+	try
+	{
+	}
+	catch (const exception& e)
 	{
 	}

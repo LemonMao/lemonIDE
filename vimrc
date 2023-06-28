@@ -182,8 +182,8 @@ let g:NERDTreeQuitOnOpen=1
 
 " snipMate
 let g:snip_author   = "Lemon Mao"
-let g:snip_mail     = "shmao@sonicwall.com"
-let g:snip_company  = "Sonicwall Corporation."
+let g:snip_mail     = "lemon_mao@dell.com"
+let g:snip_company  = "Dell Inc."
 " show the short key mappings
 ino <silent> <tab> <c-r>=TriggerSnippet()<cr>
 snor <silent> <tab> <esc>i<right><c-r>=TriggerSnippet()<cr>
@@ -282,9 +282,8 @@ let g:asyncrun_bell = 1 " After finished, make a bell to notify
 let g:DoxygenToolkit_briefTag_pre="@Brife  "
 let g:DoxygenToolkit_paramTag_pre="@Param "
 let g:DoxygenToolkit_returnTag="@Returns   "
-let g:DoxygenToolkit_blockHeader="--------------------------------------------------------------------------"
-let g:DoxygenToolkit_blockFooter="----------------------------------------------------------------------------"
-let g:DoxygenToolkit_authorName="Mathias Lorente"
+let g:DoxygenToolkit_blockHeader=""
+let g:DoxygenToolkit_blockFooter=""
 
 
 " Deoplete : Dark powered asynchronous completion framework for neovim/Vim8
@@ -586,7 +585,7 @@ let maplocalleader = "\\"
 " ## -------------------------------------- ##
 " map : -> <space>
 map <Space> :
-map <leader><Space> :AsyncRun 
+map <leader><Space> :AsyncRun
 " Make shift-insert work like in Xterm
 map <S-Insert> <MiddleMouse>
 map! <S-Insert> <MiddleMouse>
@@ -597,15 +596,15 @@ nmap <leader>d :Dashboard<CR>
 " ## -------------------------------------- ##
 " ## F1 ~~ F12 Hotkeys
 " ## -------------------------------------- ##
-"nmap <F1> :AsyncRun 
+nmap <F1>  :Dashboard<cr>
 nmap <F2>  :scriptnames<cr>
-"nmap <F3>  :diffget<cr>
-nmap <F4>  :AsyncRun lt grep <C-R><C-W> 
+nmap <F3>  :1,$s/\<<C-R><C-W>\>//g
+nmap <F4>  :AsyncRun lt grep <C-R><C-W>
 nmap <F5>  <leader>#
 nmap <F6>  <leader>*
 "nmap <F7>  :AsyncRun cd ;make
 nmap <F8>  :AsyncRun docker exec onefs_build /bin/sh -c "cd /home/cross-compiler/output.cross && make -j24"
-nmap <F9>  :GscopeFind g 
+nmap <F9>  :GscopeFind g
 nmap <F10> :EraseBadWhitespace<CR>
 "nmap <F11> :<CR>
 nmap <F12> :call ToggleMouse()<CR>

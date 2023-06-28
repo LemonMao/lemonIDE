@@ -1,5 +1,6 @@
 # fileh  ==> File head
 # fileg  ==> File guard
+# * Create: `strftime("%Y-%m-%d %H:%M:%S")`
 snippet fileh
 	/* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 4 -*-
 	 * ex: set softtabstop=4 tabstop=8 expandtab shiftwidth=4: *
@@ -7,12 +8,11 @@ snippet fileh
 	 */
 
 	/*
+	 * Copyright (C) `strftime("%Y")` ${2:`g:snip_company`} All Rights Reserved.
+	 *
 	 * `expand("%:t")` - ${1}
 	 *
-	 * Copyright (C) `strftime("%Y")` ${2:`g:snip_company`}
-	 *
 	 * Author: ${3:`g:snip_author` (`g:snip_mail`)}
-	 * Create: `strftime("%Y-%m-%d %H:%M:%S")`
 	 *
 	 */
 	${4}

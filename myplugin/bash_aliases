@@ -49,7 +49,7 @@ alias lscpu="cat /proc/cpuinfo | grep 'model name' | uniq;\
              "
 
 # project aliases
-alias gonefs="cd ~/onefs"
-alias vonefs="cd ~/onefs ; vim"
-alias bonefs="sudo docker container run --name onefs_build --mount type=bind,source=/home/lmao/project/onefs,target=/onefs,readonly -e DESKTOP=lmao -i -t docker.west.isilon.com/cclayton/docker-onefs-cross:latest"
+alias gonefs="cd ~/project/onefs"
+alias vonefs="cd ~/project/onefs ; vim"
+alias bonefs="sudo docker container run --name onefs_build --mount type=bind,source=/home/lemon/project/onefs,target=/onefs,readonly -e DESKTOP=lmao -i -t docker.west.isilon.com/cclayton/docker-onefs-cross:latest"
 alias conefs="rm -rf ~/"

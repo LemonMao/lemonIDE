@@ -12,10 +12,10 @@ retry_command() {
         echo "Prepare to run the command: $1"
         $1
         if [ $? -ne 0 ]; then
-            echo "Failed to run the command. Retry. " 
+            echo "Failed to run the command. Retry. "
             continue
         else
-            echo "Successfully to run the command." 
+            echo "Successfully to run the command."
             break
         fi
     done
@@ -25,9 +25,10 @@ retry_command() {
 ############ backup the old vim stuff
 mkdir -p $vimbak
 mkdir -v $dstPluginPath/
-[ -e $vimrc ] && mv $vimrc $vimbak/vimrc.bak && ln -s ~/.vim/vimrc $vimrc
+[ -e $vimrc ] && mv $vimrc $vimbak/vimrc.bak
+ln -s ~/.vim/vimrc $vimrc
 
-###########  Install plugins 
+###########  Install plugins
 read -e -p "Remotely install plugin [Y/n]" ret
 if [[ $ret != "n" ]] ; then
     vim +PlugInstall
@@ -47,8 +48,10 @@ if [[ $ret != "n" ]] ; then
     echo -e "\n\nComment 14/19/20 line for git status and repalce resize-pane from 2 to 5" && sleep 2
     vim +14 ~/.tmux/.tmux.conf
 fi
-[ -e ~/.tmux.conf ] && mv ~/.tmux.conf $vimbak/tmux.conf-bak && ln -s -f ~/.tmux/.tmux.conf ~/.tmux.conf
-[ -e ~/.tmux.conf.local ] && mv ~/.tmux.conf.local $vimbak/tmux.conf.local-bak && ln -s -f $srcPluginPath/tmux.conf.local ~/.tmux.conf.local
+[ -e ~/.tmux.conf ] && mv ~/.tmux.conf $vimbak/tmux.conf-bak 
+ln -s -f ~/.tmux/.tmux.conf ~/.tmux.conf
+[ -e ~/.tmux.conf.local ] && mv ~/.tmux.conf.local $vimbak/tmux.conf.local-bak
+ln -s -f $srcPluginPath/tmux.conf.local ~/.tmux.conf.local
 
 # bash-it config
 [ -e ~/.bash_aliases ] && mv ~/.bash_aliases $vimbak/bash_aliases-bak
@@ -70,7 +73,8 @@ fi
 # my theme
 cp $srcPluginPath/desertmss.vim $dstPluginPath/desertEx/colors/
 # Bookmark
-[ -e ~/.NERDTreeBookmarks ] && mv ~/.NERDTreeBookmarks $vimbak/NERDTreeBookmarks-bak && ln -s $srcPluginPath/NERDTreeBookmarks ~/.NERDTreeBookmarks
+[ -e ~/.NERDTreeBookmarks ] && mv ~/.NERDTreeBookmarks $vimbak/NERDTreeBookmarks-bak
+ln -s $srcPluginPath/NERDTreeBookmarks ~/.NERDTreeBookmarks
 # c&sh snippets.
 rm -rf $dstPluginPath/snipMate/snippets/c.snippets && ln -s $srcPluginPath/c.snippets  $dstPluginPath/snipMate/snippets/c.snippets
 rm -rf $dstPluginPath/snipMate/snippets/cpp.snippets && ln -s $srcPluginPath/cpp.snippets  $dstPluginPath/snipMate/snippets/cpp.snippets
