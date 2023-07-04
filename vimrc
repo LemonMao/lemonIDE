@@ -21,7 +21,7 @@ Plug 'vim-scripts/desertEx'
 Plug 'vim-airline/vim-airline'
 Plug 'vim-airline/vim-airline-themes'
 Plug 'vim-scripts/Align'
-Plug 'junegunn/vim-easy-align'
+Plug 'godlygeek/tabular'
 Plug 'jiangmiao/auto-pairs'
 Plug 'bitc/vim-bad-whitespace'
 Plug 'andymass/vim-matchup'
@@ -230,7 +230,7 @@ let g:Lf_PopupPreviewPosition = 'bootom'
 let g:Lf_PopupPosition = [28, 0]
 let g:Lf_PreviewInPopup = 1
 let g:Lf_PreviewHorizontalPosition = 'right'
-let g:Lf_PreviewResult = { 'BufTag': 0 , 'Function': 0 }
+let g:Lf_PreviewResult = {'File': 0, 'Tag': 0, 'Function': 0, 'Jumps': 0, 'Mru': 0, 'Line': 0, 'Colorscheme': 0, 'BufTag': 0, 'Buffer': 0}
 let g:Lf_CursorBlink = 1
 let g:Lf_EmptyQuery = 0
 let g:Lf_DiscardEmptyBuffer = 1

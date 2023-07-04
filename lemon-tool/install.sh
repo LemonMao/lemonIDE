@@ -45,11 +45,12 @@ fi
 read -e -p "\nInstall tmux config? [Y/n]" ret
 if [[ $ret != "n" ]] ; then
     retry_command "git clone https://github.com/gpakosz/.tmux.git ~/.tmux"
-    echo -e "\n\nComment 14/19/20 line for git status and repalce resize-pane from 2 to 5" && sleep 2
-    vim +14 ~/.tmux/.tmux.conf
+    #echo -e "\n\nComment 14/19/20 line for git status and repalce resize-pane from 2 to 5" && sleep 2
+    #vim +14 ~/.tmux/.tmux.conf
 fi
-[ -e ~/.tmux.conf ] && mv ~/.tmux.conf $vimbak/tmux.conf-bak 
-ln -s -f ~/.tmux/.tmux.conf ~/.tmux.conf
+[ -e ~/.tmux.conf ] && mv ~/.tmux.conf $vimbak/tmux.conf-bak
+#ln -s -f ~/.tmux/.tmux.conf ~/.tmux.conf
+ln -s -f $srcPluginPath/tmux.conf ~/.tmux.conf
 [ -e ~/.tmux.conf.local ] && mv ~/.tmux.conf.local $vimbak/tmux.conf.local-bak
 ln -s -f $srcPluginPath/tmux.conf.local ~/.tmux.conf.local
 
@@ -59,15 +60,18 @@ ln -s -f $srcPluginPath/tmux.conf.local ~/.tmux.conf.local
 read -e -p "Install bash-it ? [Y/n]" ret
 if [[ $ret != "n" ]] ; then
     retry_command "git clone --depth=1 https://github.com/Bash-it/bash-it.git ~/.bash_it"
-    cd ~/.bash_it/
-    ./install.sh
-    echo -e "\n\nComment 116 line for git status" && sleep 2
-    vim +116 ~/.bash_it/themes/powerline/powerline.base.bash
-    bash-it enable completion git docker tmux pip makefile
-    bash-it enable plugin man docker history-eternal less-pretty-cat history history-substring-search history-search colors
-    mkdir -p ~/.bash_it/custom
-    ln -s -f $srcPluginPath/bash_aliases ~/.bash_it/custom/bash_aliases.bash
-    echo -e "change BASH_IT_THEME to powerline, and GIT_HOSTING"
+    read -e -p "Please check if bash_it is installed? [Y/n]" ret
+    if [[ $ret != "n" ]]; then
+        cd ~/.bash_it/
+        ./install.sh
+        echo -e "\n\nComment 116 line for git status" && sleep 2
+        vim +116 ~/.bash_it/themes/powerline/powerline.base.bash
+        bash-it enable completion git docker tmux pip makefile
+        bash-it enable plugin man docker history-eternal less-pretty-cat history history-substring-search history-search colors
+        mkdir -p ~/.bash_it/custom
+        ln -s -f $srcPluginPath/bash_aliases ~/.bash_it/custom/bash_aliases.bash
+        echo -e "change BASH_IT_THEME to powerline, and GIT_HOSTING"
+    fi
 fi
 
 # my theme
