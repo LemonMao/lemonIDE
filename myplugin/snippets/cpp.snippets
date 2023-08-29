@@ -122,6 +122,10 @@ snippet hdr #include <unordered_map>
 	#include <unordered_map>
 snippet hdr #include <memory>
 	#include <memory>
+snippet hdr #include <optional>
+	#include <optional>
+snippet hdr #include <mutex>
+	#include <mutex>
 
 ## -- Template
 snippet temp template <>
@@ -131,11 +135,20 @@ snippet temp template <> func() {}
 	${2:fun_name}()
 	{
 	}
-## -- Template
+## -- try-catch
 snippet try
 	try
 	{
 	}
-	catch (const exception& e)
+	catch (const std::exception& ex)
 	{
 	}
+## -- cast
+snippet cast static_cast<>
+	static_cast<${1}>(${2})
+snippet cast reinterpret_cast<>
+	reinterpret_cast<${1}>(${2})
+snippet cast dynamic_cast<>
+	dynamic_cast<${1}>(${2})
+snippet cast std::move<>
+	std::move<${1}>(${2})

@@ -47,6 +47,13 @@ def lsjwt(args):
     jwt = json.dumps(json.loads(jwt), indent=4, separators=(',', ':'), ensure_ascii=False)
     print(jwt)
 
+def lsjson(args):
+    """"""
+    print(f"\n---- The original string: {args.json_str}")
+    print("\n---- The formatted Json:")
+    jstr = json.dumps(json.loads(args.json_str), indent=4, separators=(',', ':'), ensure_ascii=False)
+    print(jstr)
+
 def gitdiff(args):
     if args.commit:
         os.system(f"lt2 diff {args.commit}")
@@ -97,6 +104,11 @@ def parse_args():
     jwt_parser = subparsers.add_parser('lsjwt', help='Decode an Isilon JWT string')
     jwt_parser.add_argument('jwt_str', metavar='<jwt_str>', help='The encoded isilon JWT string')
     jwt_parser.set_defaults(func=lsjwt)
+
+    # lt lsjson xxx
+    jwt_parser = subparsers.add_parser('lsjson', help='Format an json string')
+    jwt_parser.add_argument('json_str', metavar='<json_str>', help='The original Json string')
+    jwt_parser.set_defaults(func=lsjson)
 
     # lt diff xxx
     diff_parser = subparsers.add_parser('diff', help='Perform interactions with git diff')

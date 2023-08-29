@@ -14,7 +14,6 @@ Plug 'vim-scripts/a.vim' " swtich between source files and header files quickly
 Plug 'scrooloose/nerdtree'
 Plug 'scrooloose/nerdcommenter'
 Plug 'vim-scripts/Mark' " highlight some key variables
-Plug 'vim-scripts/snipMate'
 Plug 'vim-scripts/genutils' " Vim-script library
 Plug 'vim-scripts/L9' " Vim-script library
 Plug 'vim-scripts/desertEx'
@@ -26,6 +25,10 @@ Plug 'jiangmiao/auto-pairs'
 Plug 'bitc/vim-bad-whitespace'
 Plug 'andymass/vim-matchup'
 Plug 'luochen1990/rainbow'
+" snip
+Plug 'MarcWeber/vim-addon-mw-utils'
+Plug 'tomtom/tlib_vim'
+Plug 'garbas/vim-snipmate'
 
 " display vertical lines
 Plug 'Yggdroot/indentLine'
@@ -61,6 +64,7 @@ Plug 'tpope/vim-fugitive'
 Plug 'tpope/vim-rhubarb'
 "dashboard
 Plug 'KyleJKC/Vim-dashboard'
+Plug 'Exafunction/codeium.vim', { 'branch': 'main'  }
 
 " Haven tested, not good for me
 call plug#end()
@@ -184,14 +188,8 @@ let g:NERDTreeQuitOnOpen=1
 let g:snip_author   = "Lemon Mao"
 let g:snip_mail     = "lemon_mao@dell.com"
 let g:snip_company  = "Dell Inc."
-" show the short key mappings
-ino <silent> <tab> <c-r>=TriggerSnippet()<cr>
-snor <silent> <tab> <esc>i<right><c-r>=TriggerSnippet()<cr>
-"ino <silent> <m-y> <c-r>=TriggerSnippet()<cr>
-"snor <silent> <m-y> <esc>i<right><c-r>=TriggerSnippet()<cr>
-"ino <silent> <s-tab> <c-r>=BackwardsSnippet()<cr>
-"snor <silent> <s-tab> <esc>i<right><c-r>=BackwardsSnippet()<cr>
-"ino <silent> <c-r><tab> <c-r>=ShowAvailableSnips()<cr>
+let g:snipMate = { 'snippet_version' : 0  }
+set runtimepath+=~/.vim/myplugin
 
 " man.vim - view man page in VIM
 source $VIMRUNTIME/ftplugin/man.vim
@@ -279,9 +277,9 @@ let g:asyncrun_open = 30 "Automatically open window
 let g:asyncrun_bell = 1 " After finished, make a bell to notify
 
 "DoxygenToolkit
-let g:DoxygenToolkit_briefTag_pre="@Brife  "
-let g:DoxygenToolkit_paramTag_pre="@Param "
-let g:DoxygenToolkit_returnTag="@Returns   "
+let g:DoxygenToolkit_briefTag_pre="@brief "
+let g:DoxygenToolkit_paramTag_pre="@param[in] "
+let g:DoxygenToolkit_returnTag="@returns  "
 let g:DoxygenToolkit_blockHeader=""
 let g:DoxygenToolkit_blockFooter=""
 
@@ -474,6 +472,18 @@ let g:dashboard_custom_footer = [
     \ '                                       ',
     \ '',
     \ ]
+
+
+" codeium
+let g:airline_section_y = '{…}%3{codeium#GetStatusString()}'
+let g:codeium_server_config = {
+  \'portal_url': 'https://codeium.delllabs.net',
+  \'api_url': 'https://codeium.delllabs.net/_route/api_server' }
+let g:codeium_enabled = v:true
+let g:codeium_disable_bindings = 1
+" let g:codeium_log_file = "/tmp/codeium_log_file.log"
+" let g:codeium_log_level = 'DEBUG'
+
 "}}}
 
 " Utility Functions {{{
@@ -698,11 +708,13 @@ map <silent> <leader>g1 :diffget 1<CR> :diffupdate<CR>
 map <silent> <leader>g2 :diffget 2<CR> :diffupdate<CR>
 map <silent> <leader>g3 :diffget 3<CR> :diffupdate<CR>
 map <silent> <leader>g4 :diffget 4<CR> :diffupdate<CR>
-" Align, av:aliagn variables, am: align micros, ac:align comments, af:align functions
+" Align, av:aliagn variables, am: align micros, ac:align comments,
+"        af:align functions,  as: align slash,
 vmap av ,adec
 vmap am ,adef
 vmap ac ,acom
 vmap af ,afnc
+vmap as ,tml
 " surround maps come from surround.vim
 nmap ys <Plug>Ysurround
 nmap ds <Plug>Dsurround
@@ -715,5 +727,12 @@ nmap <leader>gb :G blame<CR>
 vmap <leader>gb :G blame<CR>
 nmap <leader>gd :Gvdiffsplit<CR>
 nmap <leader>gs :G<cr>
-" highlight
+" codeium
+imap <script><silent><nowait><expr> <TAB> codeium#Accept()
+imap <leader>s  <Cmd>call codeium#CycleCompletions(1)<CR>
+imap <leader>w  <Cmd>call codeium#CycleCompletions(-1)<CR>
+imap <leader>c  <Cmd>call codeium#Clear()<CR>
+" snip
+imap <leader><TAB> <Plug>snipMateNextOrTrigger
+smap <leader><TAB> <Plug>snipMateNextOrTrigger
 

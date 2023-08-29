@@ -79,10 +79,6 @@ cp $srcPluginPath/desertmss.vim $dstPluginPath/desertEx/colors/
 # Bookmark
 [ -e ~/.NERDTreeBookmarks ] && mv ~/.NERDTreeBookmarks $vimbak/NERDTreeBookmarks-bak
 ln -s $srcPluginPath/NERDTreeBookmarks ~/.NERDTreeBookmarks
-# c&sh snippets.
-rm -rf $dstPluginPath/snipMate/snippets/c.snippets && ln -s $srcPluginPath/c.snippets  $dstPluginPath/snipMate/snippets/c.snippets
-rm -rf $dstPluginPath/snipMate/snippets/cpp.snippets && ln -s $srcPluginPath/cpp.snippets  $dstPluginPath/snipMate/snippets/cpp.snippets
-rm -rf $dstPluginPath/snipMate/snippets/sh.snippets && ln -s $srcPluginPath/sh.snippets $dstPluginPath/snipMate/snippets/sh.snippets
 
 # comment plugin
 read -e -p "\n\nComment the lines in mark.vim file.\n\t=>nmap <unique> <silent> <leader>r <Plug>MarkRegex [Y/n]" ret
@@ -94,7 +90,6 @@ if [[ $ret != "n" ]] ; then
     vim +91 $dstPluginPath/vim-gutentags/autoload/gutentags/gtags_cscope.vim
 fi
 echo " "
-
 
 ########### Other actions
 echo "Manual actions:"
