@@ -79,6 +79,8 @@ cp $srcPluginPath/desertmss.vim $dstPluginPath/desertEx/colors/
 # Bookmark
 [ -e ~/.NERDTreeBookmarks ] && mv ~/.NERDTreeBookmarks $vimbak/NERDTreeBookmarks-bak
 ln -s $srcPluginPath/NERDTreeBookmarks ~/.NERDTreeBookmarks
+# grc config
+mkdir -p ~/.grc/ && rm -rf ~/.grc/conf.lemon.log && ln -s $srcPluginPath/conf.lemon.log ~/.grc/conf.lemon.log
 
 # comment plugin
 read -e -p "\n\nComment the lines in mark.vim file.\n\t=>nmap <unique> <silent> <leader>r <Plug>MarkRegex [Y/n]" ret

@@ -19,7 +19,25 @@ git config --global core.pager 'less -FMRX'
 export LESS_TERMCAP_so=$'\033[43;37;1;4m'
 export LESS_TERMCAP_se=$'\e[0m'
 
-alias vi='vim'
+# Colorize supported commands
+cmds=(as ant blkid cc configure curl cvs df diff dig dnf docker docker-compose
+ docker-machine du env fdisk findmnt free g++ gas gcc getfacl getsebool gmake
+ id ifconfig iostat ip iptables iwconfig journalctl kubectl last ldap lolcat ld
+ lsattr lsblk lsmod lsof lspci make mount mtr mvn netstat nmap ntpdate php ping
+ ping6 proftpd ps sar semanage sensors showmount sockstat ss stat sysctl systemctl
+ tcpdump traceroute traceroute6 tune2fs ulimit uptime vmstat wdiff whois)
+cmds2=(ls)
+
+for cmd in "${cmds[@]}"; do
+    which $cmd >/dev/null 2>&1 && alias $cmd="grc --colour=auto $cmd \$@"
+done
+for cmd in "${cmds2[@]}"; do
+    which $cmd >/dev/null 2>&1 && alias "c$cmd"="grc --colour=auto $cmd \$@"
+done
+
+function ccat() {
+    cat "$@" | grcat conf.lemon.log
+}
 
 # Lemon Aliases
 alias lsalias="cat ~/.bash_aliases | grep -A 1000 'Lemon Aliases' | grep alias"
@@ -34,7 +52,7 @@ alias lxc="sudo /usr/bin/lxc "
 alias docker="sudo /usr/bin/docker "
 alias serfind='sudo systemctl list-units | grep '
 alias serlist='sudo systemctl list-units'
-alias df="[ `which duf`  ] 2&1>/dev/null && duf -hide special -style ascii || df -h"
+which duf >/dev/null 2>&1 && alias df="duf -hide special -style ascii || df -h"
 alias lscrt="openssl x509 -noout -text -in "
 
 alias lsip="ifconfig | grep inet | sort | uniq | awk '{print(\"\033[0m\" \$1 \" - \" \"\033[31m\" \$2)}'"
@@ -48,8 +66,31 @@ alias lscpu="cat /proc/cpuinfo | grep 'model name' | uniq;\
              echo -e '\ntotal logical cores: ${total}';\
              "
 
+function gitupdate() {
+  # Check if two arguments are provided
+  if [ $# -ne 2 ]; then
+    echo "Usage: $0 <remote> <branch>"
+    exit 1
+  fi
+
+  # Get the remote and branch name from arguments
+  remote="$1"
+  branch="$2"
+
+  echo "Updating branch '$branch' from remote '$remote'..."
+  git checkout "$branch" && git fetch "$remote" "$branch" && git merge --ff-only "$remote/$branch"
+
+  # Check if the merge was successful
+  if [ $? -eq 0 ]; then
+    echo "Merge successful!"
+  else
+    echo "Merge failed! Please check for conflicts and resolve them manually."
+  fi
+}
+
+
 # project aliases
-alias gonefs="cd ~/project/onefs"
-alias vonefs="cd ~/project/onefs ; vim"
-alias bonefs="sudo docker container run --name onefs_build --mount type=bind,source=/home/lemon/project/onefs,target=/onefs,readonly -e DESKTOP=lmao -i -t docker.west.isilon.com/cclayton/docker-onefs-cross:latest"
+alias gonefs="cd ~/onefs"
+alias vonefs="cd ~/onefs ; vim"
+alias bonefs="sudo docker container run --name onefs_build --mount type=bind,source=/home/lmao/project/onefs,target=/onefs,readonly -e DESKTOP=lmao -i -t docker.west.isilon.com/cclayton/docker-onefs-cross:latest"
 alias conefs="rm -rf ~/"

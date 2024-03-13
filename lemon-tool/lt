@@ -28,7 +28,7 @@ def lscrt(args):
     if os.path.exists(args.cert_str):
         tempfile = args.cert_str
     else:
-        cert_str = args.cert_str.replace("\\n", '')
+        cert_str = args.cert_str.replace("\n", '')
         decoded_cert = base64.b64decode(cert_str)
         pem = ssl.DER_cert_to_PEM_cert(decoded_cert)
         tempfile = "/tmp/temp_lt_saml_1234.txt"
@@ -47,12 +47,21 @@ def lsjwt(args):
     jwt = json.dumps(json.loads(jwt), indent=4, separators=(',', ':'), ensure_ascii=False)
     print(jwt)
 
+def lsjwt2(args):
+    jwt_str = args.jwt_str
+    cmd = "jq -R 'split(\".\") | .[0],.[1] | @base64d | fromjson' <<< " + jwt_str
+    os.system(cmd)
+
 def lsjson(args):
     """"""
-    print(f"\n---- The original string: {args.json_str}")
-    print("\n---- The formatted Json:")
-    jstr = json.dumps(json.loads(args.json_str), indent=4, separators=(',', ':'), ensure_ascii=False)
-    print(jstr)
+    if args.c:
+        # cmd = "jq . | fromjson' <<< " + args.json_str
+        cmd = f"echo '{args.json_str}' | jq ."
+        os.system(cmd)
+    else:
+        print("\n---- The formatted Json:")
+        jstr = json.dumps(json.loads(args.json_str), indent=4, separators=(',', ':'), ensure_ascii=False)
+        print(jstr)
 
 def gitdiff(args):
     if args.commit:
@@ -103,11 +112,12 @@ def parse_args():
     # lt lsjwt xxx
     jwt_parser = subparsers.add_parser('lsjwt', help='Decode an Isilon JWT string')
     jwt_parser.add_argument('jwt_str', metavar='<jwt_str>', help='The encoded isilon JWT string')
-    jwt_parser.set_defaults(func=lsjwt)
+    jwt_parser.set_defaults(func=lsjwt2)
 
     # lt lsjson xxx
     jwt_parser = subparsers.add_parser('lsjson', help='Format an json string')
     jwt_parser.add_argument('json_str', metavar='<json_str>', help='The original Json string')
+    jwt_parser.add_argument("-c", action="store_true", default=False, help="Format json string with color")
     jwt_parser.set_defaults(func=lsjson)
 
     # lt diff xxx

@@ -54,6 +54,7 @@ Plug 'roxma/vim-hug-neovim-rpc'  " Framework to support deoplete
 Plug 'Shougo/deoplete.nvim'
 " cpp syntax highlight
 Plug 'octol/vim-cpp-enhanced-highlight'
+Plug 'bfrg/vim-cpp-modern'
 " surround 插件可以快速编辑围绕在内容两端的字符（pairs of things surrounding
 " things），比如成对出现的括号、引号，甚至HTML/XML标签等。
 Plug 'tpope/vim-surround'
@@ -63,8 +64,8 @@ Plug 'ryanoasis/vim-devicons'
 Plug 'tpope/vim-fugitive'
 Plug 'tpope/vim-rhubarb'
 "dashboard
-Plug 'KyleJKC/Vim-dashboard'
-Plug 'Exafunction/codeium.vim', { 'branch': 'main'  }
+"Plug 'KyleJKC/Vim-dashboard'
+Plug 'Exafunction/codeium.vim', { 'tag': '1.6.28'  }
 
 " Haven tested, not good for me
 call plug#end()
@@ -117,6 +118,7 @@ set backupcopy=yes                  " overwrite the original file
 set formatoptions-=o                " Newline by 'o' is not inherit the last comment
 "set formatoptions-=O
 set timeoutlen=700                  " timeout length for key sequences
+set diffopt& diffopt+=algorithm:histogram,indent-heuristic " more readable diff
 
 set encoding=utf-8
 set termencoding=utf-8
@@ -294,7 +296,7 @@ highlight PMenuSel ctermfg=242 ctermbg=8 guifg=darkgrey guibg=black
 " 第一个 GTAGSLABEL 告诉 gtags 默认 C/C++/Java 等六种原生支持的代码直接使用
 " gtags 本地分析器，而其他语言使用 pygments 模块。
 let $GTAGSLABEL = 'native-pygments'
-let $GTAGSCONF = '/home/lemon/.globalrc'
+let $GTAGSCONF = '/home/lmao/.globalrc'
 
 " gutentags 搜索工程目录的标志，当前文件路径向上递归直到碰到这些文件/目录名
 let g:gutentags_project_root = ['.root', '.project', 'GTAGS']
@@ -352,14 +354,14 @@ let g:LanguageClient_serverCommands = {
     \   'name' : 'clangd',
     \   'command' : ['clangd'],
     \   'initializationOptions': {
-    \     'cacheDirectory': "/home/lemon/.cache/LanguageClient"
+    \     'cacheDirectory': "/home/lmao/.cache/LanguageClient"
     \   },
     \ },
     \ 'cpp': {
     \   'name' : 'clangd',
     \   'command' : ['clangd'],
     \   'initializationOptions': {
-    \     'cacheDirectory': "/home/lemon/.cache/LanguageClient"
+    \     'cacheDirectory': "/home/lmao/.cache/LanguageClient"
     \   },
     \ },
 \ }
@@ -377,6 +379,7 @@ let g:cpp_class_scope_highlight = 1
 let g:cpp_member_variable_highlight = 0
 let g:cpp_class_decl_highlight = 1
 let g:cpp_posix_standard = 1
+let g:cpp_simple_highlight = 1
 "let g:cpp_no_function_highlight = 0
 
 " surround
@@ -481,8 +484,8 @@ let g:codeium_server_config = {
   \'api_url': 'https://codeium.delllabs.net/_route/api_server' }
 let g:codeium_enabled = v:true
 let g:codeium_disable_bindings = 1
-" let g:codeium_log_file = "/tmp/codeium_log_file.log"
-" let g:codeium_log_level = 'DEBUG'
+"let g:codeium_log_file = "/tmp/codeium_log_file.log"
+"let g:codeium_log_level = 'DEBUG'
 
 "}}}
 
@@ -515,6 +518,21 @@ function! ToggleMouse()
     endif
     echo "Done!"
 endfunction
+
+let s:spellon = 0
+function! ToggleSpell()
+    "if  s:spellon == 0
+    if &spell
+        "let s:spellon = 1
+        set nospell
+        echo "Spell off"
+    else
+        "let s:spellon = 0
+        set spell
+        echo "Spell on"
+    endif
+endfunction
+
 
 ":vertical resize+40<CR>
 " move between windows
@@ -616,7 +634,7 @@ nmap <F6>  <leader>*
 nmap <F8>  :AsyncRun docker exec onefs_build /bin/sh -c "cd /home/cross-compiler/output.cross && make -j24"
 nmap <F9>  :GscopeFind g
 nmap <F10> :EraseBadWhitespace<CR>
-"nmap <F11> :<CR>
+nmap <F11> :call ToggleSpell()<CR>
 nmap <F12> :call ToggleMouse()<CR>
 
 " ## -------------------------------------- ##
@@ -714,7 +732,8 @@ vmap av ,adec
 vmap am ,adef
 vmap ac ,acom
 vmap af ,afnc
-vmap as ,tml
+vmap as :Tabularize //<CR>
+vmap a= :Tabularize /=<CR>
 " surround maps come from surround.vim
 nmap ys <Plug>Ysurround
 nmap ds <Plug>Dsurround
@@ -732,7 +751,10 @@ imap <script><silent><nowait><expr> <TAB> codeium#Accept()
 imap <leader>s  <Cmd>call codeium#CycleCompletions(1)<CR>
 imap <leader>w  <Cmd>call codeium#CycleCompletions(-1)<CR>
 imap <leader>c  <Cmd>call codeium#Clear()<CR>
+imap <C-c>      <Cmd>call codeium#Clear()<CR><ESC>
 " snip
 imap <leader><TAB> <Plug>snipMateNextOrTrigger
 smap <leader><TAB> <Plug>snipMateNextOrTrigger
+" ToggleSpell
+nmap <leader>sp :call ToggleSpell()<CR>
 
