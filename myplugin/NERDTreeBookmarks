@@ -1,4 +1,5 @@
 bashrc ~/.bashrc
 VIM ~/.vim
+temp ~/project/temp
+
 onefs ~/onefs
-temp /home/lemon/project/temp

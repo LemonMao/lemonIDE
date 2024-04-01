@@ -7,7 +7,10 @@ import re
 import signal
 import socket
 import subprocess
-from operator import itemgetter 
+from operator import itemgetter
+
+PWD = os.environ['PWD']
+SSH_HOSTS = PWD + "/.sshhosts"
 
 def bold_green_fmt(value):
     return "\033[1m\033[32m{0}\033[m".format(value)
@@ -28,24 +31,23 @@ def error_msg(msg):
     print("{0} {1}".format(bold_red_fmt("Error:"), red_fmt(msg)))
 
 def my_machines():
-    """Get list of remote servers from file /ifs/home/lmao/.sshhosts
-    #cat /ifs/home/lmao/.sshhosts
+    """Get list of remote servers from file ~/.sshhosts
+    #cat ~/.sshhosts
     10.224.38.228                          Test manager
     qavm01.prod.sea1.west.isilon.com       Sea1 qaVM
     """
-    SSH_HOSTS="/ifs/home/lmao/.sshhosts"
-    hostfile = open(SSH_HOSTS, "r")
     hosts = []
-    i = 0
-    for line in hostfile.readlines():
-        host = {}
-        host["id"] = i
-        i += 1
-        host["ips"] = [line.split(' ', 1)[0]]
-        host["name"] = line.split(' ', 1)[1].strip().rstrip('\n')
-        host["location"] = 'N/A'
-        host["build"] = 'N/A'
-        hosts.append(host)
+    with open(SSH_HOSTS, "a+") as hostfile:
+        i = 0
+        for line in hostfile.readlines():
+            host = {}
+            host["id"] = i
+            i += 1
+            host["ips"] = [line.split(' ', 1)[0]]
+            host["name"] = line.split(' ', 1)[1].strip().rstrip('\n')
+            host["location"] = 'N/A'
+            host["build"] = 'N/A'
+            hosts.append(host)
 
     return hosts
 
@@ -113,24 +115,25 @@ def get_ip(clusters=None, clients=None, servers=None, number=None):
 
     idx_to_machine = {}
 
-    print("Ducttape Clients:\n")
-    clients= sorted(clients, key=itemgetter("id"))
-    for vm in clients:
-        print("  ({0}) {1}".format(bold_green_fmt(next_num()), vm["name"]))
-        idx_to_machine[current_num()] = { "machine": vm }
+    if clients is not None:
+        print("Ducttape Clients:\n")
+        clients= sorted(clients, key=itemgetter("id"))
+        for vm in clients:
+            print("  ({0}) {1}".format(bold_green_fmt(next_num()), vm["name"]))
+            idx_to_machine[current_num()] = { "machine": vm }
 
-        spaces = " " * get_digits(idx_wrap[0])
-        print("     {2}Info: {0}  --  {1}".format(vm["location"], vm["build"], spaces))
+            spaces = " " * get_digits(idx_wrap[0])
+            print("     {2}Info: {0}  --  {1}".format(vm["location"], vm["build"], spaces))
 
-        current = current_num()
-        vm["ips"].reverse()
-        print("     {1}IPs:      {0}".format(
-            ", ".join(["({0}) {1}".format(bold_cyan_fmt(next_num()), ip) for ip in vm["ips"]]), spaces))
+            current = current_num()
+            vm["ips"].reverse()
+            print("     {1}IPs:      {0}".format(
+                ", ".join(["({0}) {1}".format(bold_cyan_fmt(next_num()), ip) for ip in vm["ips"]]), spaces))
 
-        for id_num, ip in enumerate(vm["ips"], current+1):
-            idx_to_machine[id_num] = { "machine": vm, "ip": ip }
+            for id_num, ip in enumerate(vm["ips"], current+1):
+                idx_to_machine[id_num] = { "machine": vm, "ip": ip }
 
-        print("")
+            print("")
 
     print("Servers :\n")
     for vm in servers:
@@ -147,24 +150,25 @@ def get_ip(clusters=None, clients=None, servers=None, number=None):
 
         print("")
 
-    print("Ducttape Clusters:\n")
-    clusters= sorted(clusters, key=itemgetter("id"))
-    for vm in clusters:
-        print("  ({0}) {1}".format(bold_green_fmt(next_num()), vm["name"]))
-        idx_to_machine[current_num()] = { "machine": vm }
+    if clusters is not None:
+        print("Ducttape Clusters:\n")
+        clusters= sorted(clusters, key=itemgetter("id"))
+        for vm in clusters:
+            print("  ({0}) {1}".format(bold_green_fmt(next_num()), vm["name"]))
+            idx_to_machine[current_num()] = { "machine": vm }
 
-        spaces = " " * get_digits(idx_wrap[0])
-        print("     {2}Info: {0}  --  {1}".format(vm["location"], vm["build"], spaces))
+            spaces = " " * get_digits(idx_wrap[0])
+            print("     {2}Info: {0}  --  {1}".format(vm["location"], vm["build"], spaces))
 
-        current = current_num()
-        vm["ips"].reverse()
-        print("     {1}IPs:      {0}".format(
-            ", ".join(["({0}) {1}".format(bold_cyan_fmt(next_num()), ip) for ip in vm["ips"]]), spaces))
+            current = current_num()
+            vm["ips"].reverse()
+            print("     {1}IPs:      {0}".format(
+                ", ".join(["({0}) {1}".format(bold_cyan_fmt(next_num()), ip) for ip in vm["ips"]]), spaces))
 
-        for id_num, ip in enumerate(vm["ips"], current+1):
-            idx_to_machine[id_num] = { "machine": vm, "ip": ip }
+            for id_num, ip in enumerate(vm["ips"], current+1):
+                idx_to_machine[id_num] = { "machine": vm, "ip": ip }
 
-        print("")
+            print("")
 
 
     while True:

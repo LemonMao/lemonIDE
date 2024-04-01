@@ -35,8 +35,15 @@ for cmd in "${cmds2[@]}"; do
     which $cmd >/dev/null 2>&1 && alias "c$cmd"="grc --colour=auto $cmd \$@"
 done
 
+# ccat file
 function ccat() {
-    cat "$@" | grcat conf.lemon.log
+    cat "$@" | grcat conf.lemon.log | less
+}
+
+# wget2 https://x.x.x.x/path/file
+function wget2() {
+    cmd="curl -k "$@" -o ./"$(basename "$@")""
+    $cmd
 }
 
 # Lemon Aliases

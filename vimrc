@@ -53,7 +53,7 @@ Plug 'roxma/nvim-yarp'  " Framework to support deoplete
 Plug 'roxma/vim-hug-neovim-rpc'  " Framework to support deoplete
 Plug 'Shougo/deoplete.nvim'
 " cpp syntax highlight
-Plug 'octol/vim-cpp-enhanced-highlight'
+"Plug 'octol/vim-cpp-enhanced-highlight'
 Plug 'bfrg/vim-cpp-modern'
 " surround 插件可以快速编辑围绕在内容两端的字符（pairs of things surrounding
 " things），比如成对出现的括号、引号，甚至HTML/XML标签等。
@@ -64,7 +64,7 @@ Plug 'ryanoasis/vim-devicons'
 Plug 'tpope/vim-fugitive'
 Plug 'tpope/vim-rhubarb'
 "dashboard
-"Plug 'KyleJKC/Vim-dashboard'
+Plug '~/.vim/plugged/Vim-dashboard'
 Plug 'Exafunction/codeium.vim', { 'tag': '1.6.28'  }
 
 " Haven tested, not good for me
@@ -296,7 +296,7 @@ highlight PMenuSel ctermfg=242 ctermbg=8 guifg=darkgrey guibg=black
 " 第一个 GTAGSLABEL 告诉 gtags 默认 C/C++/Java 等六种原生支持的代码直接使用
 " gtags 本地分析器，而其他语言使用 pygments 模块。
 let $GTAGSLABEL = 'native-pygments'
-let $GTAGSCONF = '/home/lmao/.globalrc'
+let $GTAGSCONF = '/home/lemon/.globalrc'
 
 " gutentags 搜索工程目录的标志，当前文件路径向上递归直到碰到这些文件/目录名
 let g:gutentags_project_root = ['.root', '.project', 'GTAGS']
@@ -354,14 +354,14 @@ let g:LanguageClient_serverCommands = {
     \   'name' : 'clangd',
     \   'command' : ['clangd'],
     \   'initializationOptions': {
-    \     'cacheDirectory': "/home/lmao/.cache/LanguageClient"
+    \     'cacheDirectory': "/home/lemon/.cache/LanguageClient"
     \   },
     \ },
     \ 'cpp': {
     \   'name' : 'clangd',
     \   'command' : ['clangd'],
     \   'initializationOptions': {
-    \     'cacheDirectory': "/home/lmao/.cache/LanguageClient"
+    \     'cacheDirectory': "/home/lemon/.cache/LanguageClient"
     \   },
     \ },
 \ }
@@ -375,12 +375,24 @@ let g:LanguageClient_serverCommands = {
 "highlight link EchoDocPopup Pmenu
 
 " vim-cpp-enhanced-highlight
-let g:cpp_class_scope_highlight = 1
-let g:cpp_member_variable_highlight = 0
-let g:cpp_class_decl_highlight = 1
-let g:cpp_posix_standard = 1
-let g:cpp_simple_highlight = 1
+"let g:cpp_class_scope_highlight = 1
+"let g:cpp_member_variable_highlight = 0
+"let g:cpp_class_decl_highlight = 1
+"let g:cpp_posix_standard = 1
+"let g:cpp_simple_highlight = 1
 "let g:cpp_no_function_highlight = 0
+
+"Plug 'bfrg/vim-cpp-modern'
+" Disable function highlighting (affects both C and C++ files)
+"let g:cpp_function_highlight = 0
+" Enable highlighting of C++11 attributes
+let g:cpp_attributes_highlight = 1
+" Highlight struct/class member variables (affects both C and C++ files)
+let g:cpp_member_highlight = 1
+" Put all standard C and C++ keywords under Vim's highlight group 'Statement'
+" (affects both C and C++ files)
+let g:cpp_simple_highlight = 1
+
 
 " surround
 " 不定义任何快捷键

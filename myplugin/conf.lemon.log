@@ -86,7 +86,7 @@ regexp=[Ee]nabled?|\b[Ss]uccess\w{0,5}\b|\b[Pp]ass\w{0,2}\b
 colour=green
 -
 # Red Words
-regexp=[Dd]isabled?|[Ee]rrors?|[Ss]topped|[Ff]alse|\b[Ff]ail\w{0,4}\b
+regexp=[Dd]isabled?|[Ee]rrors?|[Ss]topped|[Ff]alse|\b[Ff]ail\w{0,4}\b|\b[Ee]xception\b
 colour=red
 -
 # Yellow Words
