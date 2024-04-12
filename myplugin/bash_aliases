@@ -40,6 +40,10 @@ function ccat() {
     cat "$@" | grcat conf.lemon.log | less
 }
 
+function cgrep() {
+    grep "$@" | grcat conf.lemon.log | less
+}
+
 # wget2 https://x.x.x.x/path/file
 function wget2() {
     cmd="curl -k "$@" -o ./"$(basename "$@")""

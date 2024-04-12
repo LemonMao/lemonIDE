@@ -2,15 +2,20 @@
 from __future__ import print_function
 
 import argparse
-import os
+import os, time
 import re
 import signal
 import socket
 import subprocess
 from operator import itemgetter
 
-PWD = os.environ['PWD']
-SSH_HOSTS = PWD + "/.sshhosts"
+HOME = os.getenv('HOME', None)
+ISILON = os.getenv('ISILON', None)
+
+SSH_HOSTS = HOME + "/.sshhosts"
+ISILON_USRE = "lmao"
+MAX_HOST_LEN = 50
+MAX_NAME_LEN = 30
 
 def bold_green_fmt(value):
     return "\033[1m\033[32m{0}\033[m".format(value)
@@ -30,37 +35,51 @@ def red_fmt(value):
 def error_msg(msg):
     print("{0} {1}".format(bold_red_fmt("Error:"), red_fmt(msg)))
 
-def my_machines():
+def get_customed_machines():
     """Get list of remote servers from file ~/.sshhosts
     #cat ~/.sshhosts
     10.224.38.228                          Test manager
     qavm01.prod.sea1.west.isilon.com       Sea1 qaVM
     """
+    # if SSH_HOSTS file not exist or empty, create it.
+    # And write the example above to it.
+    if not os.path.exists(SSH_HOSTS) or os.stat(SSH_HOSTS).st_size == 0:
+        with open(SSH_HOSTS, "w") as hostfile:
+            host_spaces = " " * (MAX_HOST_LEN - 1)
+            hostfile.write(
+                    "# Start with '#' will be considered as comment.\n#\n"
+                    "# IPs(<user>@<ip/domain>)                   Machine name(no space in name)            Information of machine(can include space)\n#\n"
+                    "#  2.2.2.2,lmao@1.1.1.1                           my_server                                 Test server\n"
+                    "#  lmao@test.lemon.com                            isi_debug                                 Sea1 qaVM\n"
+            )
+
     hosts = []
-    with open(SSH_HOSTS, "a+") as hostfile:
+    # print("hosts file:{0}".format(SSH_HOSTS))
+    with open(SSH_HOSTS, "r") as hostfile:
         i = 0
         for line in hostfile.readlines():
+            # if line is start with '#' or empty line, continue
+            if line.startswith('#') or not line.strip():
+                continue
             host = {}
             host["id"] = i
             i += 1
-            host["ips"] = [line.split(' ', 1)[0]]
-            host["name"] = line.split(' ', 1)[1].strip().rstrip('\n')
-            host["location"] = 'N/A'
+            host["ips"] = line.split(' ', 1)[0].split(',', 1)
+            host["name"] = line.split(' ', 1)[1].strip().split(' ', 1)[0]
+            host["location"] = line.split(' ', 1)[1].strip().split(' ', 1)[1].strip()
             host["build"] = 'N/A'
             hosts.append(host)
 
     return hosts
 
-def dt_machines(user=None, what="Cluster"):
+def get_isilon_machines(what="Cluster"):
     """Get a list of ducttape clusters."""
+    import isilon.ducttape.client as dt
     try:
-        import isilon.ducttape.client as dt
-        if user is None:
-            user = input(
-                "Enter your DESKTOP username to pick a Ducttape IP (empty to skip): ").strip()
-
-        if not user:
-            return None
+        user = ISILON_USRE
+        # if user is None:
+            # user = input(
+                # "Enter your DESKTOP username to pick a Ducttape IP (empty to skip): ").strip()
 
         client = dt.DucttapeClient(user)
         if what == "Clients":
@@ -72,20 +91,7 @@ def dt_machines(user=None, what="Cluster"):
         print("Continuing without displaying Ducttape clusters...")
         return None
 
-def is_valid_ipv4(value):
-    """Check if a string is a valid IPv4 address."""
-    IPV4_PATTERN = re.compile(r"^[1-2]?[0-9]?[0-9]\.[1-2]?[0-9]?[0-9]\.[1-2]?[0-9]?[0-9]\.[1-2]?[0-9]?[0-9]$")
-    if not IPV4_PATTERN.search(value):
-        return False
-
-    try:
-        socket.inet_aton(value)
-    except:
-        return False
-
-    return True
-
-def choose_ducttape_ip(cluster, ip=None):
+def choose_cluster_ip(cluster, ip=None):
     """Choose the ducttape IP to use."""
     if ip is None:
         if not cluster["ips"]:
@@ -94,7 +100,7 @@ def choose_ducttape_ip(cluster, ip=None):
         ip = cluster["ips"][0]
     return ip
 
-def get_ip(clusters=None, clients=None, servers=None, number=None):
+def get_machine_ip(target=None, just_print=False):
     """Get the node IP to use for the cross compiler."""
     idx_wrap = [0]
 
@@ -114,78 +120,95 @@ def get_ip(clusters=None, clients=None, servers=None, number=None):
         return idx_wrap[0]
 
     idx_to_machine = {}
+    name_to_machine = {}
+    all_machines = {}
 
-    if clients is not None:
-        print("Ducttape Clients:\n")
-        clients= sorted(clients, key=itemgetter("id"))
-        for vm in clients:
+    if ISILON:
+        all_machines["Ducttape Cluster"] = get_isilon_machines("Cluster")
+        all_machines["Ducttape Clients"] = get_isilon_machines("Clients")
+
+    all_machines["Servers"] = get_customed_machines()
+
+    for typestr, servers in all_machines.items():
+        # type string
+        print("# {0}:\n".format(typestr))
+        # servers= sorted(servers, key=itemgetter("id"))
+        for vm in servers:
+            # vm name
             print("  ({0}) {1}".format(bold_green_fmt(next_num()), vm["name"]))
             idx_to_machine[current_num()] = { "machine": vm }
+            name_to_machine[vm["name"]] = idx_to_machine[current_num()]
 
+            # vm info - location, build
             spaces = " " * get_digits(idx_wrap[0])
-            print("     {2}Info: {0}  --  {1}".format(vm["location"], vm["build"], spaces))
+            if vm["location"]:
+                print("     {2}Info: {0}  --  {1}".format(
+                    vm["location"], vm["build"], spaces))
 
             current = current_num()
-            vm["ips"].reverse()
+            # vm["ips"].reverse()
             print("     {1}IPs:      {0}".format(
-                ", ".join(["({0}) {1}".format(bold_cyan_fmt(next_num()), ip) for ip in vm["ips"]]), spaces))
+                ", ".join(["({0}) {1}".format(bold_cyan_fmt(next_num()), ip) for ip in vm["ips"]])
+                , spaces))
 
             for id_num, ip in enumerate(vm["ips"], current+1):
                 idx_to_machine[id_num] = { "machine": vm, "ip": ip }
+                name_to_machine[vm["name"]] = idx_to_machine[id_num]
 
             print("")
 
-    print("Servers :\n")
-    for vm in servers:
-        print("  ({0}) {1}".format(bold_green_fmt(next_num()), vm["name"]))
-        idx_to_machine[current_num()] = { "machine": vm }
-
-        spaces = " " * get_digits(idx_wrap[0])
-        current = current_num()
-        print("     {1}IPs:      {0}".format(
-            ", ".join(["({0}) {1}".format(bold_cyan_fmt(next_num()), ip) for ip in vm["ips"]]), spaces))
-
-        for id_num, ip in enumerate(vm["ips"], current+1):
-            idx_to_machine[id_num] = { "machine": vm, "ip": ip }
-
-        print("")
-
-    if clusters is not None:
-        print("Ducttape Clusters:\n")
-        clusters= sorted(clusters, key=itemgetter("id"))
-        for vm in clusters:
-            print("  ({0}) {1}".format(bold_green_fmt(next_num()), vm["name"]))
-            idx_to_machine[current_num()] = { "machine": vm }
-
-            spaces = " " * get_digits(idx_wrap[0])
-            print("     {2}Info: {0}  --  {1}".format(vm["location"], vm["build"], spaces))
-
-            current = current_num()
-            vm["ips"].reverse()
-            print("     {1}IPs:      {0}".format(
-                ", ".join(["({0}) {1}".format(bold_cyan_fmt(next_num()), ip) for ip in vm["ips"]]), spaces))
-
-            for id_num, ip in enumerate(vm["ips"], current+1):
-                idx_to_machine[id_num] = { "machine": vm, "ip": ip }
-
-            print("")
-
+    if just_print:
+        exit(0)
 
     while True:
-        answer = str(number) if number != -1 else input(
-                "Enter a IP or number for SSH login: ").strip()
-
-        if is_valid_ipv4(answer):
-            return answer
+        answer = target if target else input(
+                "Enter a IP or target for SSH login: ").strip()
 
         try:
-            idx = int(answer, 10)
-            info = idx_to_machine[idx]
-            ip = choose_ducttape_ip(info["machine"], ip=info.get("ip"))
+            info = None
+            if answer.isnumeric():
+                idx = int(answer, 10)
+                info = idx_to_machine[idx]
+            else:
+                info = name_to_machine[answer]
+
+            ip = choose_cluster_ip(info["machine"], ip=info.get("ip"))
             if ip:
                 return ip
         except (ValueError, KeyError):
             error_msg("{0} is not a valid choice".format(answer))
+
+def add_custom_host(host):
+    """ if host exists, find if it exist in SSH_HOSTS file, if not add it. """
+    servers = get_customed_machines()
+    found = False
+    for server in servers:
+        if host in server["ips"]:
+            found = True
+            break
+    if not found:
+        name = input("Provide the machine name: ").strip()
+        info = input("Provide the machine info: ").strip()
+        print(f"info:{info}")
+        info = "N/A" if not info else info
+        with open(SSH_HOSTS, "a+") as hostfile:
+            space1 = " " * (MAX_HOST_LEN - len(host))
+            space2 = " " * (MAX_NAME_LEN - len(name))
+            hostfile.write(host + space1 + name + space2 + info + "\n")
+
+def do_sftp(ip, user, path):
+    if path == "lmao_sftp_prompt":
+        path = input("SFTP path: ").strip()
+    cmd = f"sftp {user}@{ip}:{path}"
+    print(f"Perform SFTP: {cmd}")
+    os.system(cmd)
+
+def need_passwd(error_msg):
+    need_pass_err = ["Permission denied (publickey,password,hostbased).", "Too many authentication failures"]
+    for need_pass in need_pass_err:
+        if need_pass in error_msg:
+            return True
+    return False
 
 def exit_signal(signum, frame):
     exit(1)
@@ -193,67 +216,68 @@ def exit_signal(signum, frame):
 def main():
     signal.signal(signal.SIGINT, exit_signal)
 
-    parser = argparse.ArgumentParser(description="Setup an IP for the cross compiler")
-    parser.add_argument("--user", default=os.environ.get("DESKTOP"),
-        help="a DESKTOP username to display Ducttape clusters of")
-    parser.add_argument("--show", action="store_true", default=False,
-        help="print the current cross compiler IP address and exit")
-    parser.add_argument("-p", action="store_true", default=False,
-        help="no password login")
-    parser.add_argument("-n", type=int, default=-1, help="VM number")
+    parser = argparse.ArgumentParser(description="Lemon SSH terminal tool")
+    # options
+    parser.add_argument("-t", type=str, default=None,
+                        help="Target machine. Could be name or number.")
     parser.add_argument("-s", action="store_true", default=False,
-        help="print the current SSH processes")
+                        help="print the current SSH processes.")
+    parser.add_argument("-l", action="store_true", default=False,
+                        help="print the remote servers list.")
+    parser.add_argument("-p", action="store_true", default=False,
+                        help="perform passwordless login.")
+    parser.add_argument("-u", nargs="?", const='lmao_prompt', default="lmao_no_prompt",
+                        help="provide the user name to login.")
+    parser.add_argument("-f", nargs="?", const='lmao_sftp_prompt', default="lmao_no_sftp",
+                        help="perform the sftp with path.")
+    # arguments
+    parser.add_argument("host", default=None, nargs="?",
+                        help="The IP address to process. <user>@<ip>, or <ip>")
+
     args = parser.parse_args()
 
+    # print the current ssh processes and exit
     if args.s is True:
         os.system("ps axjf | grep -v 'grep' | grep 'python.*mssh' -A2")
         return
 
-    user = args.user
-    if args.user is None:
-        # user = raw_input(
-            # "Enter your DESKTOP username to pick a Ducttape IP (empty to 'lmao'): ").strip()
-        # if user == None or user == "":
-            user = "lmao"
+    # add host to SSH_HOSTS if not exists
+    if args.host:
+        add_custom_host(args.host)
 
-    clusters = dt_machines(user, "Cluster")
-    clients  = dt_machines(user, "Clients")
-    servers  = my_machines()
-    ip = get_ip(clusters, clients, servers, args.n)
-    user = input("Please choose the user: [Lmao|Root|other]: ").strip()
-    if user == "l" or user == "L":
-        user = "lmao"
-    elif user == "r" or user == "R" or user == "":
-        user = "root"
+    # get ip and user name
+    ip = args.host if args.host else get_machine_ip(args.t, args.l)
+    username = ip.split("@")[0] if "@" in ip else "root"
+    ip = ip.split("@")[1] if "@" in ip else ip
+    if args.u == "lmao_prompt":
+        username = input("Please choose the username: [Lmao|Root|other]: ").strip()
+        if username == "l" or username == "L":
+            username = "lmao"
+        elif username == "r" or username == "R" or username == "":
+            username = "root"
+    elif args.u != "lmao_no_prompt":
+        username = args.u
 
-    ssh_warn = "WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!"
+    # sftp
+    if args.f != "lmao_no_sftp":
+        do_sftp(ip, username, args.f)
+        return
 
+    # print("Perform SSH clean! ", cmd2) -- "ssh-keygen -f ~/.ssh/known_hosts -R " + ip
+    # Do ssh passwordless login
+    print(f"Prepare to login to {username}@{ip}.")
+    passwordless_command = f"ssh-copy-id {username}@{ip} && ssh -o StrictHostKeyChecking=no {username}@{ip}"
+    command = f"ssh -o StrictHostKeyChecking=no {username}@{ip}"
     if args.p:
-        cmd = "ssh-copy-id " + user + "@" + ip
-        print("Perform no-password login: ", cmd)
-        proc = subprocess.Popen(cmd, stderr=subprocess.PIPE, shell=True)
-        stdout, stderr = proc.communicate()
-        result = proc.wait()
-        # print("##--\n", stderr, stdout, "\n##--\n")
-        if stderr and stderr.decode('utf-8').find(ssh_warn) != -1:
-            cmd2 = "ssh-keygen -f ~/.ssh/known_hosts -R " + ip + " && " + cmd
-            print("Perform SSH clean! ", cmd2)
-            proc = subprocess.Popen(cmd2, shell=True)
-            result = proc.wait()
+        result = subprocess.run(passwordless_command, shell=True, stderr=subprocess.PIPE)
+    else:
+        result = subprocess.run(command, shell=True, stderr=subprocess.PIPE)
+        if result.returncode != 0 and result.stderr and need_passwd(result.stderr.decode('utf-8')):
+            print("Password still required. Perform no-password login. ")
+            copy_id_command = f"ssh-copy-id {username}@{ip} && {command}"
+            subprocess.run(copy_id_command, shell=True, stderr=subprocess.PIPE)
 
-    cmd = "ssh " + user + "@" + ip
-    print("Perform login: ", cmd)
-    # proc = subprocess.run(cmd, shell=True, text=True)
-    proc = subprocess.Popen(cmd, stderr=subprocess.PIPE, shell=True)
-    stdout, stderr = proc.communicate()
-    result = proc.wait()
-    print("##--\n", "err:", stderr, "out:", stdout, "\n##--\n")
-    if stderr and stderr.decode('utf-8').find(ssh_warn) != -1:
-        cmd2 = "ssh-keygen -f ~/.ssh/known_hosts -R " + ip + " && " + cmd
-        print("Perform SSH clean! ", cmd2)
-        proc = subprocess.Popen(cmd2, shell=True)
-        result = proc.wait()
-        # proc = subprocess.run(cmd2, shell=True)
+    print(result.stderr.decode('utf-8') if result.stderr else "\n --- Good Bye !!! ---\n")
 
 if __name__ == "__main__":
     exit(main())
