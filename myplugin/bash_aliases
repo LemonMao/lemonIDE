@@ -50,6 +50,10 @@ function wget2() {
     $cmd
 }
 
+function grc2() {
+    $@ | grcat conf.lemon.log | less
+}
+
 # Lemon Aliases
 alias lsalias="cat ~/.bash_aliases | grep -A 1000 'Lemon Aliases' | grep alias"
 alias ll="ls -lthr"

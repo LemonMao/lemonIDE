@@ -8,6 +8,9 @@ import signal
 import socket
 import subprocess
 from operator import itemgetter
+from watchdog.observers import Observer
+from watchdog.events import FileSystemEventHandler
+from threading import Timer
 
 HOME = os.getenv('HOME', None)
 ISILON = os.getenv('ISILON', None)
@@ -132,7 +135,7 @@ def get_machine_ip(target=None, just_print=False):
     for typestr, servers in all_machines.items():
         # type string
         print("# {0}:\n".format(typestr))
-        # servers= sorted(servers, key=itemgetter("id"))
+        servers= sorted(servers, key=itemgetter("id"))
         for vm in servers:
             # vm name
             print("  ({0}) {1}".format(bold_green_fmt(next_num()), vm["name"]))
@@ -210,6 +213,94 @@ def need_passwd(error_msg):
             return True
     return False
 
+def need_clean_host_id(error_msg):
+    need_clean_err = ["WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!"]
+    for need_clean in need_clean_err:
+        if need_clean in error_msg:
+            return True
+    return False
+
+def do_rsync_monitor(ip, username, local_obj=None):
+    """
+    Monitors the directory/file changes and performs rsync with the remote server.
+    """
+    if local_obj == "lmao_rsync_prompt":
+        local_obj = input("Local target: ").strip()
+    else:
+        local_obj = os.getcwd() if not local_obj else local_obj
+    if os.path.isdir(local_obj) and (not local_obj.endswith('/')):
+        local_obj += '/'
+    if not os.path.exists(local_obj):
+        error_msg(f"Local target {local_obj} does not exist")
+        exit(1)
+
+    remote_obj = input("Remote target: ").strip()
+    if os.path.isdir(local_obj):
+        remote_obj = f"{username}@{ip}:{remote_obj}"
+    else:
+        remote_obj = f"{username}@{ip}:{remote_obj}/{local_obj}"
+
+    print(f"Keep sync for {local_obj} - {remote_obj}\n")
+
+    class ChangeEventHandler(FileSystemEventHandler):
+        def __init__(self):
+            self.sync_timer = None
+            self.delay_ms = 500 / 1000
+            self.queued_event = False
+
+        def _do_sync(self):
+            try:
+                print(f"Target change detected. Syncing... {local_obj} - {remote_obj}")
+                ret = subprocess.run(["rsync", "-a", local_obj, remote_obj])
+                print(f"Complete syncing. Return:{ret.returncode}\n")
+            except subprocess.CalledProcessError as e:
+                print(f"Error syncing: {e} \n")
+            finally:
+                self.sync_timer.cancel()
+                self.sync_timer = None
+
+        def on_any_event(self, event):
+            if not event.is_directory:
+                return None
+            if not self.sync_timer:
+                print(f"File change detected: {event.src_path}. Make timer...")
+                self.sync_timer = Timer(self.delay_ms, self._do_sync)
+                self.sync_timer.start()
+
+    # Example usage
+    observer = Observer()
+    observer.schedule(ChangeEventHandler(), local_obj, recursive=True)
+    observer.start()
+    try:
+      while True:
+          time.sleep(600)
+    except KeyboardInterrupt:
+        print("Stopping observer...")
+        observer.stop()
+    observer.join()
+
+def do_ssh(ip, username, passwordless):
+    # print("Perform SSH clean! ", cmd2) -- "ssh-keygen -f ~/.ssh/known_hosts -R " + ip
+    # Do ssh passwordless login
+    print(f"Prepare to login to {username}@{ip}.")
+    ssh_cmd = f"ssh -o StrictHostKeyChecking=no {username}@{ip}"
+    passwdless_cmd = f"ssh-copy-id {username}@{ip} && {ssh_cmd}"
+    if passwordless:
+        result = subprocess.run(passwdless_cmd, shell=True, stderr=subprocess.PIPE)
+    else:
+        result = subprocess.run(ssh_cmd, shell=True, stderr=subprocess.PIPE)
+        if result.returncode != 0 and result.stderr and need_passwd(result.stderr.decode('utf-8')):
+            print("Password still required. Perform no-password login. ")
+            subprocess.run(passwdless_cmd, shell=True, stderr=subprocess.PIPE)
+
+    if result.stderr and need_clean_host_id(result.stderr.decode('utf-8')):
+        print(f"Clean up known host ID for {ip}.")
+        known_hosts_path = "~/.ssh/known_hosts"
+        clean_cmd = f"ssh-keygen -f {known_hosts_path} -R {ip}"
+        subprocess.run(clean_cmd, shell=True, stderr=subprocess.PIPE)
+
+    print(f"Stderr:\n {result.stderr.decode('utf-8')}" if result.stderr else "\nGood Bye !!!\n")
+
 def exit_signal(signum, frame):
     exit(1)
 
@@ -219,7 +310,7 @@ def main():
     parser = argparse.ArgumentParser(description="Lemon SSH terminal tool")
     # options
     parser.add_argument("-t", type=str, default=None,
-                        help="Target machine. Could be name or number.")
+                        help="target machine. Could be name or number.")
     parser.add_argument("-s", action="store_true", default=False,
                         help="print the current SSH processes.")
     parser.add_argument("-l", action="store_true", default=False,
@@ -230,6 +321,8 @@ def main():
                         help="provide the user name to login.")
     parser.add_argument("-f", nargs="?", const='lmao_sftp_prompt', default="lmao_no_sftp",
                         help="perform the sftp with path.")
+    parser.add_argument("-r", nargs="?", const='lmao_rsync_prompt', default="lmao_no_rsync",
+                        help="perform rsync monitor")
     # arguments
     parser.add_argument("host", default=None, nargs="?",
                         help="The IP address to process. <user>@<ip>, or <ip>")
@@ -258,26 +351,15 @@ def main():
     elif args.u != "lmao_no_prompt":
         username = args.u
 
-    # sftp
+    # do sftp/ssh/rsync
     if args.f != "lmao_no_sftp":
         do_sftp(ip, username, args.f)
-        return
-
-    # print("Perform SSH clean! ", cmd2) -- "ssh-keygen -f ~/.ssh/known_hosts -R " + ip
-    # Do ssh passwordless login
-    print(f"Prepare to login to {username}@{ip}.")
-    passwordless_command = f"ssh-copy-id {username}@{ip} && ssh -o StrictHostKeyChecking=no {username}@{ip}"
-    command = f"ssh -o StrictHostKeyChecking=no {username}@{ip}"
-    if args.p:
-        result = subprocess.run(passwordless_command, shell=True, stderr=subprocess.PIPE)
+    elif args.r != "lmao_no_rsync":
+        do_rsync_monitor(ip, username, args.r)
     else:
-        result = subprocess.run(command, shell=True, stderr=subprocess.PIPE)
-        if result.returncode != 0 and result.stderr and need_passwd(result.stderr.decode('utf-8')):
-            print("Password still required. Perform no-password login. ")
-            copy_id_command = f"ssh-copy-id {username}@{ip} && {command}"
-            subprocess.run(copy_id_command, shell=True, stderr=subprocess.PIPE)
+        do_ssh(ip, username, args.p)
 
-    print(result.stderr.decode('utf-8') if result.stderr else "\n --- Good Bye !!! ---\n")
+    return
 
 if __name__ == "__main__":
     exit(main())
