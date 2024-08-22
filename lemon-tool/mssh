@@ -38,6 +38,26 @@ def red_fmt(value):
 def error_msg(msg):
     print("{0} {1}".format(bold_red_fmt("Error:"), red_fmt(msg)))
 
+def is_wildcard(pattern):
+  """
+  This function checks if a string is likely a shell wildcard pattern.
+  """
+  wildcards = "*?"
+  # Check for presence of wildcard characters
+  if any(char in wildcards for char in pattern):
+    return True
+  # Handle cases like ".bashrc" (not a wildcard)
+  if pattern.startswith(".") and not pattern.startswith(".*"):
+    return False
+
+  # Consider patterns with escaped characters (not reliable)
+  # This is a simplified approach and might not capture all edge cases.
+  escape_chars = "\\"
+  if any(char in escape_chars for char in pattern):
+    return False
+
+  return False
+
 def get_customed_machines():
     """Get list of remote servers from file ~/.sshhosts
     #cat ~/.sshhosts
@@ -224,23 +244,32 @@ def do_rsync_monitor(ip, username, local_obj=None):
     """
     Monitors the directory/file changes and performs rsync with the remote server.
     """
+    remote_obj = None
     if local_obj == "lmao_rsync_prompt":
         local_obj = input("Local target: ").strip()
     else:
-        local_obj = os.getcwd() if not local_obj else local_obj
+        obj = os.getcwd() if not local_obj else local_obj
+        if ":" in obj:
+            obj = obj.split(':')
+            local_obj = obj[0]
+            remote_obj = obj[1] if obj[1] else None
+
     if os.path.isdir(local_obj) and (not local_obj.endswith('/')):
         local_obj += '/'
-    if not os.path.exists(local_obj):
+    if not is_wildcard(local_obj) and not os.path.exists(local_obj):
         error_msg(f"Local target {local_obj} does not exist")
         exit(1)
 
-    remote_obj = input("Remote target: ").strip()
-    if os.path.isdir(local_obj):
+    if remote_obj is None:
+        remote_obj = input("Remote target: ").strip()
+
+    if os.path.isdir(local_obj) or is_wildcard(local_obj):
         remote_obj = f"{username}@{ip}:{remote_obj}"
     else:
-        remote_obj = f"{username}@{ip}:{remote_obj}/{local_obj}"
+        filename = local_obj.split('/')[-1]
+        remote_obj = f"{username}@{ip}:{remote_obj}/{filename}"
 
-    print(f"Keep sync for {local_obj} - {remote_obj}\n")
+    print(f"Keep sync for {local_obj} --> {remote_obj}\n")
 
     class ChangeEventHandler(FileSystemEventHandler):
         def __init__(self):
@@ -250,11 +279,12 @@ def do_rsync_monitor(ip, username, local_obj=None):
 
         def _do_sync(self):
             try:
-                print(f"Target change detected. Syncing... {local_obj} - {remote_obj}")
+                print(f"Target change detected. Syncing...\n"
+                      f" \_ {local_obj} ===> {remote_obj}")
                 ret = subprocess.run(["rsync", "-a", local_obj, remote_obj])
-                print(f"Complete syncing. Return:{ret.returncode}\n")
+                print(f" \_ Complete syncing. Return:{ret.returncode}\n")
             except subprocess.CalledProcessError as e:
-                print(f"Error syncing: {e} \n")
+                print(f" \_ Error syncing: {e} \n")
             finally:
                 self.sync_timer.cancel()
                 self.sync_timer = None
@@ -269,7 +299,7 @@ def do_rsync_monitor(ip, username, local_obj=None):
 
     # Example usage
     observer = Observer()
-    observer.schedule(ChangeEventHandler(), local_obj, recursive=True)
+    observer.schedule(ChangeEventHandler(), os.path.dirname(local_obj), recursive=True)
     observer.start()
     try:
       while True:

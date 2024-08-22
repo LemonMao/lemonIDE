@@ -746,6 +746,7 @@ vmap ac ,acom
 vmap af ,afnc
 vmap as :Tabularize //<CR>
 vmap a= :Tabularize /=<CR>
+vmap a, :Tabularize /,<CR>
 " surround maps come from surround.vim
 nmap ys <Plug>Ysurround
 nmap ds <Plug>Dsurround

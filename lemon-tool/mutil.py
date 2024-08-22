@@ -104,6 +104,7 @@ def interactive_git_diff(commit):
 
 def decompress(file_path):
     # extract the compressed file
-    shutil.unpack_archive(file_path, os.path.splitext(file_path)[0])
+    # os.path.splitext(file_path)[0]
+    shutil.unpack_archive(file_path)
     print(f"{file_path} extracted successfully!")
 

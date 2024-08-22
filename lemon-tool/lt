@@ -52,15 +52,33 @@ def lsjwt2(args):
     cmd = "jq -R 'split(\".\") | .[0],.[1] | @base64d | fromjson' <<< " + jwt_str
     os.system(cmd)
 
+def urltool(args):
+    url_str = args.url_str
+    safe_chars = "/&=?+%:"
+    if args.e:
+        print(f"\nThe encoded URL:\n"
+            f"------------\n{urllib.parse.quote(url_str, safe=safe_chars)}\n------------\n")
+    if args.d:
+        print(f"\nThe decoded URL:\n"
+            f"------------\n{urllib.parse.unquote_plus(url_str)}\n------------\n")
+
 def lsjson(args):
     """"""
+    data = None
+    if not args.json_str.startswith('{') and os.path.exists(args.json_str):
+        with open(args.json_str, 'r') as f:
+            json_content = f.read()
+            data = json.loads(json_content)
+    else:
+        data = json.loads(args.json_str)
+
     if args.c:
         # cmd = "jq . | fromjson' <<< " + args.json_str
-        cmd = f"echo '{args.json_str}' | jq ."
+        cmd = f"echo '{data}' | jq ."
         os.system(cmd)
     else:
         print("\n---- The formatted Json:")
-        jstr = json.dumps(json.loads(args.json_str), indent=4, separators=(',', ':'), ensure_ascii=False)
+        jstr = json.dumps(data, indent=4, separators=(',', ':'), ensure_ascii=False)
         print(jstr)
 
 def gitdiff(args):
@@ -129,10 +147,10 @@ def parse_args():
     gitbr_parser = subparsers.add_parser('gitbr', help='Perform interactions with git branch')
     gitbr_parser.set_defaults(func=gitbranch)
 
-    # lt tar xxx
-    tar_parser = subparsers.add_parser('tar', help='Decompress a compressed file.')
-    tar_parser.add_argument("file", help="Path to the compressed file.")
-    tar_parser.set_defaults(func=decompress)
+    # lt untar xxx
+    untar_parser = subparsers.add_parser('untar', help='Decompress a compressed file.')
+    untar_parser.add_argument("file", help="Path to the compressed file.")
+    untar_parser.set_defaults(func=decompress)
 
     # lt grep
     grep_parser = subparsers.add_parser('grep', help='Grep string in directory.')
@@ -141,11 +159,19 @@ def parse_args():
     grep_parser.add_argument("type", nargs='?', help="File type in dir.")
     grep_parser.set_defaults(func=grepindir)
 
-
-
+    # lt url -e/-d
+    url_parser = subparsers.add_parser('url', help='Do URL encode/decode.')
+    url_parser.add_argument('url_str', metavar='<url_str>', help='URL string which will be encoded/decoded.')
+    url_parser.add_argument("-e", action="store_true", default=False, help="Do URL encode.")
+    url_parser.add_argument("-d", action="store_true", default=False, help="Do URL decode.")
+    url_parser.set_defaults(func=urltool)
 
     # auto complete
     argcomplete.autocomplete(parser)
+
+    if not hasattr(parser.parse_args(), 'func'):
+        parser.print_help()
+        exit(1)
 
     return parser.parse_args()
 
