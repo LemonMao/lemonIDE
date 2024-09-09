@@ -280,11 +280,11 @@ def do_rsync_monitor(ip, username, local_obj=None):
         def _do_sync(self):
             try:
                 print(f"Target change detected. Syncing...\n"
-                      f" \_ {local_obj} ===> {remote_obj}")
+                      f" \\_ {local_obj} ===> {remote_obj}")
                 ret = subprocess.run(["rsync", "-a", local_obj, remote_obj])
-                print(f" \_ Complete syncing. Return:{ret.returncode}\n")
+                print(f" \\_ Complete syncing. Return:{ret.returncode}\n")
             except subprocess.CalledProcessError as e:
-                print(f" \_ Error syncing: {e} \n")
+                print(f" \\_ Error syncing: {e} \n")
             finally:
                 self.sync_timer.cancel()
                 self.sync_timer = None
@@ -308,6 +308,43 @@ def do_rsync_monitor(ip, username, local_obj=None):
         print("Stopping observer...")
         observer.stop()
     observer.join()
+
+def do_rsync_direct(ip, username, local_obj=None):
+    """
+    Monitors the directory/file changes and performs rsync with the remote server.
+    """
+    remote_obj = None
+    if local_obj == "lmao_rsync_prompt":
+        local_obj = input("Local target: ").strip()
+    else:
+        obj = os.getcwd() if not local_obj else local_obj
+        if ":" in obj:
+            obj = obj.split(':')
+            local_obj = obj[0]
+            remote_obj = obj[1] if obj[1] else None
+
+    if os.path.isdir(local_obj) and (not local_obj.endswith('/')):
+        local_obj += '/'
+    if not is_wildcard(local_obj) and not os.path.exists(local_obj):
+        error_msg(f"Local target {local_obj} does not exist")
+        exit(1)
+
+    if remote_obj is None:
+        remote_obj = input("Remote target: ").strip()
+
+    if os.path.isdir(local_obj) or is_wildcard(local_obj):
+        remote_obj = f"{username}@{ip}:{remote_obj}"
+    else:
+        filename = local_obj.split('/')[-1]
+        remote_obj = f"{username}@{ip}:{remote_obj}/{filename}"
+
+    print(f"Doing sync for {local_obj} --> {remote_obj}\n")
+
+    try:
+        ret = subprocess.run(["rsync", "-a", remote_obj, local_obj])
+        print(f" \\_ Complete syncing. Return:{ret.returncode}\n")
+    except subprocess.CalledProcessError as e:
+        print(f" \\_ Error syncing: {e} \n")
 
 def do_ssh(ip, username, passwordless):
     # print("Perform SSH clean! ", cmd2) -- "ssh-keygen -f ~/.ssh/known_hosts -R " + ip
@@ -340,19 +377,21 @@ def main():
     parser = argparse.ArgumentParser(description="Lemon SSH terminal tool")
     # options
     parser.add_argument("-t", type=str, default=None,
-                        help="target machine. Could be name or number.")
+                        help="Target machine. Could be name or number.")
     parser.add_argument("-s", action="store_true", default=False,
-                        help="print the current SSH processes.")
+                        help="Print the current SSH processes.")
     parser.add_argument("-l", action="store_true", default=False,
-                        help="print the remote servers list.")
+                        help="Print the remote servers list.")
     parser.add_argument("-p", action="store_true", default=False,
-                        help="perform passwordless login.")
+                        help="Perform passwordless login.")
     parser.add_argument("-u", nargs="?", const='lmao_prompt', default="lmao_no_prompt",
-                        help="provide the user name to login.")
+                        help="Provide the user name to login.")
     parser.add_argument("-f", nargs="?", const='lmao_sftp_prompt', default="lmao_no_sftp",
-                        help="perform the sftp with path.")
+                        help="Perform the sftp with path.")
     parser.add_argument("-r", nargs="?", const='lmao_rsync_prompt', default="lmao_no_rsync",
-                        help="perform rsync monitor")
+                        help="Perform rsync monitor in local file change. E.g. \"mssh -r local_obj:remote_obj\"")
+    parser.add_argument("--sync", nargs="?", const='lmao_sync_prompt', default="lmao_no_sync",
+                        help="Perform rsync directly to fetch the remote object. E.g. \"mssh --sync local_obj:remote_obj\"")
     # arguments
     parser.add_argument("host", default=None, nargs="?",
                         help="The IP address to process. <user>@<ip>, or <ip>")
@@ -386,6 +425,8 @@ def main():
         do_sftp(ip, username, args.f)
     elif args.r != "lmao_no_rsync":
         do_rsync_monitor(ip, username, args.r)
+    elif args.sync != "lmao_no_sync":
+        do_rsync_direct(ip, username, args.sync)
     else:
         do_ssh(ip, username, args.p)
 
