@@ -108,7 +108,7 @@ def grepindir(args):
     else:
         file_type=''
 
-    cmd=f"find {path} -type f { file_type } | xargs grep -n '{ pattern }'"
+    cmd=f"find {path} -type f { file_type } | xargs grep -n -E '{ pattern }'"
     print(cmd)
     os.system(cmd)
 

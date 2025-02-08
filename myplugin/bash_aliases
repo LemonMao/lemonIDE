@@ -2,6 +2,14 @@ export PATH=$PATH:/usr/local/bin/:~/.vim/lemon-tool/:/usr/local/share/gtags/scri
 #export PWD=/ifs/home/lmao
 git config --global core.pager 'less -FMRX'
 
+####################
+# Environments
+###################
+#API key
+export GEMINI_API_KEY=""
+# set for WSL web browser
+export BROWSER=wslview
+
 # man colorful
 #export LESS_TERMCAP_mb=$'\E[1m\E[32m'
 #export LESS_TERMCAP_mh=$'\E[2m'
@@ -63,11 +71,11 @@ alias tmnew="tmux -2 new \; new-window \; new-window \; new-window \; new-window
 alias tmls="tmux ls"
 alias tmat="tmux -2 att -t "
 alias apt="sudo apt "
-alias lxc="sudo /usr/bin/lxc "
+alias lxc="sudo lxc "
 alias docker="sudo /usr/bin/docker "
 alias serfind='sudo systemctl list-units | grep '
 alias serlist='sudo systemctl list-units'
-which duf >/dev/null 2>&1 && alias df="duf -hide special -style ascii || df -h"
+#which duf >/dev/null 2>&1 && alias df="duf -hide special -style ascii || df -h"
 alias lscrt="openssl x509 -noout -text -in "
 
 alias lsip="ifconfig | grep inet | sort | uniq | awk '{print(\"\033[0m\" \$1 \" - \" \"\033[31m\" \$2)}'"
@@ -80,6 +88,7 @@ alias lscpu="cat /proc/cpuinfo | grep 'model name' | uniq;\
              total=`cat /proc/cpuinfo | grep processor | uniq | wc -l` && \
              echo -e '\ntotal logical cores: ${total}';\
              "
+alias lstime="awk '{now=strftime(\"%T \");sub(/^/, now);print}'"
 
 function gitupdate() {
   # Check if two arguments are provided

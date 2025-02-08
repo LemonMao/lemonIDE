@@ -45,6 +45,8 @@ Plug 'autozimu/LanguageClient-neovim', {
     \ 'branch': 'next',
     \ 'do': 'bash install.sh',
     \ }
+" Provides syntax highlighting for generic log files in VIM.
+Plug 'mtdl9/vim-log-highlighting'
 "Plug 'prabirshrestha/vim-lsp'
 "Plug 'mattn/vim-lsp-settings'
 
@@ -178,6 +180,12 @@ let g:tagbar_left = 1
 let g:tagbar_autofocus = 1
 let g:tagbar_show_linenumbers = 2
 let g:tagbar_foldlevel = 1
+let g:tagbar_sort = 0
+"let g:tagbar_visibility_symbols = {
+            "\ 'public'    : '+',
+            "\ 'protected' : '#',
+            "\ 'private'   : '-'
+            "\ }
 
 " nerdtree
 let g:NERDTreeWinPos = "right"
@@ -228,6 +236,7 @@ let g:Lf_ShowRelativePath = 1
 let g:Lf_WindowPosition = 'popup'
 let g:Lf_PopupPreviewPosition = 'bootom'
 let g:Lf_PopupPosition = [28, 0]
+let g:Lf_PopupWidth = 0.90
 let g:Lf_PreviewInPopup = 1
 let g:Lf_PreviewHorizontalPosition = 'right'
 let g:Lf_PreviewResult = {'File': 0, 'Tag': 0, 'Function': 0, 'Jumps': 0, 'Mru': 0, 'Line': 0, 'Colorscheme': 0, 'BufTag': 0, 'Buffer': 0}
@@ -245,34 +254,6 @@ let g:Lf_WildIgnore = {
 let g:Lf_CtagsFuncOpts = {
     \ 'c': '--c-kinds=f',
     \ }
-
-" EasyAlign
-xmap ga <Plug>(EasyAlign)
-vmap <Enter> <Plug>(EasyAlign)
-let g:easy_align_delimiters = {
-\ '>': { 'pattern': '>>\|=>\|>' },
-\ '/': {
-\     'pattern':         '//\+\|/\*\|\*/',
-\     'delimiter_align': 'l',
-\     'ignore_groups':   ['!Comment'] },
-\ ']': {
-\     'pattern':       '[[\]]',
-\     'left_margin':   0,
-\     'right_margin':  0,
-\     'stick_to_left': 0
-\   },
-\ ')': {
-\     'pattern':       '[()]',
-\     'left_margin':   0,
-\     'right_margin':  0,
-\     'stick_to_left': 0
-\   },
-\ 'd': {
-\     'pattern':      ' \(\S\+\s*[;=]\)\@=',
-\     'left_margin':  0,
-\     'right_margin': 0
-\   }
-\ }
 
 " asyncrun
 let g:asyncrun_open = 30 "Automatically open window
@@ -299,7 +280,7 @@ let $GTAGSLABEL = 'native-pygments'
 let $GTAGSCONF = '/home/lemon/.globalrc'
 
 " gutentags 搜索工程目录的标志，当前文件路径向上递归直到碰到这些文件/目录名
-let g:gutentags_project_root = ['.root', '.project', 'GTAGS']
+let g:gutentags_project_root = ['.root']
 "let g:gutentags_project_root = ['.root', '.svn', '.git', '.hg', '.project']
 " 所生成的数据文件的名称
 let g:gutentags_ctags_tagfile = '.tags'
@@ -330,6 +311,29 @@ if !isdirectory(s:vim_tags)
 endif
 let g:gutentags_define_advanced_commands = 1
 let g:gutentags_plus_nomap = 1
+let g:gutentags_exclude_filetypes = ['mo']
+
+" let g:gutentags_gtags_executable = "gtags --skip-unreadable --skip-symlink"
+" let g:gutentags_exclude_project_root += ["/home/lemon/project/leveldb/third_party/"]
+let g:gutentags_trace = 0
+let g:gutentags_ctags_exclude = [
+            \ '*.git', '*.svg', '*.hg', '*/tests/*', 'build', 'dist', '*sites/*/files/*',
+            \ 'bin', 'node_modules', 'bower_components', 'cache',
+            \ 'compiled', 'docs', 'example', 'bundle',
+            \ 'vendor', '*.md', '*-lock.json', '*.lock',
+            \ '*bundle*.js', '*build*.js', '.*rc*', '*.json',
+            \ '*.min.*', '*.map', '*.bak', '*.zip',
+            \ '*.pyc', '*.class', '*.sln', '*.Master',
+            \ '*.csproj', '*.tmp', '*.csproj.user', '*.cache',
+            \ '*.pdb', 'tags*', 'cscope.*', '*.css',
+            \ '*.less', '*.scss', '*.exe', '*.dll',
+            \ '*.mp3', '*.ogg', '*.flac', '*.swp',
+            \ '*.swo', '*.bmp', '*.gif', '*.ico',
+            \ '*.jpg', '*.png', '*.rar', '*.zip',
+            \ '*.tar', '*.tar.gz', '*.tar.xz', '*.tar.bz2',
+            \ '*.pdf', '*.doc', '*.docx', '*.ppt',
+            \ '*.pptx', '*.js', '*.jsx', '*/isi_webui/*',
+            \  ]
 
 set csto=1 "1 find ctags first, 0 find cscope db first
 set cst  " cst jump to definition derectly, nocst show info
@@ -499,6 +503,9 @@ let g:codeium_disable_bindings = 1
 "let g:codeium_log_file = "/tmp/codeium_log_file.log"
 "let g:codeium_log_level = 'DEBUG'
 
+" vim-log-highlight
+" Add custom level identifiers
+au Syntax log syn keyword logLevelError error errors failure failed fail err
 "}}}
 
 " Utility Functions {{{
@@ -612,7 +619,6 @@ function! Terminal_MetaMode(mode)
 endfunc
 
 call Terminal_MetaMode(0)
-
 "}}}
 
 " Key Bindings {{{
@@ -658,10 +664,10 @@ nmap <C-h> :call ChangeCurWind("h")<ESC><cr>
 nmap <C-l> :call ChangeCurWind("l")<ESC><cr>
 nmap <C-j> <C-w>j
 nmap <C-k> <C-w>k
-nmap <leader>1 :vertical resize-20<CR> <ESC>
-nmap <leader>2 :vertical resize+20<CR> <ESC>
-nmap <leader>3 :abo resize-20<CR> <ESC>
-nmap <leader>4 :abo resize+20<CR> <ESC>
+nmap <m-h> :vertical resize-20<CR> <ESC>
+nmap <m-l> :vertical resize+20<CR> <ESC>
+nmap <m-j> :abo resize-20<CR> <ESC>
+nmap <m-k> :abo resize+20<CR> <ESC>
 "nmap <C-H> <C-w>W
 "nmap <C-L> <C-w>w
 "Ctrol-E to switch between 2 last buffers
