@@ -24,6 +24,41 @@ def lssaml(args):
     pretty_xml = xml.dom.minidom.parseString(xml_response).toprettyxml()
     print(mutil.pretty_print_xml(pretty_xml))
 
+def lsxml(args):
+    xml_input = args.xml_input
+    xml_content = ""
+    if os.path.exists(xml_input):
+        try:
+            with open(xml_input, 'r', encoding='utf-8') as f:
+                xml_content = f.read()
+        except Exception as e:
+            print(f"Error reading file {xml_input}: {e}")
+            sys.exit(1)
+    else:
+        xml_content = xml_input
+
+    if not xml_content:
+        print("Error: XML input is empty.")
+        sys.exit(1)
+
+    try:
+        # Remove potential Byte Order Mark (BOM) if present
+        if xml_content.startswith('\ufeff'):
+            xml_content = xml_content[1:]
+        pretty_xml = xml.dom.minidom.parseString(xml_content).toprettyxml()
+        print(mutil.pretty_print_xml(pretty_xml))
+    except xml.parsers.expat.ExpatError as e:
+        print(f"Error parsing XML: {e}")
+        # Attempt to print raw if parsing fails but it looks like XML
+        if xml_content.strip().startswith('<'):
+             print("\n--- Raw XML Input (due to parsing error) ---")
+             print(xml_content)
+        sys.exit(1)
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
+        sys.exit(1)
+
+
 def lscrt(args):
     if os.path.exists(args.cert_str):
         tempfile = args.cert_str
@@ -137,6 +172,11 @@ def parse_args():
     jwt_parser.add_argument('json_str', metavar='<json_str>', help='The original Json string')
     jwt_parser.add_argument("-c", action="store_true", default=False, help="Format json string with color")
     jwt_parser.set_defaults(func=lsjson)
+
+    # lt lsxml xxx
+    xml_parser = subparsers.add_parser('lsxml', help='Format an XML file or string')
+    xml_parser.add_argument('xml_input', metavar='<xml_file_or_string>', help='The XML file path or XML string')
+    xml_parser.set_defaults(func=lsxml)
 
     # lt diff xxx
     diff_parser = subparsers.add_parser('diff', help='Perform interactions with git diff')
