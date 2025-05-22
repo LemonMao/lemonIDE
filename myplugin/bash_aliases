@@ -90,6 +90,7 @@ alias lscpu="cat /proc/cpuinfo | grep 'model name' | uniq;\
              "
 alias lstime="awk '{now=strftime(\"%T \");sub(/^/, now);print}'"
 alias spellcheck="codespell -i3 -w $(git status --porcelain | grep -v '^??' | awk '{print $2}')"
+alias whichl='f(){ which "$@" | xargs grc --colour=auto ls -l; unset -f f; }; f'
 alias lstopfile="find . -type f -print0 | xargs -0 du -hs | sort -rh | head -n 10"
 
 function gitupdate() {

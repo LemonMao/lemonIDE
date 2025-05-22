@@ -176,6 +176,7 @@ def main():
     webchatapp = get_webchat_app() if args.websearch else None
 
     # prepare chat
+    model_name = ""
     llm_provider = "Deepseek" if args.switch else "Gemini"
     if llm_provider == "Deepseek":
         api_key = os.environ.get("OPENAI_API_KEY")
@@ -196,7 +197,7 @@ def main():
 
     client = OpenAI(api_key=api_key, base_url=endpoint, http_client=custom_client)
 
-    console.print(f"Welcome to [bold green]{llm_provider}[/bold green] Chatbox in Terminal!")
+    console.print(f"Welcome to [bold green]{llm_provider}:{model_name}[/bold green] Chatbox in Terminal!")
     console.print(f"CoT: {'[bold green]enable[/bold green]' if args.cot else '[bold red]disable[/bold red]'}.")
     console.print(f"Web search: {'[bold green]enable[/bold green]' if args.websearch else '[bold red]disable[/bold red]'}.")
     console.print(f"Individual mode: {'[bold green]enable[/bold green]' if args.individual else '[bold red]disable[/bold red]'}.")
@@ -290,6 +291,29 @@ def main():
                     else:
                         console.print(f"[red]Clipboard error: {e}[/red]")
                 continue
+            elif command == '/retry':
+                if args.individual:
+                    console.print("[red]Cannot retry in individual mode[/red]")
+                    continue
+
+                if not conversation_history:
+                    console.print("[red]No history to retry[/red]")
+                    continue
+
+                # Find last user message
+                last_user_msg = None
+                for msg in reversed(conversation_history):
+                    if msg["role"] == "user":
+                        last_user_msg = msg["content"]
+                        break
+
+                if not last_user_msg:
+                    console.print("[red]No previous question found[/red]")
+                    continue
+
+                # Reprocess the last question
+                user_input = last_user_msg
+                console.print(f"[bold yellow]Retrying last question ...[/bold yellow]")
             else:
                 console.print(f"[bold red]Unknown command:[/bold red] {command}")
                 continue
