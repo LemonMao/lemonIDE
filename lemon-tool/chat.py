@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 
+#  For WSL/Linux users, they need to install one of these packages:
+#  sudo apt-get install xclip  # or
+#  sudo apt-get install xsel
+
 import os, argparse, readline, time
 import datetime
 from rich.console import Console
@@ -246,10 +250,49 @@ def main():
             if command == '/new':
                 conversation_history = []
                 console.print("[bold green]Started a new conversation session.[/bold green]")
-                continue # Skip the rest of the loop and prompt again
+                continue
+            elif command == '/raw':
+                if conversation_history:
+                    # Find last assistant message
+                    for msg in reversed(conversation_history):
+                        if msg["role"] == "assistant":
+                            console.print("\n[bold yellow]RAW MESSAGE:[/bold yellow]")
+                            console.print(msg["content"])
+                            break
+                    else:
+                        console.print("[red]No assistant message in history[/red]")
+                else:
+                    console.print("[red]No conversation history[/red]")
+                continue
+            elif command == '/copy':
+                try:
+                    import pyperclip
+                    if conversation_history:
+                        # Find last assistant message
+                        for msg in reversed(conversation_history):
+                            if msg["role"] == "assistant":
+                                pyperclip.copy(msg["content"])
+                                console.print("[green]Copied last message to clipboard![/green]")
+                                break
+                        else:
+                            console.print("[red]No assistant message to copy[/red]")
+                    else:
+                        console.print("[red]No conversation history[/red]")
+                except Exception as e:
+                    if "Pyperclip could not find a copy/paste mechanism" in str(e):
+                        console.print("[red]Clipboard access requires one of these packages:")
+                        console.print("[yellow]For Linux/WSL: Install 'xclip' or 'xsel' package")
+                        console.print("  sudo apt-get install xclip or sudo apt-get install xsel[/yellow]")
+                        console.print("[yellow]For Windows: No additional requirements[/yellow]")
+                        console.print("[yellow]For MacOS: Install pbcopy/pbpaste[/yellow][/red]")
+                    elif isinstance(e, ImportError):
+                        console.print("[red]pyperclip not installed. Install with: pip install pyperclip[/red]")
+                    else:
+                        console.print(f"[red]Clipboard error: {e}[/red]")
+                continue
             else:
                 console.print(f"[bold red]Unknown command:[/bold red] {command}")
-                continue # Skip the rest of the loop and prompt again
+                continue
 
         if user_input.lower() in ["exit", "quit", "bye"]:
             console.print("Goodbye!")
