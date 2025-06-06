@@ -170,8 +170,6 @@ def main():
                 system_prompt = prompt_path_or_string # Fallback to treat as string if file reading fails
         else:
             system_prompt = prompt_path_or_string
-        if system_prompt:
-            print(f"System instruction: \"{args.prompt}\"") # Updated message to "System instruction"
 
     webchatapp = get_webchat_app() if args.websearch else None
 

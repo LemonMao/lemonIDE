@@ -62,6 +62,60 @@ function grc2() {
     $@ | grcat conf.lemon.log | less
 }
 
+function spellcheck() {
+    local files=""
+    local commit_hash=""
+    local diff_file=""
+
+    if [ "$1" == "-d" ]; then
+        if [ -z "$2" ]; then
+            # Current work stage diff summary
+            diff_file="/tmp/git_workstage.diff"
+            echo "Generating diff for current work stage to '$diff_file'..."
+            git diff > "$diff_file"
+            if [ $? -ne 0 ]; then
+                echo "Failed to generate diff for current work stage."
+                return 1
+            fi
+            echo "Checking files in current work stage for typos:"
+            codespell -s $diff_file
+        else
+            # Commit diff summary
+            commit_hash="$2"
+            diff_file="/tmp/${commit_hash}.diff"
+            echo "Generating diff for commit '$commit_hash' to '$diff_file'..."
+            git diff "$commit_hash^" "$commit_hash" > "$diff_file"
+            if [ $? -ne 0 ]; then
+                echo "Failed to generate diff for commit '$commit_hash'."
+                return 1
+            fi
+            echo "Checking files modified in commit '$commit_hash' for typos:"
+            codespell -s $diff_file
+        fi
+    elif [ -n "$1" ]; then
+        # Commit write mode
+        commit_hash="$1"
+        files=$(git log --name-only --pretty=format:"" -1 "$commit_hash")
+        if [ -z "$files" ]; then
+            echo "No files found for commit '$commit_hash'."
+            return 1
+        fi
+        echo "Fixing typos in files from commit '$commit_hash':"
+        codespell -s $files
+        codespell -i3 -w $files
+    else
+        # Current work stage write mode
+        files=$(git status --porcelain | grep -v '^??' | awk '{print $2}')
+        if [ -z "$files" ]; then
+            echo "No modified or added files in the current work stage to fix."
+            return 0
+        fi
+        echo "Fixing typos in files from current work stage:"
+        codespell -s $files
+        codespell -i3 -w $files
+    fi
+}
+
 # Lemon Aliases
 alias lsalias="cat ~/.bash_aliases | grep -A 1000 'Lemon Aliases' | grep alias"
 alias ll="ls -lthr"
@@ -89,7 +143,7 @@ alias lscpu="cat /proc/cpuinfo | grep 'model name' | uniq;\
              echo -e '\ntotal logical cores: ${total}';\
              "
 alias lstime="awk '{now=strftime(\"%T \");sub(/^/, now);print}'"
-alias spellcheck="codespell -i3 -w $(git status --porcelain | grep -v '^??' | awk '{print $2}')"
+
 alias whichl='f(){ which "$@" | xargs grc --colour=auto ls -l; unset -f f; }; f'
 alias lstopfile="find . -type f -print0 | xargs -0 du -hs | sort -rh | head -n 10"
 
