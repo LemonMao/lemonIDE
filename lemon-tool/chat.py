@@ -52,7 +52,7 @@ def get_webchat_app():
     print("tools:", tools)
 
     model = ChatGoogleGenerativeAI(
-        model="gemini-2.0-flash",
+        model="gemini-2.5-flash",
         temperature=0.7
     ).bind_tools(tools)
 
@@ -135,13 +135,30 @@ def chat_with_tool(app, input):
         debug=True,
     )
 
+    current_turn_tokens = 0
     for msg in final_state["messages"]:
         msg.pretty_print()
+        if isinstance(msg, AIMessage) and msg.response_metadata:
+            token_usage = msg.response_metadata.get("token_usage")
+            if token_usage:
+                current_turn_tokens += token_usage.get("prompt_tokens", 0)
+                current_turn_tokens += token_usage.get("completion_tokens", 0)
+                current_turn_tokens += token_usage.get("input_tokens", 0) # For Gemini
+                current_turn_tokens += token_usage.get("output_tokens", 0) # For Gemini
 
-    return final_state["messages"][-1].content
+    return final_state["messages"][-1].content, current_turn_tokens
+
+def format_tokens(tokens: int) -> str:
+    if tokens >= 1_000_000:
+        return f"{tokens / 1_000_000:.1f}M"
+    elif tokens >= 1_000:
+        return f"{tokens / 1_000:.1f}K"
+    else:
+        return str(tokens)
 
 # should export GEMINI_API_KEY in env
 def main():
+    total_tokens_consumed = 0
     parser = argparse.ArgumentParser(description="Simple Gemini Chatbot in Terminal")
     parser.add_argument("--prompt", help="System prompt for the chat session. Can be a string or a file path (e.g., './prompt.txt').", required=False)
     parser.add_argument("-c", "--cot", action="store_true", help="Enable Chain-of-Thought (CoT) mode")
@@ -190,7 +207,8 @@ def main():
             print("Error: Gemini API key is required. Provide it via GEMINI_API_KEY environment variable.")
             return
         endpoint = "https://generativelanguage.googleapis.com/v1alpha/openai/"
-        model_name = "gemini-2.0-flash-thinking-exp"
+        #  model_name = "gemini-2.0-flash-thinking-exp"
+        model_name = "gemini-2.5-pro"
         custom_client = httpx.Client()
 
     client = OpenAI(api_key=api_key, base_url=endpoint, http_client=custom_client)
@@ -248,6 +266,7 @@ def main():
 
             if command == '/new':
                 conversation_history = []
+                total_tokens_consumed = 0
                 console.print("[bold green]Started a new conversation session.[/bold green]")
                 continue
             elif command == '/raw':
@@ -330,7 +349,9 @@ def main():
             spinner = Spinner("dots", text="[bold cyan]Waiting response ...[/bold cyan]")
             with console.status(spinner): # Use status to manage the spinner
                 if args.websearch:
-                    response = chat_with_tool(webchatapp, user_input) # Call CoT function if -c is used
+                    response_content, current_turn_tokens = chat_with_tool(webchatapp, user_input)
+                    response = response_content
+                    total_tokens_consumed += current_turn_tokens
                 else:
                     # Build messages
                     messages = [{"role": "system", "content": system_prompt}]
@@ -338,16 +359,21 @@ def main():
                         messages.extend(conversation_history) # Include history only if not in individual mode
                     messages.append({"role": "user", "content": user_input})
 
-                    response = client.chat.completions.create(
+                    if not args.individual:
+                        conversation_history.append({"role": "user", "content": user_input})
+
+                    completion = client.chat.completions.create(
                         model=model_name,
                         messages=messages,
                         temperature=args.temperature,
                         stream=False
-                    ).choices[0].message.content
+                    )
+                    response = completion.choices[0].message.content
+                    if completion.usage and completion.usage.total_tokens:
+                        total_tokens_consumed += completion.usage.total_tokens
 
                     # Save conversation context only if not in individual mode
                     if not args.individual:
-                        conversation_history.append({"role": "user", "content": user_input})
                         conversation_history.append({"role": "assistant", "content": response})
 
             end_time = time.time()
@@ -360,7 +386,8 @@ def main():
 
             console.print(
                 f"\n[bold cyan]Time consumed:[/bold cyan] {elapsed_time:.2f} seconds",
-                f"[bold cyan]Word rate:[/bold cyan] {word_rate:.2f} words/second"
+                f"[bold cyan]Word rate:[/bold cyan] {word_rate:.2f} words/second",
+                f"\n[bold cyan]Total tokens consumed:[/bold cyan] {format_tokens(total_tokens_consumed)}"
             )
 
         except Exception as e:
