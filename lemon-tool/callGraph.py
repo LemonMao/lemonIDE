@@ -396,7 +396,12 @@ def main():
                 create_svg_from_json(graph_json, output_svg) # use graph_json here
             except Exception as e:
                 print(f"Error generating SVG image: {e}")
-        elif args.chat:
+        #  else:
+        #      print("\nCall stack JSON:")
+        #      call_stack_json_str = json.dumps(graph_json, indent=4)
+        #      print(call_stack_json_str)
+
+        if args.chat:
             try:
                 command_str = f"chat --prompt {json_file_path}"
                 print(f"\n\nExecuting chat command: {command_str}")
@@ -405,10 +410,6 @@ def main():
                 print(f"Error executing chat command: {e}")
             except KeyboardInterrupt:
                 print("\nQuit.")
-        else:
-            print("\nCall stack JSON:")
-            call_stack_json_str = json.dumps(graph_json, indent=4)
-            print(call_stack_json_str)
     else:
         print(f"Could not generate graph starting from {args.start}. Definition of start symbol '{start_symbol_name}' might not be found.")
 

@@ -1,0 +1,51 @@
+
+If you want to create one Mermaid code. Please follow the rules here.
+Generate a detailed prompt for a large language model (LLM) that guides it to create a Mermaid mindmap. The prompt should ensure the generated Mermaid mindmap adheres to best practices, includes all features of Mermaid markdown relevant to mindmaps, and is free of bugs or syntax errors.
+
+The generated prompt must instruct the LLM to:
+- Use the latest Mermaid markdown syntax for mindmaps.
+- Incorporate best practices such as clear node hierarchies, concise labeling, and appropriate use of colors and styles.
+- Include advanced features of Mermaid mindmaps, such as clickable nodes, collapsible branches, or styling options.
+- Validate Mermaid syntax to prevent bugs or rendering errors.
+- Provide the Mermaid mindmap code block ready to be rendered in compatible Markdown environments.
+
+# Steps
+1. Specify the task clearly for the LLM to generate a Mermaid mindmap.
+2. Emphasize adherence to best practices in mindmap design.
+3. Include instructions to utilize full Mermaid markdown features relevant to mindmaps.
+4. Enforce syntax correctness and error-free output.
+5. Output the Mermaid diagram in a properly fenced markdown code block.
+
+# Output Format
+- The output must be a complete Mermaid mindmap code snippet enclosed within triple backticks and the tag 'mermaid'.
+- The code should be ready for immediate use in Markdown without further modification.
+
+# Example
+```mermaid
+mindmap
+  root((Mindmap))
+    Origins
+      Long history
+      ::icon(fa fa-history)
+    Research
+      Current
+      Past
+      ::icon(fa fa-flask)
+    Resources
+      Books
+      Articles
+      ::icon(fa fa-book)
+```
+
+# Notes
+- Ensure no syntax errors or malformed Mermaid diagrams.
+- Use indentation and clear hierarchical structure.
+- Utilize Mermaid mindmap features fully, including styling and interactive nodes if applicable.
+- Keep node labels concise and descriptive.
+
+Your task is to generate the perfect system prompt that will guide an LLM to produce Mermaid mindmaps according to these requirements without bugs or omissions.
+
+# Some Mermaid error checking rules:
+1. When a subgraph title contains spaces or special characters, it needs to be enclosed in double quotes (").
+2. The failure occurred due to non-ASCII characters and parentheses in node labels causing parsing conflicts.
+3. Mermaid syntax requires subgraph IDs to be enclosed in quotes when they contain spaces or special characters.

@@ -78,7 +78,7 @@ syntax on                           " highlight syntax
 
 set nocompatible                    " out of Vi compatible mode
 set number                          " show line number
-set relativenumber                  " show relative line number
+"set relativenumber                  " show relative line number
 set numberwidth=3                   " minimal culumns for line numbers
 set textwidth=0                     " do not wrap words (insert)
 set nowrap                          " do not wrap words (view)
