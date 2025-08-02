@@ -43,6 +43,184 @@ for cmd in "${cmds2[@]}"; do
     which $cmd >/dev/null 2>&1 && alias "c$cmd"="grc --colour=auto $cmd \$@"
 done
 
+# Lemon Aliases
+alias lsalias="cat ~/.bash_aliases | grep -A 1000 'Lemon Aliases' | grep alias"
+alias ll="ls -lthr"
+alias ld="ls -lthr -F | grep /$"
+alias la="ls -lathr"
+alias tmnew="tmux -2 new \; new-window \; new-window \; new-window \; new-window \; new-window \; rename-session "
+alias tmls="tmux ls"
+alias tmat="tmux -2 att -t "
+alias apt="sudo apt "
+alias lxc="sudo lxc "
+#alias docker="sudo /usr/bin/docker "
+alias serfind='sudo systemctl list-units | grep '
+alias serlist='sudo systemctl list-units'
+#which duf >/dev/null 2>&1 && alias df="duf -hide special -style ascii || df -h"
+alias lscrt="openssl x509 -noout -text -in "
+
+alias lsip="ifconfig | grep inet | sort | uniq | awk '{print(\"\033[0m\" \$1 \" - \" \"\033[31m\" \$2)}'"
+alias lsip="ifconfig | grep -e \"^[a-z]\" -e \"inet\" | \
+            awk '{if (\$1==\"inet\" || \$1==\"inet6\") printf(\"%s %s\n\",\$2,dev); else dev = \$1}' |\
+            sort | uniq | awk '{printf(\"\033[0m%-13s  - \033[31m%s\n\",\$2,\$1)}'"
+alias lscpu="cat /proc/cpuinfo | grep 'model name' | uniq;\
+             cat /proc/cpuinfo | grep 'cpu cores' | sort | uniq;\
+             cat /proc/cpuinfo | grep 'siblings' | sort | uniq;\
+             total=`cat /proc/cpuinfo | grep processor | uniq | wc -l` && \
+             echo -e '\ntotal logical cores: ${total}';\
+             "
+alias lstime="awk '{now=strftime(\"%T \");sub(/^/, now);print}'"
+
+alias whichl='f(){ which "$@" | xargs grc --colour=auto ls -l; unset -f f; }; f'
+alias lstopfile="find . -type f -print0 | xargs -0 du -hs | sort -rh | head -n 10"
+
+
+# project aliases
+alias gonefs="cd ~/onefs"
+alias vonefs="cd ~/onefs ; vim"
+alias bonefs="sudo docker container run --name onefs_build --mount type=bind,source=/home/lmao/project/onefs,target=/onefs,readonly -e DESKTOP=lmao -i -t docker.west.isilon.com/cclayton/docker-onefs-cross:latest"
+alias conefs="rm -rf ~/"
+
+# Functions:
+#
+# proxy: Manages proxy settings (enable, disable, or display).
+#   Usage:
+#     proxy -e: Exports proxy settings from /tmp/.lemon_http_proxy.
+#     proxy -d: Unsets proxy settings and saves them to /tmp/.lemon_http_proxy.
+#     proxy: Prints current proxy environment variables.
+#
+# gitupdate: Fetches and merges a remote branch.
+#   Usage: gitupdate <remote> <branch>
+#
+# ccat: Displays file content with colorization using grcat.
+#   Usage: ccat <file...>
+#
+# cgrep: Greps content with colorization using grcat.
+#   Usage: cgrep <options> <pattern> <file(s)>
+#
+# wget2: Downloads a file using curl, saving it to the current directory.
+#   Usage: wget2 <URL>
+#
+# grc2: Runs a command and pipes its output through grcat.
+#   Usage: grc2 <command> [args...]
+#
+# spellcheck: Checks and fixes typos in git-managed files.
+#   Usage:
+#     spellcheck: Checks and fixes typos in current work stage modified/added files.
+#     spellcheck -d: Checks typos in the current work stage diff.
+#     spellcheck -d <commit_hash>: Checks typos in a specific commit's diff.
+#     spellcheck <commit_hash>: Fixes typos in files from a specific commit.
+#
+function proxy() {
+    local proxy_file="/tmp/.lemon_http_proxy"
+
+    if [ "$1" == "-e" ]; then
+        # Enable proxy (original setproxy functionality)
+        if [ ! -f "$proxy_file" ]; then
+            echo "Error: Proxy configuration file '$proxy_file' not found." >&2
+            return 1
+        fi
+
+        local exported_any=false
+        while IFS= read -r line; do
+            # Trim leading/trailing whitespace
+            line=$(echo "$line" | xargs)
+            if [[ "$line" == http_proxy=* ]] || [[ "$line" == https_proxy=* ]] || [[ "$line" == no_proxy=* ]]; then
+                # Extract variable name and value
+                local var_name="${line%%=*}" # Get everything before the first '='
+                local var_value="${line#*=}" # Get everything after the first '='
+
+                # Remove surrounding quotes from value if present
+                # This handles cases where the value was saved with quotes, e.g., no_proxy="val1,val2"
+                # And ensures the value is treated as a single string for export
+                if [[ "$var_value" == \"*\" ]]; then
+                    var_value="${var_value%\"}"
+                    var_value="${var_value#\"}"
+                fi
+
+                # Export the variable using the VAR=VALUE syntax
+                export "$var_name=$var_value"
+                exported_any=true
+            fi
+        done < "$proxy_file"
+
+        if ! $exported_any; then
+            echo "Warning: No proxy settings found in '$proxy_file'." >&2
+            return 0
+        fi
+
+        echo "# Proxy settings exported from '$proxy_file'." >&2
+        echo "# Enable http proxy #"
+
+    elif [ "$1" == "-d" ]; then
+        # Disable proxy (original unsetproxy functionality)
+        local http_proxy_set="${http_proxy}"
+        local https_proxy_set="${https_proxy}"
+        local no_proxy_set="${no_proxy}"
+
+        if [ -z "$http_proxy_set" ] && [ -z "$https_proxy_set" ] && [ -z "$no_proxy_set" ]; then
+            echo "Error: No http_proxy, https_proxy, or no_proxy environment variables are currently set or they are empty." >&2
+            return 1
+        fi
+
+        # Save current proxy settings to file
+        echo -n "" > "$proxy_file" # Clear file first
+        if [ -n "$http_proxy_set" ]; then
+            echo "http_proxy=\"$http_proxy_set\"" >> "$proxy_file"
+        fi
+        if [ -n "$https_proxy_set" ]; then
+            echo "https_proxy=\"$https_proxy_set\"" >> "$proxy_file"
+        fi
+        if [ -n "$no_proxy_set" ]; then
+            echo "no_proxy=\"$no_proxy_set\"" >> "$proxy_file"
+        fi
+        echo "# Current proxy settings saved to '$proxy_file'." >&2
+
+        # Unset commands
+        if [ -n "$http_proxy_set" ]; then
+            unset http_proxy
+        fi
+        if [ -n "$https_proxy_set" ]; then
+            unset https_proxy
+        fi
+        if [ -n "$no_proxy_set" ]; then
+            unset no_proxy
+        fi
+
+        echo "# Proxy settings unset." >&2
+        echo "# Disable http proxy #"
+    fi
+
+    # Always list current proxy settings after any operation or if no arguments are given
+    echo -e "\n---- Current Proxy Settings:"
+    echo "http_proxy: ${http_proxy:-Not set}"
+    echo "https_proxy: ${https_proxy:-Not set}"
+    echo "no_proxy: ${no_proxy:-Not set}"
+    echo "------------"
+}
+
+function gitupdate() {
+  # Check if two arguments are provided
+  if [ $# -ne 2 ]; then
+    echo "Usage: $0 <remote> <branch>"
+    exit 1
+  fi
+
+  # Get the remote and branch name from arguments
+  remote="$1"
+  branch="$2"
+
+  echo "Updating branch '$branch' from remote '$remote'..."
+  git checkout "$branch" && git fetch "$remote" "$branch" && git merge --ff-only "$remote/$branch"
+
+  # Check if the merge was successful
+  if [ $? -eq 0 ]; then
+    echo "Merge successful!"
+  else
+    echo "Merge failed! Please check for conflicts and resolve them manually."
+  fi
+}
+
 # ccat file
 function ccat() {
     cat "$@" | grcat conf.lemon.log | less
@@ -115,63 +293,3 @@ function spellcheck() {
         codespell -i3 -w $files
     fi
 }
-
-# Lemon Aliases
-alias lsalias="cat ~/.bash_aliases | grep -A 1000 'Lemon Aliases' | grep alias"
-alias ll="ls -lthr"
-alias ld="ls -lthr -F | grep /$"
-alias la="ls -lathr"
-alias tmnew="tmux -2 new \; new-window \; new-window \; new-window \; new-window \; new-window \; rename-session "
-alias tmls="tmux ls"
-alias tmat="tmux -2 att -t "
-alias apt="sudo apt "
-alias lxc="sudo lxc "
-#alias docker="sudo /usr/bin/docker "
-alias serfind='sudo systemctl list-units | grep '
-alias serlist='sudo systemctl list-units'
-#which duf >/dev/null 2>&1 && alias df="duf -hide special -style ascii || df -h"
-alias lscrt="openssl x509 -noout -text -in "
-
-alias lsip="ifconfig | grep inet | sort | uniq | awk '{print(\"\033[0m\" \$1 \" - \" \"\033[31m\" \$2)}'"
-alias lsip="ifconfig | grep -e \"^[a-z]\" -e \"inet\" | \
-            awk '{if (\$1==\"inet\" || \$1==\"inet6\") printf(\"%s %s\n\",\$2,dev); else dev = \$1}' |\
-            sort | uniq | awk '{printf(\"\033[0m%-13s  - \033[31m%s\n\",\$2,\$1)}'"
-alias lscpu="cat /proc/cpuinfo | grep 'model name' | uniq;\
-             cat /proc/cpuinfo | grep 'cpu cores' | sort | uniq;\
-             cat /proc/cpuinfo | grep 'siblings' | sort | uniq;\
-             total=`cat /proc/cpuinfo | grep processor | uniq | wc -l` && \
-             echo -e '\ntotal logical cores: ${total}';\
-             "
-alias lstime="awk '{now=strftime(\"%T \");sub(/^/, now);print}'"
-
-alias whichl='f(){ which "$@" | xargs grc --colour=auto ls -l; unset -f f; }; f'
-alias lstopfile="find . -type f -print0 | xargs -0 du -hs | sort -rh | head -n 10"
-
-function gitupdate() {
-  # Check if two arguments are provided
-  if [ $# -ne 2 ]; then
-    echo "Usage: $0 <remote> <branch>"
-    exit 1
-  fi
-
-  # Get the remote and branch name from arguments
-  remote="$1"
-  branch="$2"
-
-  echo "Updating branch '$branch' from remote '$remote'..."
-  git checkout "$branch" && git fetch "$remote" "$branch" && git merge --ff-only "$remote/$branch"
-
-  # Check if the merge was successful
-  if [ $? -eq 0 ]; then
-    echo "Merge successful!"
-  else
-    echo "Merge failed! Please check for conflicts and resolve them manually."
-  fi
-}
-
-
-# project aliases
-alias gonefs="cd ~/onefs"
-alias vonefs="cd ~/onefs ; vim"
-alias bonefs="sudo docker container run --name onefs_build --mount type=bind,source=/home/lmao/project/onefs,target=/onefs,readonly -e DESKTOP=lmao -i -t docker.west.isilon.com/cclayton/docker-onefs-cross:latest"
-alias conefs="rm -rf ~/"
