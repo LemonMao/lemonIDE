@@ -99,7 +99,7 @@ alias conefs="rm -rf ~/"
 #   Usage: cgrep <options> <pattern> <file(s)>
 #
 # wget2: Downloads a file using curl, saving it to the current directory.
-#   Usage: wget2 <URL>
+#   Usage: wget2 https://x.x.x.x/path/file
 #
 # grc2: Runs a command and pipes its output through grcat.
 #   Usage: grc2 <command> [args...]
@@ -230,7 +230,6 @@ function cgrep() {
     grep "$@" | grcat conf.lemon.log | less
 }
 
-# wget2 https://x.x.x.x/path/file
 function wget2() {
     cmd="curl -k "$@" -o ./"$(basename "$@")""
     $cmd
