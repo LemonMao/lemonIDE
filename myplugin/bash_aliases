@@ -203,21 +203,41 @@ function gitupdate() {
   # Check if two arguments are provided
   if [ $# -ne 2 ]; then
     echo "Usage: $0 <remote> <branch>"
-    exit 1
+    return 1
   fi
 
   # Get the remote and branch name from arguments
   remote="$1"
   branch="$2"
 
-  echo "Updating branch '$branch' from remote '$remote'..."
-  git checkout "$branch" && git fetch "$remote" "$branch" && git merge --ff-only "$remote/$branch"
+  # Check if the local branch exists
+  if git rev-parse --verify --quiet "$branch" &>/dev/null; then
+    # Local branch exists, do the original update logic
+    echo "Updating branch '$branch' from remote '$remote'..."
+    git checkout "$branch" && git fetch "$remote" "$branch" && git merge --ff-only "$remote/$branch"
 
-  # Check if the merge was successful
-  if [ $? -eq 0 ]; then
-    echo "Merge successful!"
+    # Check if the merge was successful
+    if [ $? -eq 0 ]; then
+      echo "Merge successful!"
+    else
+      echo "Merge failed! Please check for conflicts and resolve them manually."
+    fi
   else
-    echo "Merge failed! Please check for conflicts and resolve them manually."
+    # Local branch does not exist, create it to track the remote branch
+    echo "Local branch '$branch' not found. Checking remote..."
+    # Check if remote branch exists
+    if git ls-remote --exit-code --heads "$remote" "$branch" &>/dev/null; then
+      echo "Fetching and creating local branch '$branch' to track '$remote/$branch'..."
+      git fetch "$remote" "$branch" && git checkout --track "$remote/$branch"
+
+      if [ $? -ne 0 ]; then
+        echo "Failed to create or track branch '$remote/$branch'."
+        return 1
+      fi
+    else
+      echo "Error: Remote branch '$remote/$branch' not found."
+      return 1
+    fi
   fi
 }
 

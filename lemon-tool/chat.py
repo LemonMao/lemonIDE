@@ -158,14 +158,71 @@ def format_tokens(tokens: int) -> str:
 
 # should export GEMINI_API_KEY in env
 def main():
+    MODELS = {
+        "dp": {
+            "display": "deepseek-r1",
+            "provider": "Deepseek",
+            "model": "deepseek-reasoner",
+            "endpoint": "https://api.deepseek.com",
+            "api_key_env": "OPENAI_API_KEY",
+        },
+        "dp2": {
+            "display": "deepseek-v2",
+            "provider": "Deepseek",
+            "model": "deepseek-chat",
+            "endpoint": "https://api.deepseek.com",
+            "api_key_env": "OPENAI_API_KEY",
+        },
+        "gmf": {
+            "display": "gemini-2.5-flash",
+            "provider": "Gemini",
+            "model": "gemini-2.5-flash",
+            "endpoint": "https://generativelanguage.googleapis.com/v1alpha/openai/",
+            "api_key_env": "GEMINI_API_KEY",
+        },
+        "gm": {
+            "display": "gemini-2.5-pro (default)",
+            "provider": "Gemini",
+            "model": "gemini-2.5-pro",
+            "endpoint": "https://generativelanguage.googleapis.com/v1alpha/openai/",
+            "api_key_env": "GEMINI_API_KEY",
+        },
+    }
+    DEFAULT_MODEL_ALIAS = "gm"
     total_tokens_consumed = 0
     parser = argparse.ArgumentParser(description="Simple Gemini Chatbot in Terminal")
-    parser.add_argument("--prompt", help="System prompt for the chat session. Can be a string or a file path (e.g., './prompt.txt').", required=False)
-    parser.add_argument("-c", "--cot", action="store_true", help="Enable Chain-of-Thought (CoT) mode")
-    parser.add_argument("-w", "--websearch", action="store_true", help="Enable tool use mode")
-    parser.add_argument("-s", "--switch", action="store_true", help="Switch to specific LLM")
-    parser.add_argument("-t", "--temperature", type=float, default=0.2, help="Set temperature for response generation (default: 0.2)")
-    parser.add_argument("-i", "--individual", action="store_true", help="Enable individual mode (no conversation history)")
+    parser.add_argument(
+        "--prompt",
+        help="System prompt for the chat session. Can be a string or a file path (e.g., './prompt.txt').",
+        required=False,
+    )
+    parser.add_argument(
+        "-c", "--cot", action="store_true", help="Enable Chain-of-Thought (CoT) mode"
+    )
+    parser.add_argument(
+        "-w", "--websearch", action="store_true", help="Enable tool use mode"
+    )
+    parser.add_argument(
+        "-s",
+        "--switch",
+        nargs="?",
+        const=True,
+        default=None,
+        help="Switch to a specific LLM. Provide an alias, or leave empty for interactive selection.",
+    )
+    parser.add_argument(
+        "-t",
+        "--temperature",
+        type=float,
+        default=0.2,
+        help="Set temperature for response generation (default: 0.2)",
+    )
+    parser.add_argument(
+        "-i",
+        "--individual",
+        action="store_true",
+        help="Enable individual mode (no conversation history)",
+    )
     args = parser.parse_args()
 
     # Initialize conversation history
@@ -174,7 +231,7 @@ def main():
     console = Console()
 
     # prompt
-    system_prompt = "You're a helpful assistant. Give me more exact answer. You can think for few some time."
+    system_prompt = "You're a helpful assistant. Give me more exact answer."
     if args.prompt:
         prompt_path_or_string = args.prompt
         if os.path.exists(prompt_path_or_string):
@@ -191,24 +248,47 @@ def main():
     webchatapp = get_webchat_app() if args.websearch else None
 
     # prepare chat
-    model_name = ""
-    llm_provider = "Deepseek" if args.switch else "Gemini"
+    selected_model_alias = DEFAULT_MODEL_ALIAS
+    if args.switch is True:  # -s without alias, interactive mode
+        console.print("Please select a model:")
+        for alias, config in MODELS.items():
+            console.print(f"  [bold cyan]{alias}[/bold cyan]: {config['display']}")
+
+        while True:
+            try:
+                alias_input = input("Enter model alias: ").strip()
+                if alias_input in MODELS:
+                    selected_model_alias = alias_input
+                    break
+                else:
+                    console.print("[red]Invalid alias. Please try again.[/red]")
+            except (KeyboardInterrupt, EOFError):
+                console.print("\nSelection cancelled. Exiting.")
+                return
+    elif isinstance(args.switch, str):  # -s with alias
+        if args.switch in MODELS:
+            selected_model_alias = args.switch
+        else:
+            console.print(f"[red]Unknown model alias: '{args.switch}'.[/red]")
+            console.print("Available aliases:")
+            for alias, config in MODELS.items():
+                console.print(f"  [bold cyan]{alias}[/bold cyan]: {config['display']}")
+            return
+
+    model_config = MODELS[selected_model_alias]
+    llm_provider = model_config["provider"]
+    model_name = model_config["model"]
+    endpoint = model_config["endpoint"]
+    api_key_env = model_config["api_key_env"]
+    api_key = os.environ.get(api_key_env)
+
+    if not api_key:
+        console.print(f"[red]Error: {llm_provider}({model_name}) API key is required. Provide it via {api_key_env} environment variable.[/red]")
+        return
+
     if llm_provider == "Deepseek":
-        api_key = os.environ.get("OPENAI_API_KEY")
-        if not api_key:
-            print("Error: Deepseek API key is required. Provide it via OPENAI_API_KEY environment variable.")
-            return
-        endpoint = "https://api.deepseek.com"
-        model_name = "deepseek-reasoner"
         custom_client = httpx.Client(verify=False)
-    else:
-        api_key = os.environ.get("GEMINI_API_KEY")
-        if not api_key:
-            print("Error: Gemini API key is required. Provide it via GEMINI_API_KEY environment variable.")
-            return
-        endpoint = "https://generativelanguage.googleapis.com/v1alpha/openai/"
-        #  model_name = "gemini-2.0-flash-thinking-exp"
-        model_name = "gemini-2.5-pro"
+    else:  # Gemini
         custom_client = httpx.Client()
 
     client = OpenAI(api_key=api_key, base_url=endpoint, http_client=custom_client)
@@ -328,8 +408,8 @@ def main():
                     console.print("[red]No previous question found[/red]")
                     continue
 
-                # Reprocess the last question
-                user_input = last_user_msg
+                # Reprocess the last question - ensure it's not None
+                user_input = last_user_msg or ""
                 console.print(f"[bold yellow]Retrying last question ...[/bold yellow]")
             else:
                 console.print(f"[bold red]Unknown command:[/bold red] {command}")
@@ -355,7 +435,7 @@ def main():
                 else:
                     # Build messages
                     messages = [{"role": "system", "content": system_prompt}]
-                    if not args.individual:
+                    if not args.individual and len(conversation_history) > 0:
                         messages.extend(conversation_history) # Include history only if not in individual mode
                     messages.append({"role": "user", "content": user_input})
 
@@ -368,7 +448,7 @@ def main():
                         temperature=args.temperature,
                         stream=False
                     )
-                    response = completion.choices[0].message.content
+                    response = completion.choices[0].message.content or ""
                     if completion.usage and completion.usage.total_tokens:
                         total_tokens_consumed += completion.usage.total_tokens
 
@@ -385,13 +465,14 @@ def main():
             word_rate = word_count / elapsed_time if elapsed_time > 0 else 0
 
             console.print(
-                f"\n[bold cyan]Time consumed:[/bold cyan] {elapsed_time:.2f} seconds",
-                f"[bold cyan]Word rate:[/bold cyan] {word_rate:.2f} words/second",
-                f"\n[bold cyan]Total tokens consumed:[/bold cyan] {format_tokens(total_tokens_consumed)}"
+                f"\n[bold cyan]Model:[/bold cyan] [bold yellow]{model_name}[/bold yellow], ",
+                f"[bold cyan]Time consumed:[/bold cyan] [bold yellow]{elapsed_time:.2f} seconds[/bold yellow], ",
+                f"[bold cyan]Word rate:[/bold cyan] [bold yellow]{word_rate:.2f} words/second[/bold yellow], ",
+                f"[bold cyan]Total tokens consumed:[/bold cyan] [bold yellow]{format_tokens(total_tokens_consumed)}[/bold yellow]"
             )
 
         except Exception as e:
-            console.print(f"Error communicating with Gemini API: {e}")
+            console.print(f"[red]Error communicating with {llm_provider}({model_name}) API: {e}[/red]")
             console.print("Please check your API key and internet connection.")
 
         console.rule(title="[bold magenta] End [/bold magenta]")
