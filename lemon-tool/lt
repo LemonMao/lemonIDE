@@ -9,7 +9,7 @@ import zlib
 
 import mutil
 import urllib.parse
-# pip install colorama argcomplete 
+# pip install colorama argcomplete
 
 
 def lssaml(args):
@@ -147,6 +147,35 @@ def grepindir(args):
     print(cmd)
     os.system(cmd)
 
+
+def extract_logs(args):
+    """Extract logs from a file within the specified time range."""
+    from datetime import datetime, timezone
+    import re
+
+    # Parse time range
+    time_range = args.time_range
+    if '~' not in time_range:
+        print("Error: Time range must be in format 'start~end'")
+        sys.exit(1)
+
+    start_str, end_str = time_range.split('~', 1)
+
+    try:
+        # Parse start and end times
+        start_dt = datetime.fromisoformat(start_str).replace(tzinfo=timezone.utc)
+        end_dt = datetime.fromisoformat(end_str).replace(tzinfo=timezone.utc)
+    except ValueError as e:
+        print(f"Error parsing time range: {e}")
+        sys.exit(1)
+
+    # Extract logs
+    logs = mutil.extract_logs_by_time_range(args.log_file, start_dt, end_dt)
+
+    # Print results
+    for log in logs:
+        print(log)
+
 # tool options
 def parse_args():
     parser = argparse.ArgumentParser(prog='lt', description='Lemon tools')
@@ -199,6 +228,12 @@ def parse_args():
     grep_parser.add_argument("type", nargs='?', help="File type in dir.")
     grep_parser.set_defaults(func=grepindir)
 
+    # lt log
+    log_parser = subparsers.add_parser('log', help='Extract logs from a file within a time range.')
+    log_parser.add_argument("time_range", help="Time range in format 'start~end' (e.g., '2025-08-06T21:04:02~2025-08-06T21:04:03')")
+    log_parser.add_argument("log_file", help="Path to the log file")
+    log_parser.set_defaults(func=extract_logs)
+
     # lt url -e/-d
     url_parser = subparsers.add_parser('url', help='Do URL encode/decode.')
     url_parser.add_argument('url_str', metavar='<url_str>', help='URL string which will be encoded/decoded.')
@@ -221,5 +256,3 @@ def main():
 
 if __name__ == "__main__":
     exit(main())
-
-

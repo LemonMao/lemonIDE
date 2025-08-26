@@ -108,3 +108,44 @@ def decompress(file_path):
     shutil.unpack_archive(file_path)
     print(f"{file_path} extracted successfully!")
 
+
+def extract_logs_by_time_range(file_path, start_dt, end_dt):
+    """Extract logs from a file within the specified time range."""
+    import gzip
+    from datetime import datetime, timezone
+    import re
+
+    # Open the file (handle gzipped files)
+    opener = gzip.open if file_path.endswith(".gz") else open
+
+    logs = []
+    timestamp_pattern = re.compile(r'^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:[+-]\d{2}:\d{2}|Z)?)')
+
+    try:
+        with opener(file_path, 'rt') as f:
+            for line in f:
+                if not line.strip():
+                    continue
+
+                # Try to extract timestamp from the beginning of the line
+                match = timestamp_pattern.match(line)
+                if match:
+                    ts_str = match.group(1)
+                    try:
+                        # Handle different timestamp formats
+                        if ts_str.endswith('Z'):
+                            ts_str = ts_str[:-1] + '+00:00'
+                        ts = datetime.fromisoformat(ts_str).replace(tzinfo=timezone.utc)
+
+                        if start_dt <= ts <= end_dt:
+                            logs.append(line.strip())
+                        elif ts > end_dt:
+                            break  # Stop processing if we're past the end time
+                    except ValueError:
+                        # If timestamp parsing fails, skip this line
+                        continue
+    except Exception as e:
+        print(f"Error processing file {file_path}: {e}")
+        return []
+
+    return logs

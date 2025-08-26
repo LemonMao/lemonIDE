@@ -727,7 +727,11 @@ nmap <Leader>F :NERDTreeFind<CR>
 " ## -------------------------------------- ##
 " ## Coding Hotkeys
 " ## -------------------------------------- ##
-nnoremap Y y$
+" nnoremap Y y$
+" Select all content of current buffer
+nnoremap <C-a> ggVG
+" Copy to system clipboard in visual mode
+xnoremap Y "+y
 "insert 模式下，跳到行首行尾
 inoremap <C-a> <Home>
 inoremap <C-e> <End>
