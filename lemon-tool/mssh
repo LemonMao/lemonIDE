@@ -13,10 +13,8 @@ from watchdog.events import FileSystemEventHandler
 from threading import Timer
 
 HOME = os.getenv('HOME', None)
-ISILON = os.getenv('ISILON', None)
 
 SSH_HOSTS = HOME + "/.sshhosts"
-ISILON_USRE = "lmao"
 MAX_HOST_LEN = 50
 MAX_NAME_LEN = 30
 
@@ -95,25 +93,6 @@ def get_customed_machines():
 
     return hosts
 
-def get_isilon_machines(what="Cluster"):
-    """Get a list of ducttape clusters."""
-    import isilon.ducttape.client as dt
-    try:
-        user = ISILON_USRE
-        # if user is None:
-            # user = input(
-                # "Enter your DESKTOP username to pick a Ducttape IP (empty to skip): ").strip()
-
-        client = dt.DucttapeClient(user)
-        if what == "Clients":
-            return client.get_clients(owner=user)
-        else:
-            return client.get_clusters(owner=user)
-    except Exception as e:
-        error_msg("Failed to get Ducttape clsuters: {0}".format(e))
-        print("Continuing without displaying Ducttape clusters...")
-        return None
-
 def choose_cluster_ip(cluster, ip=None):
     """Choose the ducttape IP to use."""
     if ip is None:
@@ -145,10 +124,6 @@ def get_machine_ip(target=None, just_print=False):
     idx_to_machine = {}
     name_to_machine = {}
     all_machines = {}
-
-    if ISILON:
-        all_machines["Ducttape Cluster"] = get_isilon_machines("Cluster")
-        all_machines["Ducttape Clients"] = get_isilon_machines("Clients")
 
     all_machines["Servers"] = get_customed_machines()
 
