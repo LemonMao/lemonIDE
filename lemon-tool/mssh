@@ -157,35 +157,47 @@ def get_machine_ip(target=None, just_print=False):
         print("# {0}:\n".format(typestr))
         servers= sorted(servers, key=itemgetter("id"))
         for vm in servers:
-            # vm name
-            print("  ({0}) {1}".format(bold_green_fmt(next_num()), vm["name"]))
-            idx_to_machine[current_num()] = { "machine": vm }
-            name_to_machine[vm["name"]] = idx_to_machine[current_num()]
+            # Always assign a number for the machine
+            machine_num = next_num()
+            if not target:
+                print("  ({0}) {1}".format(bold_green_fmt(machine_num), vm["name"]))
+            idx_to_machine[machine_num] = { "machine": vm }
+            # For name lookup, point to the machine entry (without IP)
+            name_to_machine[vm["name"]] = idx_to_machine[machine_num]
 
             # vm info - location, build
-            spaces = " " * get_digits(idx_wrap[0])
-            if vm["location"]:
+            spaces = " " * get_digits(machine_num)
+            if vm["location"] and not target:
                 print("     {2}Info: {0}  --  {1}".format(
                     vm["location"], vm["build"], spaces))
 
-            current = current_num()
-            # vm["ips"].reverse()
-            print("     {1}IPs:      {0}".format(
-                ", ".join(["({0}) {1}".format(bold_cyan_fmt(next_num()), ip) for ip in vm["ips"]])
-                , spaces))
+            # Always assign numbers for IPs
+            ip_nums = []
+            for ip in vm["ips"]:
+                ip_num = next_num()
+                ip_nums.append(ip_num)
+                idx_to_machine[ip_num] = { "machine": vm, "ip": ip }
+                # Note: we are not updating name_to_machine with IPs for the same machine name
+                # This preserves the original behavior where name lookup returns the machine entry
 
-            for id_num, ip in enumerate(vm["ips"], current+1):
-                idx_to_machine[id_num] = { "machine": vm, "ip": ip }
-                name_to_machine[vm["name"]] = idx_to_machine[id_num]
-
-            print("")
+            if not target:
+                print("     {1}IPs:      {0}".format(
+                    ", ".join(["({0}) {1}".format(bold_cyan_fmt(ip_num), ip) for ip_num, ip in zip(ip_nums, vm["ips"])])
+                    , spaces))
+                print("")
 
     if just_print:
         exit(0)
 
+    # Interactive selection if no target specified or target was invalid
     while True:
         answer = target if target else input(
-                "Enter a IP or target for SSH login: ").strip()
+            "Enter a Number or Name or <user@ip> of target: ").strip()
+
+        # Handle user@ip format directly
+        if '@' in answer:
+            add_custom_host(answer)
+            return answer
 
         try:
             info = None
@@ -195,11 +207,23 @@ def get_machine_ip(target=None, just_print=False):
             else:
                 info = name_to_machine[answer]
 
+            # Print information only for the specified target
+            if target:
+                vm = info["machine"]
+                print("-------------------------")
+                print("Machine: {0}".format(bold_green_fmt(vm["name"])))
+                if vm["location"]:
+                    print("Info: {0}  --  {1}".format(vm["location"], vm["build"]))
+                print("IPs: {0}".format(", ".join(vm["ips"])))
+                print("-------------------------")
+
             ip = choose_cluster_ip(info["machine"], ip=info.get("ip"))
             if ip:
                 return ip
-        except (ValueError, KeyError):
-            error_msg("{0} is not a valid choice".format(answer))
+        except ValueError as e:
+            error_msg(f"'{answer}' is not a valid number. Please enter a number, machine name, or user@ip. Details: {e}")
+        except KeyError as e:
+            error_msg(f"'{answer}' does not match any machine name or indexed option. Please try again. Details: {e}")
 
 def add_custom_host(host):
     """ if host exists, find if it exist in SSH_HOSTS file, if not add it. """
@@ -368,67 +392,130 @@ def do_ssh(ip, username, passwordless):
 
     print(f"Stderr:\n {result.stderr.decode('utf-8')}" if result.stderr else "\nGood Bye !!!\n")
 
+def do_pull(ip, username, remote_path, local_path):
+    """Pull files from remote to local using rsync"""
+    if local_path is None:
+        local_path = "."
+
+    print(f"Pulling from {username}@{ip}:{remote_path} to {local_path}")
+
+    # Build rsync command
+    remote_spec = f"{username}@{ip}:{remote_path}"
+    cmd = ["rsync", "-av", "--progress", remote_spec, local_path]
+
+    try:
+        result = subprocess.run(cmd)
+        if result.returncode != 0:
+            error_msg(f"rsync failed with return code {result.returncode}")
+    except Exception as e:
+        error_msg(f"Error during pull: {e}")
+
+
+def do_push(ip, username, local_path, remote_path):
+    """Push files from local to remote using rsync"""
+    if not os.path.exists(local_path):
+        error_msg(f"Local path {local_path} does not exist")
+        exit(1)
+
+    print(f"Pushing from {local_path} to {username}@{ip}:{remote_path}")
+
+    # Build rsync command
+    remote_spec = f"{username}@{ip}:{remote_path}"
+    cmd = ["rsync", "-av", "--progress", local_path, remote_spec]
+
+    try:
+        result = subprocess.run(cmd)
+        if result.returncode != 0:
+            error_msg(f"rsync failed with return code {result.returncode}")
+    except Exception as e:
+        error_msg(f"Error during push: {e}")
+
 def exit_signal(signum, frame):
     exit(1)
+
+def parse_ip_and_user(args):
+    """Parse IP and username from arguments using the same logic for all commands"""
+
+    # Get IP using the appropriate method
+    ip = get_machine_ip(args.t, args.l)
+
+    # Parse username from IP or use default
+    username = ip.split("@")[0] if "@" in ip else "root"
+    ip = ip.split("@")[1] if "@" in ip else ip
+
+    # Handle username prompt if needed
+    if hasattr(args, 'u'):
+        if args.u == "lmao_prompt":
+            username_input = input("Please choose the username: [Lmao|Root|other]: ").strip()
+            if username_input == "l" or username_input == "L":
+                username = "lmao"
+            elif username_input == "r" or username_input == "R" or username_input == "":
+                username = "root"
+            else:
+                username = username_input
+        elif args.u != "lmao_no_prompt":
+            username = args.u
+
+    return ip, username
 
 def main():
     signal.signal(signal.SIGINT, exit_signal)
 
     parser = argparse.ArgumentParser(description="Lemon SSH terminal tool")
-    # options
     parser.add_argument("-t", type=str, default=None,
                         help="Target machine. Could be name or number.")
+    parser.add_argument("-u", nargs="?", const='lmao_prompt', default="lmao_no_prompt",
+                        help="Provide the user name to login.")
     parser.add_argument("-s", action="store_true", default=False,
                         help="Print the current SSH processes.")
     parser.add_argument("-l", action="store_true", default=False,
                         help="Print the remote servers list.")
     parser.add_argument("-p", action="store_true", default=False,
                         help="Perform passwordless login.")
-    parser.add_argument("-u", nargs="?", const='lmao_prompt', default="lmao_no_prompt",
-                        help="Provide the user name to login.")
-    parser.add_argument("-f", nargs="?", const='lmao_sftp_prompt', default="lmao_no_sftp",
-                        help="Perform the sftp with path.")
-    parser.add_argument("-r", nargs="?", const='lmao_rsync_prompt', default="lmao_no_rsync",
-                        help="Perform rsync monitor in local file change. E.g. \"mssh -r local_obj:remote_obj\"")
-    parser.add_argument("--sync", nargs="?", const='lmao_sync_prompt', default="lmao_no_sync",
-                        help="Perform rsync directly to fetch the remote object. E.g. \"mssh --sync local_obj:remote_obj\"")
-    # arguments
-    parser.add_argument("host", default=None, nargs="?",
-                        help="The IP address to process. <user>@<ip>, or <ip>")
+
+    subparsers = parser.add_subparsers(dest='command', help='sub-command help')
+
+    # parser for sftp command
+    parser_sftp = subparsers.add_parser('sftp', help='Perform SFTP to a remote server')
+    parser_sftp.add_argument("path", nargs="?", default='lmao_sftp_prompt', help="SFTP path")
+
+    # parser for rsync-monitor command
+    parser_rsync_monitor = subparsers.add_parser('sync', help='Monitor and sync local changes to remote')
+    parser_rsync_monitor.add_argument("path", nargs="?", default='lmao_rsync_prompt',
+                        help="Local and remote path specification. E.g. \"local_obj:remote_obj\"")
+
+    # parser for pull command
+    parser_pull = subparsers.add_parser('pull', help='Pull files from remote')
+    parser_pull.add_argument("remote_path", help="Remote file/directory path to pull")
+    parser_pull.add_argument("local_path", nargs="?", help="Local path to save to (default: current directory)")
+
+    # parser for push command
+    parser_push = subparsers.add_parser('push', help='Push files to remote')
+    parser_push.add_argument("local_path", help="Local file/directory path to push")
+    parser_push.add_argument("remote_path", help="Remote path to save to")
 
     args = parser.parse_args()
+
+    # Set default command to connect if no subcommand provided
+    if not args.command:
+        args.command = 'connect'
 
     # print the current ssh processes and exit
     if args.s is True:
         os.system("ps axjf | grep -v 'grep' | grep 'python.*mssh' -A2")
         return
 
-    # add host to SSH_HOSTS if not exists
-    if args.host:
-        add_custom_host(args.host)
-
-    # get ip and user name
-    ip = args.host if args.host else get_machine_ip(args.t, args.l)
-    username = ip.split("@")[0] if "@" in ip else "root"
-    ip = ip.split("@")[1] if "@" in ip else ip
-    if args.u == "lmao_prompt":
-        username = input("Please choose the username: [Lmao|Root|other]: ").strip()
-        if username == "l" or username == "L":
-            username = "lmao"
-        elif username == "r" or username == "R" or username == "":
-            username = "root"
-    elif args.u != "lmao_no_prompt":
-        username = args.u
-
-    # do sftp/ssh/rsync
-    if args.f != "lmao_no_sftp":
-        do_sftp(ip, username, args.f)
-    elif args.r != "lmao_no_rsync":
-        do_rsync_monitor(ip, username, args.r)
-    elif args.sync != "lmao_no_sync":
-        do_rsync_direct(ip, username, args.sync)
-    else:
+    ip, username = parse_ip_and_user(args)
+    if args.command == 'connect':
         do_ssh(ip, username, args.p)
+    elif args.command == 'sftp':
+        do_sftp(ip, username, args.path)
+    elif args.command == 'sync':
+        do_rsync_monitor(ip, username, args.path)
+    elif args.command == 'pull':
+        do_pull(ip, username, args.remote_path, args.local_path)
+    elif args.command == 'push':
+        do_push(ip, username, args.local_path, args.remote_path)
 
     return
 

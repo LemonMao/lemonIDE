@@ -326,7 +326,19 @@ def create_svg_from_json(json_input, output_file="/tmp/call_stack.svg"):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Generate Call Stack JSON for a C project.")
+    examples = """
+Usage Examples:
+  Example 1: Generate call stack JSON for function 'main' in codebase '/path/to/codebase' with depth 3:
+     python callGraph.py --codebase /path/to/codebase --start main --depth 3
+
+  Example 2: Generate Mermaid code for function 'entry_point' in 'src/main.c' in codebase '/path/to/codebase':
+     python callGraph.py --codebase /path/to/codebase --start src/main.c:entry_point --mermaid
+"""
+    parser = argparse.ArgumentParser(
+        description="Generate Call Stack JSON for a C project.",
+        epilog=examples,
+        formatter_class=argparse.RawTextHelpFormatter # Use RawTextHelpFormatter to preserve formatting of epilog
+    )
     parser.add_argument("--codebase", required=True, help="Path to the C codebase")
     parser.add_argument("--start", required=True, help="Starting point function in format 'filename:function_name'")
     parser.add_argument("--depth", type=int, default=None, help="Maximum depth of call stack. No limit if not specified.")
@@ -375,7 +387,7 @@ def main():
         # Dump JSON to file
         timestamp = str(int(time.time()))
         json_file_path = f"/tmp/call_stack_{timestamp}.json"
-        role_prompt = f"Following is function call stack with json format. Works as a programmer to give more detail description in code level.\n"
+        role_prompt = f"Following is function call stack with json format. Works as a C programmer/expert to give more detail description in code level. Answer in Chinese\n"
         with open(json_file_path, 'w') as f:
             f.write(role_prompt)
             json.dump(graph_json, f, indent=4)
@@ -403,7 +415,7 @@ def main():
 
         if args.chat:
             try:
-                command_str = f"chat --prompt {json_file_path}"
+                command_str = f"chat -s gmf --prompt {json_file_path}"
                 print(f"\n\nExecuting chat command: {command_str}")
                 process = subprocess.run(command_str, shell=True, check=True)
             except subprocess.CalledProcessError as e:

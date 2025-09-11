@@ -156,6 +156,22 @@ def format_tokens(tokens: int) -> str:
     else:
         return str(tokens)
 
+# Shortcut configuration - easily customizable by users
+# Use valid prompt_toolkit key names: https://python-prompt-toolkit.readthedocs.io/en/stable/pages/advanced_topics/key_bindings.html#list-of-special-keys
+SHORTCUT_MAPPINGS = {
+    'a-`': '```\n\n```',
+    # Add more shortcuts here in the format: 'key-combination': 'text-to-insert'
+    # Examples:
+    # 'c-b': '**bold**',  # Ctrl+B for bold text
+    # 'a-b': '---',       # Alt+B for horizontal rule
+}
+
+def create_shortcut_handler(text_to_insert):
+    """Create a handler function for inserting text snippets"""
+    def handler(event):
+        event.app.current_buffer.insert_text(text_to_insert)
+    return handler
+
 # should export GEMINI_API_KEY in env
 def main():
     MODELS = {
@@ -177,6 +193,13 @@ def main():
             "display": "gemini-2.5-flash",
             "provider": "Gemini",
             "model": "gemini-2.5-flash",
+            "endpoint": "https://generativelanguage.googleapis.com/v1alpha/openai/",
+            "api_key_env": "GEMINI_API_KEY",
+        },
+        "gmfl": {
+            "display": "gemini-2.5-flash-lite",
+            "provider": "Gemini",
+            "model": "gemini-2.5-flash-lite",
             "endpoint": "https://generativelanguage.googleapis.com/v1alpha/openai/",
             "api_key_env": "GEMINI_API_KEY",
         },
@@ -231,7 +254,7 @@ def main():
     console = Console()
 
     # prompt
-    system_prompt = "You're a helpful assistant. Give me more exact answer."
+    system_prompt = "You're a helpful assistant. Give me more exact answer. If no special instruction, please answer in Chinese."
     if args.prompt:
         prompt_path_or_string = args.prompt
         if os.path.exists(prompt_path_or_string):
@@ -312,6 +335,27 @@ def main():
             "按CTRL+D提交"
             event.app.exit(result=event.app.current_buffer.text)
 
+        # Add shortcut key bindings
+        for key_combination, text_to_insert in SHORTCUT_MAPPINGS.items():
+            # Handle special case for backtick with alt
+            if key_combination == 'a-`':
+                @kb.add('escape', '`', eager=True)
+                def insert_code_block(event):
+                    event.app.current_buffer.insert_text('```\n\n```')
+            else:
+                # Parse other key combinations
+                if key_combination.startswith('c-'):
+                    # Ctrl+key combination
+                    key = key_combination[2:]
+                    kb.add('c-' + key, eager=True)(create_shortcut_handler(text_to_insert))
+                elif key_combination.startswith('a-'):
+                    # Alt+key combination (Meta key)
+                    key = key_combination[2:]
+                    kb.add('escape', key, eager=True)(create_shortcut_handler(text_to_insert))
+                else:
+                    # Single key
+                    kb.add(key_combination, eager=True)(create_shortcut_handler(text_to_insert))
+
         session = PromptSession(
             message=[("fg:ansiblue", "\nYou (Ctrl+c to Quit, Ctrl+d to Submit):\n")],
             multiline=True,
@@ -366,14 +410,25 @@ def main():
                 try:
                     import pyperclip
                     if conversation_history:
-                        # Find last assistant message
-                        for msg in reversed(conversation_history):
-                            if msg["role"] == "assistant":
-                                pyperclip.copy(msg["content"])
-                                console.print("[green]Copied last message to clipboard![/green]")
-                                break
+                        # Check if there's an "all" argument
+                        if len(command_parts) > 1 and command_parts[1].lower() == 'all':
+                            # Format all conversation history
+                            formatted_history = []
+                            for msg in conversation_history:
+                                role = "User" if msg["role"] == "user" else "Assistant"
+                                formatted_history.append(f"{role}: {msg['content']}")
+                            history_text = "\n\n".join(formatted_history)
+                            pyperclip.copy(history_text)
+                            console.print("[green]Copied entire conversation history to clipboard![/green]")
                         else:
-                            console.print("[red]No assistant message to copy[/red]")
+                            # Find last assistant message (original behavior)
+                            for msg in reversed(conversation_history):
+                                if msg["role"] == "assistant":
+                                    pyperclip.copy(msg["content"])
+                                    console.print("[green]Copied last message to clipboard![/green]")
+                                    break
+                            else:
+                                console.print("[red]No assistant message to copy[/red]")
                     else:
                         console.print("[red]No conversation history[/red]")
                 except Exception as e:
@@ -439,8 +494,7 @@ def main():
                         messages.extend(conversation_history) # Include history only if not in individual mode
                     messages.append({"role": "user", "content": user_input})
 
-                    if not args.individual:
-                        conversation_history.append({"role": "user", "content": user_input})
+                    conversation_history.append({"role": "user", "content": user_input})
 
                     completion = client.chat.completions.create(
                         model=model_name,
@@ -450,11 +504,13 @@ def main():
                     )
                     response = completion.choices[0].message.content or ""
                     if completion.usage and completion.usage.total_tokens:
-                        total_tokens_consumed += completion.usage.total_tokens
+                        if args.individual:
+                            total_tokens_consumed = completion.usage.total_tokens
+                        else:
+                            total_tokens_consumed += completion.usage.total_tokens
 
-                    # Save conversation context only if not in individual mode
-                    if not args.individual:
-                        conversation_history.append({"role": "assistant", "content": response})
+                    # Save conversation context
+                    conversation_history.append({"role": "assistant", "content": response})
 
             end_time = time.time()
             elapsed_time = end_time - start_time
@@ -467,7 +523,7 @@ def main():
             console.print(
                 f"\n[bold cyan]Model:[/bold cyan] [bold yellow]{model_name}[/bold yellow], ",
                 f"[bold cyan]Time consumed:[/bold cyan] [bold yellow]{elapsed_time:.2f} seconds[/bold yellow], ",
-                f"[bold cyan]Word rate:[/bold cyan] [bold yellow]{word_rate:.2f} words/second[/bold yellow], ",
+                #  f"[bold cyan]Word rate:[/bold cyan] [bold yellow]{word_rate:.2f} words/second[/bold yellow], ",
                 f"[bold cyan]Total tokens consumed:[/bold cyan] [bold yellow]{format_tokens(total_tokens_consumed)}[/bold yellow]"
             )
 
