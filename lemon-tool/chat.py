@@ -108,6 +108,12 @@ def main():
         action="store_true",
         help="Enable individual mode (no conversation history)",
     )
+    parser.add_argument(
+        "--input",
+        type=str,
+        help="Direct question to ask the LLM (non-interactive mode)",
+        required=False,
+    )
     args = parser.parse_args()
 
     # Initialize conversation history
@@ -231,11 +237,15 @@ def main():
             #  ]
         )
 
-        try:
-            user_input = session.prompt()
-        except KeyboardInterrupt:
-            console.print("\nGoodbye!")
-            quit()
+        user_input = None
+        if args.input:
+            user_input = args.input
+        else:
+            try:
+                user_input = session.prompt()
+            except KeyboardInterrupt:
+                console.print("\nGoodbye!")
+                quit()
 
         if not user_input:
             print("None input !!\n\n")
@@ -386,6 +396,10 @@ def main():
             console.print("Please check your API key and internet connection.")
 
         console.rule(title="[bold magenta] End [/bold magenta]")
+
+        # One shot LLM ask
+        if args.input:
+            return
 
 if __name__ == "__main__":
     main()

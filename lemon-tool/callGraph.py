@@ -345,6 +345,7 @@ Usage Examples:
     parser.add_argument("--mermaid", action="store_true", help="Generate Mermaid code from call stack JSON")
     parser.add_argument("--svg", action="store_true", help="Generate SVG image from call stack JSON")
     parser.add_argument("--chat", action="store_true", help="Call 'chat --prompt' with call stack JSON")
+    parser.add_argument("-u", "--update-gtags", action="store_true", default=False, help="Update GTAGS (default: True)")
     parser.add_argument("-d", "--debug", action="store_true", help="Enable debug logging")
 
     args = parser.parse_args()
@@ -373,11 +374,12 @@ Usage Examples:
     if not os.path.exists(codebase_path):
         parser.error(f"Codebase path '{codebase_path}' does not exist.")
 
-    try:
-        check_gtags(codebase_path)
-    except Exception as e:
-        print(f"Error: {e}")
-        return
+    if args.update_gtags:
+        try:
+            check_gtags(codebase_path)
+        except Exception as e:
+            print(f"Error: {e}")
+            return
 
     # print_directory_tree(codebase_path)
 
@@ -387,7 +389,10 @@ Usage Examples:
         # Dump JSON to file
         timestamp = str(int(time.time()))
         json_file_path = f"/tmp/call_stack_{timestamp}.json"
-        role_prompt = f"Following is function call stack with json format. Works as a C programmer/expert to give more detail description in code level. Answer in Chinese\n"
+        role_prompt = f"""
+            Following is function call stack with json format.
+            Works as a C expert to give more detail description in code level.
+            Answer in Chinese\n"""
         with open(json_file_path, 'w') as f:
             f.write(role_prompt)
             json.dump(graph_json, f, indent=4)
@@ -415,7 +420,7 @@ Usage Examples:
 
         if args.chat:
             try:
-                command_str = f"chat -s gmf --prompt {json_file_path}"
+                command_str = f"chat -s gmf --prompt {json_file_path} --input 'Explain code {start_symbol_name}()' "
                 print(f"\n\nExecuting chat command: {command_str}")
                 process = subprocess.run(command_str, shell=True, check=True)
             except subprocess.CalledProcessError as e:
