@@ -10,143 +10,8 @@ from rich.console import Console
 from rich.markdown import Markdown
 from rich.spinner import Spinner
 
-from typing import Annotated, Literal, TypedDict
-from pydantic import BaseModel
-
-from langchain_core.messages import HumanMessage, SystemMessage, AIMessage, ToolMessage
-from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain_community.agent_toolkits.load_tools import load_tools
-from langchain_core.tools import tool
-from langgraph.checkpoint.memory import MemorySaver
-from langgraph.graph import END, START, StateGraph, MessagesState
-from langgraph.graph.message import add_messages
-from langgraph.prebuilt import ToolNode, tools_condition
-
 from openai import OpenAI
 import httpx
-
-# from langchain.globals import set_debug
-# set_debug(True)
-
-def get_webchat_app():
-    @tool
-    class AskHuman(BaseModel):
-        """
-        You can ask human some questions to supply the context.
-        It will help you understand what user want and what environment user uses.
-        And help you analysis the problem.
-        """
-        request: str
-
-    class State(TypedDict):
-        messages: Annotated[list, add_messages]
-        ask_human: bool
-
-
-    tools = [AskHuman]
-    loaded_tools = load_tools(["searx-search"],
-                        searx_host="http://localhost:8888",
-                        num_results=5)
-    tools += loaded_tools
-    # tools.append(get_location)
-    print("tools:", tools)
-
-    model = ChatGoogleGenerativeAI(
-        model="gemini-2.5-flash",
-        temperature=0.7
-    ).bind_tools(tools)
-
-    tool_node = ToolNode(tools)
-
-    def agent_flow(state: State):
-        response = model.invoke(state['messages'])
-        ask_human = False
-        if (
-            response.tool_calls
-            and response.tool_calls[0]["name"] == "AskHuman"
-        ):
-            ask_human = True
-        return {"messages": [response], "ask_human": ask_human}
-
-    def select_next_node(state: State):
-        if state["ask_human"]:
-            return "ask"
-        return tools_condition(state)
-
-    def create_response(response: str, ai_message: AIMessage):
-        return ToolMessage(
-            content=response,
-            tool_call_id=ai_message.tool_calls[0]["id"],
-        )
-
-    def ask_human(state: State):
-        new_messages = []
-        print("\n[bold blue]You (Ctrl+d to Submit, Ctrl+c to Quit):[/bold blue] ", end="\n\n") # Updated prompt for multi-line input
-        multi_line_input = []
-        print("> ", end="")
-        while True:
-            try:
-                line = input()
-                multi_line_input.append(line)
-            except (EOFError, KeyboardInterrupt):
-                break
-        user_input = "\n".join(multi_line_input) if multi_line_input else "No human response."
-
-        if not isinstance(state["messages"][-1], ToolMessage):
-            # Typically, the user will have updated the state during the interrupt.
-            # If they choose not to, we will include a placeholder ToolMessage to
-            # let the LLM continue.
-            new_messages.append(create_response(user_input, state["messages"][-1]))
-        return {"messages": new_messages,"ask_human": False}
-
-    workflow = StateGraph(State)
-    workflow.add_node("agent", agent_flow)
-    workflow.add_node("tools", tool_node)
-    workflow.add_node("ask", ask_human)
-
-    workflow.add_edge(START, "agent")
-    workflow.add_conditional_edges("agent", select_next_node)
-    workflow.add_edge("tools", 'agent')
-    workflow.add_edge("ask", 'agent')
-    # workflow.add_edge("suggestion", "agent")
-
-    app = workflow.compile(checkpointer=MemorySaver(), interrupt_before=["ask"])
-
-    return app
-
-def chat_with_tool(app, input):
-    if app is None:
-        raise Exception("app is None")
-
-    system_prompt = """你是一个非常有用的assistant, 并且可以使用以下工具来帮助你完成任务：
-    - 你可以调用SearxSearch 工具从网络上抓取相关信息，由你来决定search what。
-      记住：search的结果只是用来作为参考，你不能认为它就是完全正确的从而就发送一个search结果的总结。
-      你必须自己分析search结果，然后给出详细的回答和分析。
-    """
-    # - 你可以调用 AskHuman 工具来问3个问题，这个几个问题可以帮助你更好的了解问题的上下文。
-
-   # `invoke` 方法的第一个参数是用来启动 LangGraph 工作流的 **初始输入数据**。
-   # 对于 `StateGraph` 构建的工作流来说，这个初始输入数据就代表了工作流的 **初始状态**。
-   # 它是一个字典 (dictionary)，并且和 state 息息相关。
-
-    final_state = app.invoke(
-        {"messages": [SystemMessage(content=f"{system_prompt}"), HumanMessage(content=f"{input}")]},
-        config={"configurable": {"thread_id": 42}},
-        debug=True,
-    )
-
-    current_turn_tokens = 0
-    for msg in final_state["messages"]:
-        msg.pretty_print()
-        if isinstance(msg, AIMessage) and msg.response_metadata:
-            token_usage = msg.response_metadata.get("token_usage")
-            if token_usage:
-                current_turn_tokens += token_usage.get("prompt_tokens", 0)
-                current_turn_tokens += token_usage.get("completion_tokens", 0)
-                current_turn_tokens += token_usage.get("input_tokens", 0) # For Gemini
-                current_turn_tokens += token_usage.get("output_tokens", 0) # For Gemini
-
-    return final_state["messages"][-1].content, current_turn_tokens
 
 def format_tokens(tokens: int) -> str:
     if tokens >= 1_000_000:
@@ -223,9 +88,6 @@ def main():
         "-c", "--cot", action="store_true", help="Enable Chain-of-Thought (CoT) mode"
     )
     parser.add_argument(
-        "-w", "--websearch", action="store_true", help="Enable tool use mode"
-    )
-    parser.add_argument(
         "-s",
         "--switch",
         nargs="?",
@@ -267,8 +129,6 @@ def main():
                 system_prompt = prompt_path_or_string # Fallback to treat as string if file reading fails
         else:
             system_prompt = prompt_path_or_string
-
-    webchatapp = get_webchat_app() if args.websearch else None
 
     # prepare chat
     selected_model_alias = DEFAULT_MODEL_ALIAS
@@ -318,7 +178,6 @@ def main():
 
     console.print(f"Welcome to [bold green]{llm_provider}:{model_name}[/bold green] Chatbox in Terminal!")
     console.print(f"CoT: {'[bold green]enable[/bold green]' if args.cot else '[bold red]disable[/bold red]'}.")
-    console.print(f"Web search: {'[bold green]enable[/bold green]' if args.websearch else '[bold red]disable[/bold red]'}.")
     console.print(f"Individual mode: {'[bold green]enable[/bold green]' if args.individual else '[bold red]disable[/bold red]'}.")
     # console.print("Type 'exit', 'quit', or 'bye', or Ctrl+c to end the chat.")
 
@@ -483,34 +342,29 @@ def main():
             start_time = time.time()
             spinner = Spinner("dots", text="[bold cyan]Waiting response ...[/bold cyan]")
             with console.status(spinner): # Use status to manage the spinner
-                if args.websearch:
-                    response_content, current_turn_tokens = chat_with_tool(webchatapp, user_input)
-                    response = response_content
-                    total_tokens_consumed += current_turn_tokens
-                else:
-                    # Build messages
-                    messages = [{"role": "system", "content": system_prompt}]
-                    if not args.individual and len(conversation_history) > 0:
-                        messages.extend(conversation_history) # Include history only if not in individual mode
-                    messages.append({"role": "user", "content": user_input})
+                # Build messages
+                messages = [{"role": "system", "content": system_prompt}]
+                if not args.individual and len(conversation_history) > 0:
+                    messages.extend(conversation_history) # Include history only if not in individual mode
+                messages.append({"role": "user", "content": user_input})
 
-                    conversation_history.append({"role": "user", "content": user_input})
+                conversation_history.append({"role": "user", "content": user_input})
 
-                    completion = client.chat.completions.create(
-                        model=model_name,
-                        messages=messages,
-                        temperature=args.temperature,
-                        stream=False
-                    )
-                    response = completion.choices[0].message.content or ""
-                    if completion.usage and completion.usage.total_tokens:
-                        if args.individual:
-                            total_tokens_consumed = completion.usage.total_tokens
-                        else:
-                            total_tokens_consumed += completion.usage.total_tokens
+                completion = client.chat.completions.create(
+                    model=model_name,
+                    messages=messages,
+                    temperature=args.temperature,
+                    stream=False
+                )
+                response = completion.choices[0].message.content or ""
+                if completion.usage and completion.usage.total_tokens:
+                    if args.individual:
+                        total_tokens_consumed = completion.usage.total_tokens
+                    else:
+                        total_tokens_consumed += completion.usage.total_tokens
 
-                    # Save conversation context
-                    conversation_history.append({"role": "assistant", "content": response})
+                # Save conversation context
+                conversation_history.append({"role": "assistant", "content": response})
 
             end_time = time.time()
             elapsed_time = end_time - start_time
