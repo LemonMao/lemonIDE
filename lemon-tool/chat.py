@@ -114,7 +114,33 @@ def main():
         help="Direct question to ask the LLM (non-interactive mode)",
         required=False,
     )
+    parser.add_argument(
+        "--output",
+        type=str,
+        help="File path to save the conversation (work with --input)",
+        required=False,
+    )
     args = parser.parse_args()
+
+    def save_chat_to_file(file, messages):
+        # Format conversation history as markdown
+        markdown_lines = []
+        for msg in messages:
+            if msg["role"] == "user":
+                markdown_lines.append(f"\n---\n**Question:**\n\n{msg['content']}\n")
+            elif msg["role"] == "assistant":
+                markdown_lines.append(f"\n---\n**Answer:**\n\n{msg['content']}\n")
+
+        markdown_lines.append(f"\n---\nModel: **{model_name}**")
+        markdown_lines.append(f", Total tokens consumed: **{format_tokens(total_tokens_consumed)}**")
+
+        # Write to file
+        try:
+            with open(file, 'w', encoding='utf-8') as f:
+                f.writelines(markdown_lines)
+                console.print(f"[green]Conversation saved to {file}[/green]")
+        except Exception as e:
+            console.print(f"[red]Error saving to file: {e}[/red]")
 
     # Initialize conversation history
     conversation_history = []
@@ -335,6 +361,12 @@ def main():
                 # Reprocess the last question - ensure it's not None
                 user_input = last_user_msg or ""
                 console.print(f"[bold yellow]Retrying last question ...[/bold yellow]")
+            elif command == '/save':
+                # Generate timestamp for filename
+                timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+                filename = f"/tmp/chat_{timestamp}.md"
+                save_chat_to_file(args.output, conversation_history)
+                continue
             else:
                 console.print(f"[bold red]Unknown command:[/bold red] {command}")
                 continue
@@ -399,6 +431,8 @@ def main():
 
         # One shot LLM ask
         if args.input:
+            if args.output:
+                save_chat_to_file(args.output, conversation_history)
             return
 
 if __name__ == "__main__":

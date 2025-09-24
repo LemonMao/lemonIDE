@@ -260,7 +260,9 @@ def do_rsync_monitor(ip, username, local_obj=None):
         exit(1)
 
     if remote_obj is None:
-        remote_obj = input("Remote target: ").strip()
+        remote_obj = input("Remote dir: ").strip()
+        if not remote_obj:
+            remote_obj = '~'
 
     if os.path.isdir(local_obj) or is_wildcard(local_obj):
         remote_obj = f"{username}@{ip}:{remote_obj}"
@@ -372,11 +374,12 @@ def do_pull(ip, username, remote_path, local_path):
     # Prompt for remote path if not provided
     if remote_path is None:
         remote_path = input("Remote path to pull: ").strip()
-    
+
     if local_path is None:
-        local_path = input("Local path to save to [default: current directory]: ").strip()
-        if not local_path:
-            local_path = "."
+        local_path = "~"
+        #  local_path = input("Local path to save to [default: current directory]: ").strip()
+        #  if not local_path:
+        #      local_path = "."
 
     print(f"Pulling from {username}@{ip}:{remote_path} to {local_path}")
 
@@ -397,15 +400,16 @@ def do_push(ip, username, local_path, remote_path):
     # Prompt for local path if not provided
     if local_path is None:
         local_path = input("Local path to push: ").strip()
-    
+
     if not os.path.exists(local_path):
         error_msg(f"Local path {local_path} does not exist")
         exit(1)
 
     if remote_path is None:
-        remote_path = input("Remote path to save to [default: current directory]: ").strip()
-        if not remote_path:
-            remote_path = "."
+        remote_path = "~"
+        #  remote_path = input("Remote path to save to [default: current directory]: ").strip()
+        #  if not remote_path:
+        #      remote_path = "."
 
     print(f"Pushing from {local_path} to {username}@{ip}:{remote_path}")
 

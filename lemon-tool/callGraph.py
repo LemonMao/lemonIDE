@@ -347,6 +347,14 @@ Usage Examples:
     parser.add_argument("--chat", action="store_true", help="Call 'chat --prompt' with call stack JSON")
     parser.add_argument("-u", "--update-gtags", action="store_true", default=False, help="Update GTAGS (default: True)")
     parser.add_argument("-d", "--debug", action="store_true", help="Enable debug logging")
+    parser.add_argument(
+        "--explain_to",
+        nargs='?',
+        const="DEFAULT_EXPLAIN",  # Value if --explain is used without an argument
+        default=None,             # Value if --explain is not used at all
+        type=str,
+        help="Explain the function and save output into file."
+    )
 
     args = parser.parse_args()
 
@@ -389,10 +397,15 @@ Usage Examples:
         # Dump JSON to file
         timestamp = str(int(time.time()))
         json_file_path = f"/tmp/call_stack_{timestamp}.json"
-        role_prompt = f"""
-            Following is function call stack with json format.
-            Works as a C expert to give more detail description in code level.
-            Answer in Chinese\n"""
+        role_prompt = """
+            You are a C expert. Analyze the following function call stack in JSON format.
+            Provide a detailed, code-level description, similar to adding comments to code.
+            Example:
+            void function() {
+              // comment here
+              int ret = getXXXX();
+            }
+            Respond in Chinese.\n"""
         with open(json_file_path, 'w') as f:
             f.write(role_prompt)
             json.dump(graph_json, f, indent=4)
@@ -418,15 +431,24 @@ Usage Examples:
         #      call_stack_json_str = json.dumps(graph_json, indent=4)
         #      print(call_stack_json_str)
 
-        if args.chat:
-            try:
-                command_str = f"chat -s gmf --prompt {json_file_path} --input 'Explain code {start_symbol_name}()' "
+        try:
+            command_str = f"chat -s gmf --prompt {json_file_path}"
+            if args.chat:
                 print(f"\n\nExecuting chat command: {command_str}")
-                process = subprocess.run(command_str, shell=True, check=True)
-            except subprocess.CalledProcessError as e:
-                print(f"Error executing chat command: {e}")
-            except KeyboardInterrupt:
-                print("\nQuit.")
+                subprocess.run(command_str, shell=True, check=True)
+            elif args.explain_to is not None:
+                command_str += f" --input 'Explain function {start_symbol_name}()'"
+                if args.explain_to != "DEFAULT_EXPLAIN":
+                    # Case: --explain "custom prompt" was used
+                    command_str += f" --output {args.explain_to}"
+
+                print(f"\n\nExecuting chat command: {command_str}")
+                subprocess.run(command_str, shell=True, check=True)
+
+        except subprocess.CalledProcessError as e:
+            print(f"Error executing chat command: {e}")
+        except KeyboardInterrupt:
+            print("\nQuit.")
     else:
         print(f"Could not generate graph starting from {args.start}. Definition of start symbol '{start_symbol_name}' might not be found.")
 
