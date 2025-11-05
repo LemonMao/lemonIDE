@@ -112,7 +112,7 @@ alias conefs="rm -rf ~/"
 #     spellcheck <commit_hash>: Fixes typos in files from a specific commit.
 #
 function proxy() {
-    local proxy_file="~/tmp/.lemon_http_proxy"
+    local proxy_file="/tmp/.lemon_http_proxy"
 
     if [ "$1" == "-e" ]; then
         # Enable proxy (original setproxy functionality)

@@ -399,13 +399,15 @@ Usage Examples:
         json_file_path = f"/tmp/call_stack_{timestamp}.json"
         role_prompt = """
             You are a C expert. Analyze the following function call stack in JSON format.
-            Provide a detailed, code-level description, similar to adding comments to code.
-            Example:
-            void function() {
-              // comment here
-              int ret = getXXXX();
-            }
-            Respond in Chinese.\n"""
+            - Provide a detailed, code-level description, similar to adding comments to code.
+                Example:
+                void function() {
+                // comment here
+                int ret = getXXXX();
+                } \n
+            - Provide a detail summary description for the function. \n
+              What is it used for? Why design as that? Use an example to illustrate how to use it.\n
+            - Always respond in Chinese.\n"""
         with open(json_file_path, 'w') as f:
             f.write(role_prompt)
             json.dump(graph_json, f, indent=4)

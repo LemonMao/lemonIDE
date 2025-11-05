@@ -364,7 +364,7 @@ def do_ssh(ip, username, passwordless):
     if result.stderr and need_clean_host_id(result.stderr.decode('utf-8')):
         print(f"Clean up known host ID for {ip}.")
         known_hosts_path = "~/.ssh/known_hosts"
-        clean_cmd = f"ssh-keygen -f {known_hosts_path} -R {ip}"
+        clean_cmd = f"ssh-keygen -f {known_hosts_path} -R {ip} && {ssh_cmd}"
         subprocess.run(clean_cmd, shell=True, stderr=subprocess.PIPE)
 
     print(f"Stderr:\n {result.stderr.decode('utf-8')}" if result.stderr else "\nGood Bye !!!\n")
@@ -376,10 +376,11 @@ def do_pull(ip, username, remote_path, local_path):
         remote_path = input("Remote path to pull: ").strip()
 
     if local_path is None:
-        local_path = "~"
-        #  local_path = input("Local path to save to [default: current directory]: ").strip()
-        #  if not local_path:
-        #      local_path = "."
+        local_path = input("Local path to save to: ").strip()
+        if not local_path:
+            local_path = "./"
+        elif not local_path.endswith('/') and os.path.isdir(os.path.expanduser(local_path)):
+            local_path += '/'
 
     print(f"Pulling from {username}@{ip}:{remote_path} to {local_path}")
 
@@ -406,10 +407,9 @@ def do_push(ip, username, local_path, remote_path):
         exit(1)
 
     if remote_path is None:
-        remote_path = "~"
-        #  remote_path = input("Remote path to save to [default: current directory]: ").strip()
-        #  if not remote_path:
-        #      remote_path = "."
+        remote_path = input("Remote path to save to: ").strip()
+        if not remote_path:
+            remote_path = "~/"
 
     print(f"Pushing from {local_path} to {username}@{ip}:{remote_path}")
 

@@ -8,7 +8,7 @@ Please note:
   - If that is an English word, I need its Chinese translation, English pronunciation, and two simple English usage examples.
   - The output format is like:
     ```
-    - <words translation>
+    - <translation>
     - <English pronunciation>
     - E.g.:
       1. <One simple English usage example>
