@@ -24,7 +24,7 @@ def run_mouse_script(duration_minutes):
     print(f"脚本将运行 {duration_str}。")
     print("请不要移动鼠标，脚本将在后台运行。")
     print("可以通过关闭终端窗口或强制结束Python进程来停止脚本。")
-    move_offset = 1200  # 鼠标移动的像素距离，可以根据需要调整
+    move_offset = 100  # 鼠标移动的像素距离，可以根据需要调整
 
     while time.time() < end_time:
         start_interval_time = time.time()
