@@ -664,10 +664,10 @@ nmap <C-h> :call ChangeCurWind("h")<ESC><cr>
 nmap <C-l> :call ChangeCurWind("l")<ESC><cr>
 nmap <C-j> <C-w>j
 nmap <C-k> <C-w>k
-nmap <m-h> :vertical resize-20<CR> <ESC>
-nmap <m-l> :vertical resize+20<CR> <ESC>
-nmap <m-j> :abo resize-20<CR> <ESC>
-nmap <m-k> :abo resize+20<CR> <ESC>
+nmap <C-Left> :vertical resize-20<CR> <ESC>
+nmap <C-Right> :vertical resize+20<CR> <ESC>
+nmap <C-Down> :abo resize-20<CR> <ESC>
+nmap <C-Up> :abo resize+20<CR> <ESC>
 "nmap <C-H> <C-w>W
 "nmap <C-L> <C-w>w
 "Ctrol-E to switch between 2 last buffers

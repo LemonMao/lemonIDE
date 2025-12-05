@@ -365,7 +365,7 @@ def main():
                 # Generate timestamp for filename
                 timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
                 filename = f"/tmp/chat_{timestamp}.md"
-                save_chat_to_file(args.output, conversation_history)
+                save_chat_to_file(filename, conversation_history)
                 continue
             else:
                 console.print(f"[bold red]Unknown command:[/bold red] {command}")

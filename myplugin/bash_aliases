@@ -200,27 +200,80 @@ function proxy() {
 }
 
 function gitupdate() {
-  # Check if two arguments are provided
-  if [ $# -ne 2 ]; then
-    echo "Usage: $0 <remote> <branch>"
+  local remote=""
+  local branch=""
+  local delete_local_branch=false
+
+  # Parse arguments
+  if [ "$#" -eq 3 ] && [ "$3" == "-D" ]; then
+    remote="$1"
+    branch="$2"
+    delete_local_branch=true
+  elif [ "$#" -eq 2 ]; then
+    remote="$1"
+    branch="$2"
+  else
+    echo "Usage: gitupdate <remote> <branch> [-D]"
+    echo "  -D: Delete local branch before updating (only if local branch exists)."
     return 1
   fi
-
-  # Get the remote and branch name from arguments
-  remote="$1"
-  branch="$2"
 
   # Check if the local branch exists
   if git rev-parse --verify --quiet "$branch" &>/dev/null; then
     # Local branch exists, do the original update logic
-    echo "Updating branch '$branch' from remote '$remote'..."
-    git checkout "$branch" && git fetch "$remote" "$branch" && git merge --ff-only "$remote/$branch"
+    if $delete_local_branch; then
+      local current_branch=$(git rev-parse --abbrev-ref HEAD)
+      if [ "$current_branch" == "$branch" ]; then
+        echo "Cannot delete current branch '$branch'. Attempting to switch to 'main' or 'master' to proceed." >&2
+        # Try to switch to 'main' or 'master'
+        if git rev-parse --verify --quiet BR_MAIN &>/dev/null; then
+          git checkout BR_MAIN >/dev/null 2>&1
+        elif git rev-parse --verify --quiet master &>/dev/null; then
+          git checkout master >/dev/null 2>&1
+        else
+          local fallback_branch=""
+          while true; do
+            read -p "No 'main' or 'master' branch found. Please enter an existing branch to switch to: " fallback_branch
+            if [ -z "$fallback_branch" ]; then
+              echo "Branch name cannot be empty. Please try again." >&2
+            elif git rev-parse --verify --quiet "$fallback_branch" &>/dev/null; then
+              git checkout "$fallback_branch" >/dev/null 2>&1
+              if [ $? -eq 0 ]; then
+                echo "Switched to branch '$fallback_branch'." >&2
+                break
+              else
+                echo "Error: Failed to switch to branch '$fallback_branch'. Please try again." >&2
+              fi
+            else
+              echo "Error: Branch '$fallback_branch' not found. Please enter an existing branch." >&2
+            fi
+          done
+        fi
+      fi
 
-    # Check if the merge was successful
-    if [ $? -eq 0 ]; then
-      echo "Merge successful!"
+      echo "Deleting local branch '$branch' before update..."
+      git branch -D "$branch"
+      if [ $? -ne 0 ]; then
+        echo "Failed to delete local branch '$branch'." >&2
+        return 1
+      fi
+      # After deleting, the local branch no longer exists, so we proceed to create it as a tracking branch
+      echo "Fetching and creating local branch '$branch' to track '$remote/$branch'..."
+      git fetch "$remote" "$branch" && git checkout --track "$remote/$branch"
+      if [ $? -ne 0 ]; then
+        echo "Failed to create or track branch '$remote/$branch'." >&2
+        return 1
+      fi
     else
-      echo "Merge failed! Please check for conflicts and resolve them manually."
+      echo "Updating branch '$branch' from remote '$remote'..."
+      git checkout "$branch" && git fetch "$remote" "$branch" && git merge --ff-only "$remote/$branch"
+
+      # Check if the merge was successful
+      if [ $? -eq 0 ]; then
+        echo "Merge successful!"
+      else
+        echo "Merge failed! Please check for conflicts and resolve them manually."
+      fi
     fi
   else
     # Local branch does not exist, create it to track the remote branch
