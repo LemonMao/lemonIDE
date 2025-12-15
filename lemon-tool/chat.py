@@ -13,6 +13,12 @@ from rich.spinner import Spinner
 from openai import OpenAI
 import httpx
 
+from prompt_toolkit.layout import Layout, Window, HSplit, FloatContainer, Float, ConditionalContainer
+from prompt_toolkit.layout.controls import BufferControl, FormattedTextControl
+from prompt_toolkit.layout.dimension import D
+from prompt_toolkit.filters import Condition
+from prompt_toolkit.buffer import Buffer
+
 def format_tokens(tokens: int) -> str:
     if tokens >= 1_000_000:
         return f"{tokens / 1_000_000:.1f}M"
@@ -21,15 +27,69 @@ def format_tokens(tokens: int) -> str:
     else:
         return str(tokens)
 
+def read_file(filepath: str) -> str:
+    """Reads the content of a file, expanding the user home directory."""
+    try:
+        # Expand user home directory in the path
+        expanded_filepath = os.path.expanduser(filepath)
+        with open(expanded_filepath, "r", encoding="utf-8") as f:
+            return f.read().strip()
+    except FileNotFoundError:
+        return f"Error: Prompt file not found at {filepath}"
+    except Exception as e:
+        return f"Error reading prompt file {filepath}: {e}"
+
+
 # Shortcut configuration - easily customizable by users
 # Use valid prompt_toolkit key names: https://python-prompt-toolkit.readthedocs.io/en/stable/pages/advanced_topics/key_bindings.html#list-of-special-keys
 SHORTCUT_MAPPINGS = {
-    'a-`': '```\n\n```',
+    'a-`': '```\n',
     # Add more shortcuts here in the format: 'key-combination': 'text-to-insert'
     # Examples:
     # 'c-b': '**bold**',  # Ctrl+B for bold text
     # 'a-b': '---',       # Alt+B for horizontal rule
 }
+
+# System prompts menu configuration
+PROMPT_MENU = {
+    "Assistant": "You're a helpful assistant. Give me more exact answer. If no special instruction, please answer in Chinese.",
+    "Software_explainer": "Work as an software expert to answer my question."
+        "Tell me what the things I provided are. Use one example to illustrate the usage. Always respond in Chinese",
+    "Doc_organizer": "整理文档，润色句子，改正错误，增加细节。直接给出整理后的Markdown文档，不要解释和总结。",
+    "Translater": "{}".format(read_file("~/.vim/AI/translation.prt")),
+}
+
+class MenuState:
+    """State for the prompt menu."""
+    def __init__(self, prompts_dict):
+        self.active = False
+        self.prompts = list(prompts_dict.items())  # list of (key, text)
+        self.selected_index = 0
+
+    def activate(self):
+        self.active = True
+        self.selected_index = 0
+
+    def deactivate(self):
+        self.active = False
+
+    def move_down(self):
+        if self.selected_index < len(self.prompts) - 1:
+            self.selected_index += 1
+
+    def move_up(self):
+        if self.selected_index > 0:
+            self.selected_index -= 1
+
+    def get_selected_text(self):
+        if self.prompts:
+            return self.prompts[self.selected_index][1]
+        return ""
+
+    def get_selected_key(self):
+        if self.prompts:
+            return self.prompts[self.selected_index][0]
+        return ""
 
 def create_shortcut_handler(text_to_insert):
     """Create a handler function for inserting text snippets"""
@@ -40,14 +100,14 @@ def create_shortcut_handler(text_to_insert):
 # should export GEMINI_API_KEY in env
 def main():
     MODELS = {
-        "dp": {
+        "dpr": {
             "display": "deepseek-r1",
             "provider": "Deepseek",
             "model": "deepseek-reasoner",
             "endpoint": "https://api.deepseek.com",
             "api_key_env": "OPENAI_API_KEY",
         },
-        "dp2": {
+        "dpv": {
             "display": "deepseek-v2",
             "provider": "Deepseek",
             "model": "deepseek-chat",
@@ -68,7 +128,7 @@ def main():
             "endpoint": "https://generativelanguage.googleapis.com/v1alpha/openai/",
             "api_key_env": "GEMINI_API_KEY",
         },
-        "gm": {
+        "gmp": {
             "display": "gemini-2.5-pro (default)",
             "provider": "Gemini",
             "model": "gemini-2.5-pro",
@@ -76,7 +136,7 @@ def main():
             "api_key_env": "GEMINI_API_KEY",
         },
     }
-    DEFAULT_MODEL_ALIAS = "gm"
+    DEFAULT_MODEL_ALIAS = "gmf"
     total_tokens_consumed = 0
     parser = argparse.ArgumentParser(description="Simple Gemini Chatbot in Terminal")
     parser.add_argument(
@@ -142,25 +202,45 @@ def main():
         except Exception as e:
             console.print(f"[red]Error saving to file: {e}[/red]")
 
+    def get_status():
+        """Return a list of (label, value) for current chat status."""
+        status = []
+        # Total tokens consumed
+        status.append(("Total tokens consumed", format_tokens(total_tokens_consumed)))
+        # System prompt role
+        prompt_role = system_prompt.get("role", "Unknown")
+        status.append(("System prompt", prompt_role))
+        # LLM model name
+        status.append(("LLM model name", model_name))
+        # Add more status items here in the future
+        return status
+
     # Initialize conversation history
     conversation_history = []
 
     console = Console()
 
     # prompt
-    system_prompt = "You're a helpful assistant. Give me more exact answer. If no special instruction, please answer in Chinese."
+    system_prompt = {
+        "role": "Assistant",
+        "content": "You're a helpful assistant. Give me more exact answer. If no special instruction, please answer in Chinese."
+    }
     if args.prompt:
         prompt_path_or_string = args.prompt
         if os.path.exists(prompt_path_or_string):
             try:
                 with open(prompt_path_or_string, "r") as f:
-                    system_prompt = f.read().strip()
+                    content = f.read().strip()
+                system_prompt["content"] = content
+                system_prompt["role"] = "Custom"
                 console.print(f"System instruction loaded from file: '{prompt_path_or_string}'") # Updated message to "System instruction"
             except Exception as e:
                 console.print(f"Error reading prompt file '{prompt_path_or_string}': {e}")
-                system_prompt = prompt_path_or_string # Fallback to treat as string if file reading fails
+                system_prompt["content"] = prompt_path_or_string # Fallback to treat as string if file reading fails
+                system_prompt["role"] = "Custom"
         else:
-            system_prompt = prompt_path_or_string
+            system_prompt["content"] = prompt_path_or_string
+            system_prompt["role"] = "Custom"
 
     # prepare chat
     selected_model_alias = DEFAULT_MODEL_ALIAS
@@ -217,22 +297,83 @@ def main():
         from prompt_toolkit import PromptSession
         from prompt_toolkit.key_binding import KeyBindings
         from prompt_toolkit.keys import Keys
+        from prompt_toolkit.styles import Style
 
+        menu_state = MenuState(PROMPT_MENU)
+
+        # Define shortcut handler function
+        def create_shortcut_handler(text_to_insert):
+            def handler(event):
+                event.app.current_buffer.insert_text(text_to_insert)
+            return handler
+
+        # Create custom style to override bottom toolbar background to black
+        custom_style = Style.from_dict({
+            'bottom-toolbar': 'fg:black',           # Black background for toolbar container
+            'bottom-toolbar.text': 'fg:ansiwhite',      # Black background for toolbar text
+        })
+    
         # 创建自定义键绑定
         kb = KeyBindings()
+
+        @kb.add('c-t', eager=True)
+        def _(event):
+            """Toggle menu on Ctrl+T."""
+            if menu_state.active:
+                menu_state.deactivate()
+            else:
+                menu_state.activate()
+            # Force redraw to update bottom toolbar
+            event.app.invalidate()
+
+        @kb.add('j', eager=True, filter=Condition(lambda: menu_state.active))
+        def _(event):
+            """Move down in menu."""
+            menu_state.move_down()
+            event.app.invalidate()
+
+        @kb.add('k', eager=True, filter=Condition(lambda: menu_state.active))
+        def _(event):
+            """Move up in menu."""
+            menu_state.move_up()
+            event.app.invalidate()
+
+        @kb.add('enter', eager=True, filter=Condition(lambda: menu_state.active))
+        def _(event):
+            """Select current menu item."""
+            nonlocal system_prompt
+            text = menu_state.get_selected_text()
+            key = menu_state.get_selected_key()
+            if text:
+                system_prompt["content"] = text
+                system_prompt["role"] = key.capitalize()
+            menu_state.deactivate()
+            event.app.invalidate()
+            # Prevent default enter behavior (insert newline)
+            return
+
+        @kb.add('escape', eager=True, filter=Condition(lambda: menu_state.active))
+        def _(event):
+            """Cancel menu."""
+            menu_state.deactivate()
+            event.app.invalidate()
 
         @kb.add(Keys.ControlD, eager=True)
         def _exit(event):
             "按CTRL+D提交"
-            event.app.exit(result=event.app.current_buffer.text)
+            if menu_state.active:
+                menu_state.deactivate()
+                event.app.invalidate()
+            else:
+                event.app.exit(result=event.app.current_buffer.text)
 
         # Add shortcut key bindings
         for key_combination, text_to_insert in SHORTCUT_MAPPINGS.items():
             # Handle special case for backtick with alt
             if key_combination == 'a-`':
                 @kb.add('escape', '`', eager=True)
-                def insert_code_block(event):
-                    event.app.current_buffer.insert_text('```\n\n```')
+                def insert_code_block(event, text=text_to_insert):
+                    event.app.current_buffer.insert_text(text)
             else:
                 # Parse other key combinations
                 if key_combination.startswith('c-'):
@@ -247,20 +388,40 @@ def main():
                     # Single key
                     kb.add(key_combination, eager=True)(create_shortcut_handler(text_to_insert))
 
+        # Function to generate bottom toolbar fragments
+        def get_bottom_toolbar():
+            fragments = []
+            if menu_state.active:
+                # 显示提示菜单，采用类似 Claude 的深色主题设计
+                # 背景为深黑色，文字使用浅色，选中项使用蓝色背景突出
+                # fg: background bg:frontground
+                fragments.append(("bg:ansiwhite fg:ansiblack", "## Set System prompt. Use j/k to move, Enter to select, Esc to cancel "))
+                fragments.append(("", "\n"))
+                for idx, (key, text) in enumerate(menu_state.prompts):
+                    if idx == menu_state.selected_index:
+                        fragments.append(("bg:ansiwhite fg:ansicyan", f"- {key}: {text} "))
+                    else:
+                        fragments.append(("bg:ansiwhite fg:ansiblack", f"- {key}: {text} "))
+                    fragments.append(("", "\n"))
+            else:
+                # 显示聊天状态信息（单行）
+                status_items = get_status()
+                for i, (label, value) in enumerate(status_items):
+                    fragments.append(("fg:ansiblack bg:ansicyan", f" {label}: "))
+                    fragments.append(("fg:ansiblack bg:ansiwhite", f"{value}"))
+                    if i < len(status_items) - 1:
+                        fragments.append(("fg:ansiblack bg:ansiwhite", " , "))
+            return fragments
+
         session = PromptSession(
             message=[("fg:ansiblue", "\nYou (Ctrl+c to Quit, Ctrl+d to Submit):\n")],
             multiline=True,
             key_bindings=kb,
-            vi_mode=True,  # 启用vi风格导航
+            vi_mode=True,
             wrap_lines=True,
             prompt_continuation=lambda width, line_number, wrap_count: '> ' if line_number == 0 else '  ',
-            style=None,
-            #  bottom_toolbar=[
-            #      ("bg:ansiblue fg:white", " Quit "),
-            #      ("", " Ctrl+c "),
-            #      ("bg:ansigreen fg:white", " Submit "),
-            #      ("", " ESC → Enter ")
-            #  ]
+            style=custom_style,  # Use custom style with black toolbar background
+            bottom_toolbar=get_bottom_toolbar,
         )
 
         user_input = None
@@ -367,6 +528,13 @@ def main():
                 filename = f"/tmp/chat_{timestamp}.md"
                 save_chat_to_file(filename, conversation_history)
                 continue
+            elif command == '/st':
+                # Display chat status
+                status_items = get_status()
+                console.print("[bold green]Chat Status:[/bold green]")
+                for label, value in status_items:
+                    console.print(f"  [bold cyan]{label}:[/bold cyan] {value}")
+                continue
             else:
                 console.print(f"[bold red]Unknown command:[/bold red] {command}")
                 continue
@@ -385,7 +553,7 @@ def main():
             spinner = Spinner("dots", text="[bold cyan]Waiting response ...[/bold cyan]")
             with console.status(spinner): # Use status to manage the spinner
                 # Build messages
-                messages = [{"role": "system", "content": system_prompt}]
+                messages = [{"role": "system", "content": system_prompt["content"]}]
                 if not args.individual and len(conversation_history) > 0:
                     messages.extend(conversation_history) # Include history only if not in individual mode
                 messages.append({"role": "user", "content": user_input})

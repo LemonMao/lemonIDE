@@ -64,6 +64,7 @@ def get_customed_machines():
     """
     # if SSH_HOSTS file not exist or empty, create it.
     # And write the example above to it.
+    print("Check server file: ", SSH_HOSTS)
     if not os.path.exists(SSH_HOSTS) or os.stat(SSH_HOSTS).st_size == 0:
         with open(SSH_HOSTS, "w") as hostfile:
             host_spaces = " " * (MAX_HOST_LEN - 1)
@@ -201,22 +202,61 @@ def get_machine_ip(target=None, just_print=False):
                 exit(-1)
 
 def add_custom_host(host):
-    """ if host exists, find if it exist in SSH_HOSTS file, if not add it. """
-    servers = get_customed_machines()
-    found = False
-    for server in servers:
-        if host in server["ips"]:
-            found = True
-            break
-    if not found:
+    """
+    Adds a new host to ~/.sshhosts or updates an existing one.
+    If the host (IP/domain) already exists, it prompts the user to update
+    the machine name and information for that host.
+    If the host does not exist, it prompts for new name and info and adds it.
+    """
+    # Read all lines from the SSH_HOSTS file
+    with open(SSH_HOSTS, "r") as hostfile:
+        lines = hostfile.readlines()
+
+    updated_lines = []
+    host_found_and_updated = False
+
+    for line in lines:
+        stripped_line = line.strip()
+        # Preserve comments and empty lines
+        if stripped_line.startswith('#') or not stripped_line:
+            updated_lines.append(line)
+            continue
+
+        # Parse the existing line to check for the host
+        parts = stripped_line.split(' ', 1)
+        ips_str_from_file = parts[0]
+
+        # Check if the input host (e.g., user@ip) is part of the IPs string from the file.
+        # This handles cases where multiple IPs are listed, e.g., "ip1,user@ip2".
+        if host in ips_str_from_file.split(','):
+            print(f"Host '{host}' found in existing entry. Updating its details.")
+            # Prompt for new name and info
+            new_name = input("Provide the new machine name: ").strip()
+            new_info = input("Provide the new machine info: ").strip()
+            new_info = "N/A" if not new_info else new_info
+
+            # Format the updated line using ljust for consistent spacing
+            formatted_line = f"{ips_str_from_file.ljust(MAX_HOST_LEN)}{new_name.ljust(MAX_NAME_LEN)}{new_info}\n"
+            updated_lines.append(formatted_line)
+            host_found_and_updated = True
+        else:
+            # If no match, keep the original line
+            updated_lines.append(line)
+
+    # If the host was not found in any existing entry, add it as a new entry
+    if not host_found_and_updated:
+        print(f"Host '{host}' not found. Adding as a new entry.")
         name = input("Provide the machine name: ").strip()
         info = input("Provide the machine info: ").strip()
-        print(f"info:{info}")
         info = "N/A" if not info else info
-        with open(SSH_HOSTS, "a+") as hostfile:
-            space1 = " " * (MAX_HOST_LEN - len(host))
-            space2 = " " * (MAX_NAME_LEN - len(name))
-            hostfile.write(host + space1 + name + space2 + info + "\n")
+
+        # Format the new host line using ljust for consistent spacing
+        new_host_line = f"{host.ljust(MAX_HOST_LEN)}{name.ljust(MAX_NAME_LEN)}{info}\n"
+        updated_lines.append(new_host_line)
+
+    # Write all (original and updated/new) lines back to the SSH_HOSTS file
+    with open(SSH_HOSTS, "w") as hostfile:
+        hostfile.writelines(updated_lines)
 
 def do_sftp(ip, user, path):
     if path == "lmao_sftp_prompt":
