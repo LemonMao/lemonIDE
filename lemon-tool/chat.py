@@ -55,7 +55,7 @@ PROMPT_MENU = {
     "Assistant": "You're a helpful assistant. Give me more exact answer. If no special instruction, please answer in Chinese.",
     "Software_explainer": "Work as an software expert to answer my question."
         "Tell me what the things I provided are. Use one example to illustrate the usage. Always respond in Chinese",
-    "Doc_organizer": "整理文档，润色句子，改正错误，增加细节。直接给出整理后的Markdown文档，不要解释和总结。",
+    "Doc_organizer": "整理文档，润色句子，改正错误，增加细节。直接给出整理后的中文Markdown文档，不要解释和总结。",
     "Translater": "{}".format(read_file("~/.vim/AI/translation.prt")),
 }
 
@@ -115,9 +115,9 @@ def main():
             "api_key_env": "OPENAI_API_KEY",
         },
         "gmf": {
-            "display": "gemini-2.5-flash",
+            "display": "gemini-3-flash",
             "provider": "Gemini",
-            "model": "gemini-2.5-flash",
+            "model": "gemini-3-flash-preview",
             "endpoint": "https://generativelanguage.googleapis.com/v1alpha/openai/",
             "api_key_env": "GEMINI_API_KEY",
         },
@@ -202,7 +202,7 @@ def main():
         except Exception as e:
             console.print(f"[red]Error saving to file: {e}[/red]")
 
-    def get_status():
+    def get_status(verbose=False):
         """Return a list of (label, value) for current chat status."""
         status = []
         # Total tokens consumed
@@ -210,6 +210,15 @@ def main():
         # System prompt role
         prompt_role = system_prompt.get("role", "Unknown")
         status.append(("System prompt", prompt_role))
+
+        if verbose:
+            content = system_prompt.get("content", "")
+            # Replace newlines with spaces for preview
+            content_preview = content.replace('\n', ' ')
+            if len(content_preview) > 60:
+                content_preview = content_preview[:60] + "..."
+            status.append(("Prompt content", content_preview))
+
         # LLM model name
         status.append(("LLM model name", model_name))
         # Add more status items here in the future
@@ -312,7 +321,7 @@ def main():
             'bottom-toolbar': 'fg:black',           # Black background for toolbar container
             'bottom-toolbar.text': 'fg:ansiwhite',      # Black background for toolbar text
         })
-    
+
         # 创建自定义键绑定
         kb = KeyBindings()
 
@@ -395,14 +404,17 @@ def main():
                 # 显示提示菜单，采用类似 Claude 的深色主题设计
                 # 背景为深黑色，文字使用浅色，选中项使用蓝色背景突出
                 # fg: background bg:frontground
-                fragments.append(("bg:ansiwhite fg:ansiblack", "## Set System prompt. Use j/k to move, Enter to select, Esc to cancel "))
+                fragments.append(("bg:ansigreen fg:ansiblack", "## Set System prompt. Use j/k to move, Enter to select, Esc to cancel "))
                 fragments.append(("", "\n"))
                 for idx, (key, text) in enumerate(menu_state.prompts):
+                    # Truncate text to the first 40 characters for display
+                    display_text = text[:40]
                     if idx == menu_state.selected_index:
-                        fragments.append(("bg:ansiwhite fg:ansicyan", f"- {key}: {text} "))
+                        base_style = "bg:ansiwhite fg:ansicyan"
                     else:
-                        fragments.append(("bg:ansiwhite fg:ansiblack", f"- {key}: {text} "))
-                    fragments.append(("", "\n"))
+                        base_style = "bg:ansiwhite fg:ansiblack"
+                    fragments.append((base_style, f"- {key}: "))
+                    fragments.append((base_style, f"{display_text} \n"))
             else:
                 # 显示聊天状态信息（单行）
                 status_items = get_status()
@@ -530,7 +542,7 @@ def main():
                 continue
             elif command == '/st':
                 # Display chat status
-                status_items = get_status()
+                status_items = get_status(verbose=True)
                 console.print("[bold green]Chat Status:[/bold green]")
                 for label, value in status_items:
                     console.print(f"  [bold cyan]{label}:[/bold cyan] {value}")
