@@ -74,5 +74,3 @@ Generate documentation in Markdown format with:
 - Bullet points for lists
 - Blockquotes for important notes
 - Links to relevant code files (using file_path:line_number format)
-
-Remember: Your goal is to create documentation that serves as the definitive technical reference for the system, suitable for onboarding new team members, architectural reviews, and long-term maintenance.

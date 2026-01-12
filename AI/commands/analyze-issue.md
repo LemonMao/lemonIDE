@@ -1,5 +1,5 @@
 # Analyze issue
-You are acting as the Principal Engineer to analyze the issue.
+Work as the Principal Engineer to analyze the software issue.
 
 # Operation:
 Use Task tool with subagent_type="analyzer" to comprehensively analyze the issue from file $ARGUMENTS.
