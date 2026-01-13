@@ -2,6 +2,7 @@
 from __future__ import print_function
 
 import argparse
+import fnmatch
 import os, time
 import re
 import signal
@@ -312,27 +313,100 @@ def do_rsync_monitor(ip, username, local_obj=None):
 
     print(f"Keep sync for {local_obj} --> {remote_obj}\n")
 
+    target_path = os.path.abspath(local_obj)
+    is_target_wildcard = is_wildcard(local_obj)
+    is_target_dir = os.path.isdir(target_path)
+
     class ChangeEventHandler(FileSystemEventHandler):
         def __init__(self):
             self.sync_timer = None
             self.delay_ms = 500 / 1000
             self.queued_event = False
 
+        def _is_ignored(self, path):
+            if not path:
+                return True
+
+            # Use absolute path for consistent checking
+            abs_path = os.path.abspath(path)
+            name = os.path.basename(abs_path)
+
+            # Ignore directories - we only care about file content changes.
+            # Directory metadata changes (like mtime) happen when files inside are
+            # created/deleted, and those files will trigger their own events.
+            if os.path.isdir(abs_path):
+                return True
+
+            # Vim swap files: .filename.swp, .swo, .swn, etc.
+            # Also covers .swpx and other variations.
+            if name.startswith('.') and ('.sw' in name):
+                return True
+
+            # Vim/Emacs backup files: filename~
+            if name.endswith('~'):
+                return True
+
+            # Vim test file (used to check if directory is writable)
+            if name == '4913':
+                return True
+
+            # Git internal files
+            if '/.git/' in abs_path or abs_path.endswith('/.git') or name == '.git':
+                return True
+
+            # Common temporary/compiled files
+            if name.endswith('.pyc') or name.endswith('.pyo') or name == '__pycache__':
+                return True
+
+            return False
+
         def _do_sync(self):
             try:
                 print(f"Target change detected. Syncing...\n"
                       f" \\_ {local_obj} ===> {remote_obj}")
-                ret = subprocess.run(["rsync", "-a", local_obj, remote_obj])
+                # Use -a (archive) and -z (compress) for efficient sync
+                ret = subprocess.run(["rsync", "-az", local_obj, remote_obj])
                 print(f" \\_ Complete syncing. Return:{ret.returncode}\n")
             except subprocess.CalledProcessError as e:
                 print(f" \\_ Error syncing: {e} \n")
             finally:
-                self.sync_timer.cancel()
+                if self.sync_timer:
+                    self.sync_timer.cancel()
                 self.sync_timer = None
 
         def on_any_event(self, event):
-            if not event.is_directory:
-                return None
+            # Ignore directory events and access events.
+            # We also ignore 'opened' and 'closed' if the observer supports them.
+            if event.is_directory or event.event_type in ['accessed', 'opened', 'closed']:
+                return
+
+            # Check if the changed file matches our target
+            paths = [event.src_path]
+            if hasattr(event, 'dest_path'):
+                paths.append(event.dest_path)
+
+            is_match = False
+            for p in paths:
+                if self._is_ignored(p):
+                    continue
+
+                abs_p = os.path.abspath(p)
+                if is_target_wildcard:
+                    if fnmatch.fnmatch(abs_p, target_path):
+                        is_match = True; break
+                elif is_target_dir:
+                    # Only match files strictly INSIDE the directory.
+                    # This ignores events on the directory itself (like mtime changes).
+                    if abs_p.startswith(target_path + os.sep):
+                        is_match = True; break
+                else:
+                    # For single file watch, match exactly.
+                    if abs_p == target_path:
+                        is_match = True; break
+
+            if not is_match:
+                return
+
             if not self.sync_timer:
                 print(f"File change detected: {event.src_path}. Make timer...")
                 self.sync_timer = Timer(self.delay_ms, self._do_sync)
@@ -340,7 +414,14 @@ def do_rsync_monitor(ip, username, local_obj=None):
 
     # Example usage
     observer = Observer()
-    observer.schedule(ChangeEventHandler(), os.path.dirname(local_obj), recursive=True)
+    # Use absolute path for the directory to watch
+    if is_target_dir:
+        watch_path = target_path
+    else:
+        watch_path = os.path.dirname(target_path)
+        if not watch_path:
+            watch_path = "."
+    observer.schedule(ChangeEventHandler(), watch_path, recursive=True)
     observer.start()
     try:
       while True:
