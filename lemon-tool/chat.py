@@ -18,6 +18,8 @@ from prompt_toolkit.layout.controls import BufferControl, FormattedTextControl
 from prompt_toolkit.layout.dimension import D
 from prompt_toolkit.filters import Condition
 from prompt_toolkit.buffer import Buffer
+from prompt_toolkit.key_binding.vi_state import InputMode
+from prompt_toolkit.application.current import get_app
 
 def format_tokens(tokens: int) -> str:
     if tokens >= 1_000_000:
@@ -205,11 +207,28 @@ def main():
     def get_status(verbose=False):
         """Return a list of (label, value) for current chat status."""
         status = []
+
+        # Display current Vim mode (Normal/Insert/Replace)
+        try:
+            app = get_app()
+            # vi_state is only available when vi_mode=True in PromptSession
+            if app and hasattr(app, 'vi_state'):
+                mode_map = {
+                    InputMode.INSERT: "Insert",
+                    InputMode.NAVIGATION: "Normal",
+                    InputMode.REPLACE: "Replace",
+                }
+                current_mode = mode_map.get(app.vi_state.input_mode, "Normal")
+                status.append(("Mode", current_mode))
+        except Exception:
+            # Silently fail if not in an active prompt session or vi_state is missing
+            pass
+
         # Total tokens consumed
-        status.append(("Total tokens consumed", format_tokens(total_tokens_consumed)))
+        status.append(("Tokens", format_tokens(total_tokens_consumed)))
         # System prompt role
         prompt_role = system_prompt.get("role", "Unknown")
-        status.append(("System prompt", prompt_role))
+        status.append(("Role", prompt_role))
 
         if verbose:
             content = system_prompt.get("content", "")
@@ -220,7 +239,7 @@ def main():
             status.append(("Prompt content", content_preview))
 
         # LLM model name
-        status.append(("LLM model name", model_name))
+        status.append(("Model", model_name))
         # Add more status items here in the future
         return status
 
