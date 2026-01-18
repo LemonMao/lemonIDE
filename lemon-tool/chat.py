@@ -219,7 +219,7 @@ def main():
                     InputMode.REPLACE: "Replace",
                 }
                 current_mode = mode_map.get(app.vi_state.input_mode, "Normal")
-                status.append(("Mode", current_mode))
+                status.append(("InputMode", current_mode))
         except Exception:
             # Silently fail if not in an active prompt session or vi_state is missing
             pass

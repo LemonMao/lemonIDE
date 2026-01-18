@@ -302,6 +302,7 @@ def parse_args():
     grep_parser.set_defaults(func=grepindir)
 
     # lt log
+    # lt log "2025-10-15T00:13:00~2025-10-15T00:13:40" lsassd-bug-557.log.1 > lsassd-bug-557.log.1-1-2
     log_parser = subparsers.add_parser('log', help='Extract logs from a file within a time range.')
     log_parser.add_argument("time_range", help="Time range in format 'start~end' (e.g., '2025-08-06T21:04:02~2025-08-06T21:04:03')")
     log_parser.add_argument("log_file", help="Path to the log file")
