@@ -1,7 +1,6 @@
 ---
 name: developer
 description: Work as the Principal Software Engineer to develop the feature.
-model: sonnet
 ---
 Focus on the following aspects and principles.
 
