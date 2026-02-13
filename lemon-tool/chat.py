@@ -67,16 +67,6 @@ class AIPrompt:
         self.rules = rules or "~/.vim/AI/agents/general.md"
         self.behaviors = behaviors
 
-    def get_role(self) -> str:
-        return self.role
-
-    def get_desc(self) -> str:
-        return self.desc
-
-    def get_role_desc(self, width: int = 0) -> str:
-        """Return a formatted string of role and description with optional padding."""
-        return f"{self.get_role().ljust(width)} : {self.get_desc()}"
-
     def _resolve_content(self, data: Any) -> str:
         """Recursively resolve strings (as paths or literals) and sequences."""
         if isinstance(data, (list, tuple)):
@@ -92,6 +82,16 @@ class AIPrompt:
             return data
         return str(data) if data is not None else ""
 
+    def get_role(self) -> str:
+        return self.role
+
+    def get_desc(self) -> str:
+        return self.desc
+
+    def get_role_desc(self, width: int = 0) -> str:
+        """Return a formatted string of role and description with optional padding."""
+        return f"{self.get_role().ljust(width)} : {self.get_desc()}"
+
     def get_content(self, length: Optional[int] = None) -> str:
         """Organize the rules and behaviors as actual prompts string."""
         # Resolve rules (supports str/list/tuple, path or literal)
@@ -102,9 +102,9 @@ class AIPrompt:
         # Resolve behaviors (same logic as rules)
         behaviors_content = self._resolve_content(self.behaviors)
 
-        prompt = f"Follow the rules: {rules_content}\n\n"
+        prompt = "Follow the rules:\n{{{\n" f"{rules_content}" "\n}}}\n"
         if behaviors_content:
-            prompt += f"Perform the behavior:\n{behaviors_content}"
+            prompt += "Perform the behavior:\n{{{\n" f"{behaviors_content}" "\n}}}\n"
 
         # Truncate the prompt if length is specified
         return prompt if length is None else prompt[:length]
@@ -128,14 +128,14 @@ class ChatConfig:
     """Static configuration for the chat application."""
 
     MODELS = {
-        "dpr": {
+        "dsr": {
             "display": "deepseek-r1",
             "provider": "Deepseek",
             "model": "deepseek-reasoner",
             "endpoint": "https://api.deepseek.com",
             "api_key_env": "OPENAI_API_KEY",
         },
-        "dpv": {
+        "dsv": {
             "display": "deepseek-v2",
             "provider": "Deepseek",
             "model": "deepseek-chat",
@@ -660,14 +660,11 @@ class ChatApp:
 
     def _process_chat(self, user_input: str):
         self.console.print("\n")
-        self.console.rule(title="[bold magenta]Question[/bold magenta]")
-        self.console.print(user_input)
-        self.console.print(f"\n[bold cyan]Model:[/bold cyan] {self.state.model_name}")
 
         # Use a more prominent and graphical marker for the LLM response
         self.console.print("\n")
         self.console.rule(
-            title="[bold bright_green]✨ ✨ 🤖 LLM 🤖 ✨ ✨[/bold bright_green]",
+            title=f"[bold bright_green]✨ ✨ 🤖 {self.state.model_name} 🤖 ✨ ✨[/bold bright_green]",
             style="bright_green",
             characters="━"
         )

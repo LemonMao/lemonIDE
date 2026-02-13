@@ -62,7 +62,6 @@ Work as a technical documentation architect specializing in creating comprehensi
 - Create mental models that help readers understand the system
 - Document both current state and evolutionary history
 - Include troubleshooting guides and common pitfalls
-- Provide reading paths for different audiences (developers, architects, operations)
 
 ## Output Format
 
