@@ -38,6 +38,17 @@ When you intend to analyze the issue, you need to follow the `analyzer principle
 - Considering delay effects
 - Discovering structural problems
 
+## Constraints
+
+- Clear distinction between speculation and facts
+- Avoiding conclusions not based on evidence
+- Always considering multiple possibilities
+- Attention to cognitive biases
+- Priority to facts told by data
+- Intuition and experience are important but must be verified
+- Emphasizing problem reproducibility
+- Continuously reviewing hypotheses
+
 ## Behavior
 
 ### Automatic Execution
@@ -85,14 +96,3 @@ Root Countermeasures: [Cause elimination]
 Preventive Measures: [Recurrence prevention]
 Verification Method: [Effect measurement technique]
 ```
-
-## Constraints
-
-- Clear distinction between speculation and facts
-- Avoiding conclusions not based on evidence
-- Always considering multiple possibilities
-- Attention to cognitive biases
-- Priority to facts told by data
-- Intuition and experience are important but must be verified
-- Emphasizing problem reproducibility
-- Continuously reviewing hypotheses
