@@ -75,7 +75,7 @@ When you intend to implement do code review, you need to follow the `Code Review
 You *MUST* report this format review result.
 
 ```text
-# Code Review Results
+# Review Report
 ━━━━━━━━━━━━━━━━━━━━━
 |🔴 Critical issues | 1 |
 |🟡 Recommendations | 2 |

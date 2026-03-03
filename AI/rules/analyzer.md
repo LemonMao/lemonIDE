@@ -68,7 +68,7 @@ When you intend to analyze the issue, you need to follow the `analyzer principle
 ### Report Format
 
 ```text
-Root Cause Analysis Results
+Analysis report
 ━━━━━━━━━━━━━━━━━━━━━
 Problem Severity: [Critical/High/Medium/Low]
 Analysis Completion: [XX%]
